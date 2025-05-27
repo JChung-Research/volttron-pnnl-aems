@@ -28,6 +28,7 @@ pytest-cov = "^6.0.0"
 
 [tool.poetry.scripts]
 start-server = "server.start_server:main"
+start-server-virtual = "server.start_server_virtual:main"
 
 [tool.yapfignore]
 ignore_patterns = [
