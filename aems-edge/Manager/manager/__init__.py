@@ -53,7 +53,24 @@ DEFAULT_SETPOINTS = {
     'UnoccupiedHeatingSetPoint': 65,
     'UnoccupiedCoolingSetPoint': 78,
     'DeadBand': 3,
-    'OccupiedSetPoint': 71
+    'OccupiedSetPoint': 71,
+    'SupplyDuctPressure': 230,
+    'CoolingCoilValve': 0.5,
+    'HeatingCoilValve': 0.5,
+    'CoolingCoilPump': 0.5,
+    'HeatingCoilPump': 0.5,
+    'SupplyFanSpeed': 0.5,
+    'SupplyAirSetpoint': 71,
+    'SupplyHeaterSetpoint': 71,
+    'OutsideAirDamperPosition': 0.5,
+    'ReturnAirDamperPosition': 0.5,
+    'ZoneDamperPosition': 0.5,
+    'ZoneReheatControl': 0.5,
+    'ZoneAirCoolingSetpoint': 78,
+    'ZoneAirHeatingSetpoint': 65,
+    'ZoneOperativeCoolingSetpoint': 78,
+    'ZoneOperativeHeatingSetpoint': 65,
+    'ControlStagePump': 1
 }
 DEFAULT_OCCUPANCY_VALUES = {'occupied': 2, 'unoccupied': 3}
 
@@ -146,6 +163,10 @@ class DefaultConfig:
     setpoint_control: SetpointControlType = SetpointControlType(1)
     setpoint_validate_frequency: int = 300
     local_tz: str = 'UTC'
+    bldg_type: str = ''
+    operator: str = ''    
+    image: str = ''
+    description: str = ''
     location: Optional[Location] = None
     default_setpoints: dict[str, float] = field(default_factory=lambda: DEFAULT_SETPOINTS)
     optimal_start: OptimalStartConfig = field(

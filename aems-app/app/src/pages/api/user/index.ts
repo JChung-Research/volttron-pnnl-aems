@@ -5,7 +5,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { authUser } from "@/auth";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 import { Prisma } from "@prisma/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { id } = user;
   if (req.method === "PUT") {
-    const input = req.body as Prisma.UserUpdateInput;
+    const user = req.body as Prisma.UserUpdateInput;
     return prisma.user
       .update({
         select: {
@@ -28,12 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           updatedAt: true,
           password: false,
         },
-        data: pick(input, ["password", "preferences"]),
+        data: pick(user, ["password", "preferences"]),
         where: { id: id },
       })
-      .then((response) => {
-        recordChange("Update", "User", response.id, user, convertToJsonObject(response));
-        return res.status(200).json(response);
+      .then((user) => {
+        return res.status(200).json(user);
       })
       .catch((error) => {
         logger.warn(error);
@@ -81,7 +80,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id: id },
       })
       .then(() => {
-        recordChange("Delete", "User", id!, user);
         return res.status(200).json(true);
       })
       .catch((error) => {

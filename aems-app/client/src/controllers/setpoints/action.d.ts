@@ -8,6 +8,24 @@ export interface ISetpoint {
   deadband: number;
   heating: number;
   cooling: number;
+  supplyDuctPressure: number;
+  coolingCoilValve: number;
+  heatingCoilValve: number;
+  coolingCoilPump: number;
+  heatingCoilPump: number;
+  supplyFanSpeed: number;
+  supplyAirSetpoint: number;
+  supplyHeaterSetpoint: number;
+  outsideAirDamperPosition: number;
+  returnAirDamperPosition: number;
+  zoneDamperPosition: number;
+  zoneReheatControl: number;
+  zoneAirCoolingSetpoint: number;
+  zoneAirHeatingSetpoint: number;
+  zoneOperativeCoolingSetpoint: number;
+  zoneOperativeHeatingSetpoint: number;
+  controlStagePump: number;
+
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -16,7 +34,7 @@ export interface ISetpoint {
 }
 
 export interface IFilter {
-  field?: "id" | "label" | "setpoint" | "deadband" | "heating" | "cooling" | "createdAt" | "updatedAt";
+  field?: "id" | "label" | "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump" | "createdAt" | "updatedAt";
   direction?: "asc" | "dsc";
   search?: string;
   auto?: boolean;

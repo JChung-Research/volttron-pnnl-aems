@@ -39,7 +39,7 @@ model Feedback {
 
   // direct relations
   user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignee User? @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assignee User? @relation("assignee", fields: [assigneeId], references: [id], onDelete: Cascade)
 
   // indirect relations
   files File[]
@@ -230,6 +230,10 @@ model Units {
   building              String          @default("") @db.VarChar(1024)
   system                String          @default("") @db.VarChar(1024)
   timezone              String          @default("local") @db.VarChar(1024)
+  bldgType                String          @default("") @db.VarChar(1024)
+  operator                String          @default("") @db.VarChar(1024)
+  image                String          @default("") @db.VarChar(1024)
+  description                String          @default("") @db.VarChar(1024)
   label                 String          @db.VarChar(1024)
   coolingCapacity       Float           @default(3)
   compressors           Int             @default(1)
@@ -380,6 +384,25 @@ model Setpoints {
   deadband       Float            @default(4)
   heating        Float            @default(60)
   cooling        Float            @default(80)
+  supplyDuctPressure   Float            @default(230)
+  coolingCoilValve   Float            @default(0.5)
+  heatingCoilValve   Float            @default(0.5)
+  coolingCoilPump   Float            @default(0.5)
+  heatingCoilPump   Float            @default(0.5)
+  supplyFanSpeed   Float            @default(0.5)  
+  supplyAirSetpoint   Float            @default(70)
+  supplyHeaterSetpoint   Float            @default(70)
+  outsideAirDamperPosition   Float            @default(0.5)
+  returnAirDamperPosition   Float            @default(0.5)
+  zoneDamperPosition   Float            @default(0.5)
+  zoneReheatControl   Float            @default(0.5)
+  zoneAirCoolingSetpoint   Float            @default(80)
+  zoneAirHeatingSetpoint   Float            @default(60)
+  zoneOperativeCoolingSetpoint   Float            @default(80)
+  zoneOperativeHeatingSetpoint   Float            @default(60)
+  controlStagePump   Float            @default(1)
+
+  
   // indirect relations
   configurations Configurations[] @relation("Configurations_setpoints")
   schedules      Schedules[]      @relation("Schedules_setpoints")

@@ -98,6 +98,24 @@ class DFPoints(Enum):
     unoccupiedheatingsetpoint = 'unoccupiedheatingsetpoint'
     unoccupiedcoolingsetpoint = 'unoccupiedcoolingsetpoint'
     occupiedsetpoint = 'occupiedsetpoint'
+    supplyductpressure = 'supplyductpressure'
+    coolingcoilvalve = 'coolingcoilvalve'
+    heatingcoilvalve = 'heatingcoilvalve'
+    coolingcoilpump = 'coolingcoilpump'
+    heatingcoilpump = 'heatingcoilpump'
+    supplyfanspeed = 'supplyfanspeed'
+    supplyairsetpoint = 'supplyairsetpoint'
+    supplyheatersetpoint = 'supplyheatersetpoint'
+    outsideairdamperposition = 'outsideairdamperposition'
+    returnairdamperposition = 'returnairdamperposition'
+    zonedamperposition = 'zonedamperposition'
+    zonereheatcontrol = 'zonereheatcontrol'
+    zoneaircoolingsetpoint = 'zoneaircoolingsetpoint'
+    zoneairheatingsetpoint = 'zoneairheatingsetpoint'
+    zoneoperativecoolingsetpoint = 'zoneoperativecoolingsetpoint'
+    zoneoperativeheatingsetpoint = 'zoneoperativeheatingsetpoint'
+    controlstagepump = 'controlstagepump'
+
     conditioning = 'conditioning'
     tempdiff = 'tempdiff'
     timediff = 'timediff'
@@ -156,6 +174,23 @@ Points.add_item(DFPoints.deadband.name, 'DeadBand')
 Points.add_item(DFPoints.unoccupiedheatingsetpoint.name, 'UnoccupiedHeatingSetPoint')
 Points.add_item(DFPoints.unoccupiedcoolingsetpoint.name, 'UnoccupiedCoolingSetPoint')
 Points.add_item(DFPoints.occupiedsetpoint.name, 'OccupiedSetPoint')
+Points.add_item(DFPoints.supplyductpressure.name, 'SupplyDuctPressure')
+Points.add_item(DFPoints.coolingcoilvalve.name, 'CoolingCoilValve')
+Points.add_item(DFPoints.heatingcoilvalve.name, 'HeatingCoilValve')
+Points.add_item(DFPoints.coolingcoilpump.name, 'CoolingCoilPump')
+Points.add_item(DFPoints.heatingcoilpump.name, 'HeatingCoilPump')
+Points.add_item(DFPoints.supplyfanspeed.name, 'SupplyFanSpeed')
+Points.add_item(DFPoints.supplyairsetpoint.name, 'SupplyAirSetpoint')
+Points.add_item(DFPoints.supplyheatersetpoint.name, 'SupplyHeaterSetpoint')
+Points.add_item(DFPoints.outsideairdamperposition.name, 'OutsideAirDamperPosition')
+Points.add_item(DFPoints.returnairdamperposition.name, 'ReturnAirDamperPosition')
+Points.add_item(DFPoints.zonedamperposition.name, 'ZoneDamperPosition')
+Points.add_item(DFPoints.zonereheatcontrol.name, 'ZoneReheatControl')
+Points.add_item(DFPoints.zoneaircoolingsetpoint.name, 'ZoneAirCoolingSetpoint')
+Points.add_item(DFPoints.zoneairheatingsetpoint.name, 'ZoneAirHeatingSetpoint')
+Points.add_item(DFPoints.zoneoperativecoolingsetpoint.name, 'ZoneOperativeCoolingSetpoint')
+Points.add_item(DFPoints.zoneoperativeheatingsetpoint.name, 'ZoneOperativeHeatingSetpoint')
+Points.add_item(DFPoints.controlstagepump.name, 'ControlStagePump')
 
 
 class DaysOfWeek(IntEnum):

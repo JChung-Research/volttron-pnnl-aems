@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { authUser } from "@/auth";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 import { Prisma } from "@prisma/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json(null);
   }
   if (req.method === "POST") {
-    const input = req.body as Prisma.UserCreateInput;
+    const user = req.body as Prisma.UserCreateInput;
     return prisma.user
       .create({
         select: {
@@ -26,11 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           updatedAt: true,
           password: false,
         },
-        data: input,
+        data: user,
       })
-      .then((response) => {
-        recordChange("Create", "User", response.id, user, convertToJsonObject(response));
-        return res.status(200).json(response);
+      .then((user) => {
+        return res.status(200).json(user);
       })
       .catch((error) => {
         logger.warn(error);

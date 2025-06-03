@@ -660,6 +660,24 @@ class ManagerProxy:
         try:
             unocc_clg_sp = float(setpoints[Points.unoccupiedcoolingsetpoint.value])
             unocc_htg_sp = float(setpoints[Points.unoccupiedheatingsetpoint.value])
+            sp_prss_sp = float(setpoints[Points.supplyductpressure.value])            
+            clg_vlv_sg = float(setpoints[Points.coolingcoilvalve.value])
+            htg_vlv_sg = float(setpoints[Points.heatingcoilvalve.value])
+            clg_pmp_sg = float(setpoints[Points.coolingcoilpump.value])
+            htg_pmp_sg = float(setpoints[Points.heatingcoilpump.value])
+            sp_fn_sp = float(setpoints[Points.supplyfanspeed.value])
+            sp_ar_sp = float(setpoints[Points.supplyairsetpoint.value])
+            sp_ht_sp = float(setpoints[Points.supplyheatersetpoint.value])
+            out_dmp_ps = float(setpoints[Points.outsideairdamperposition.value])
+            rtn_dmp_ps = float(setpoints[Points.returnairdamperposition.value])
+            zn_dmp_po = float(setpoints[Points.zonedamperposition.value])
+            zn_rht_ctrl = float(setpoints[Points.zonereheatcontrol.value])
+            zn_ar_clg_sp = float(setpoints[Points.zoneaircoolingsetpoint.value])
+            zn_ar_htg_sp = float(setpoints[Points.zoneairheatingsetpoint.value])
+            zn_opr_clg_sp = float(setpoints[Points.zoneoperativecoolingsetpoint.value])
+            zn_opr_htg_sp = float(setpoints[Points.zoneoperativeheatingsetpoint.value]) 
+            ctrl_stg_pmp = float(setpoints[Points.controlstagepump.value]) 
+            
             deadband = float(setpoints[Points.deadband.value])
             occ_sp = float(setpoints[Points.occupiedsetpoint.value])
             occ_clg_sp = occ_sp + deadband
@@ -671,6 +689,24 @@ class ManagerProxy:
 
         control[Points.unoccupiedcoolingsetpoint.value] = unocc_clg_sp
         control[Points.unoccupiedheatingsetpoint.value] = unocc_htg_sp
+        control[Points.supplyductpressure.value] = sp_prss_sp
+        control[Points.coolingcoilvalve.value] = clg_vlv_sg
+        control[Points.heatingcoilvalve.value] = htg_vlv_sg
+        control[Points.coolingcoilpump.value] = clg_pmp_sg
+        control[Points.heatingcoilpump.value] = htg_pmp_sg
+        control[Points.supplyfanspeed.value] = sp_fn_sp              
+        control[Points.supplyairsetpoint.value] = sp_ar_sp
+        control[Points.supplyheatersetpoint.value] = sp_ht_sp
+        control[Points.outsideairdamperposition.value] = out_dmp_ps
+        control[Points.returnairdamperposition.value] = rtn_dmp_ps
+        control[Points.zonedamperposition.value] = zn_dmp_po
+        control[Points.zonereheatcontrol.value] = zn_rht_ctrl
+        control[Points.zoneaircoolingsetpoint.value] = zn_ar_clg_sp
+        control[Points.zoneairheatingsetpoint.value] = zn_ar_htg_sp
+        control[Points.zoneoperativecoolingsetpoint.value] = zn_opr_clg_sp
+        control[Points.zoneoperativeheatingsetpoint.value] = zn_opr_htg_sp
+        control[Points.controlstagepump.value] = ctrl_stg_pmp
+
         _log.debug(f'Configure setpoints: {self.cfg.setpoint_control}')
 
         if self.cfg.setpoint_control == SetpointControlType.AttachedSetpoint:

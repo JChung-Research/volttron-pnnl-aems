@@ -1,5 +1,15 @@
-import { IBase, IValidate, ValidateType } from "../types";
+import { IBase, IConstant, IValidate, ValidateType } from "../types";
 import Base from "./base";
+
+export type ValidateType = "unit" | "schedule" | "setpoint";
+
+export interface IValidate extends IConstant {
+  type: ValidateType;
+  options?:
+    | { default: string; min?: string; max?: string }
+    | { default: boolean; min?: undefined; max?: undefined }
+    | { default: number; min: number; max: number };
+}
 
 class Validate extends Base<IValidate> implements IBase<IValidate> {
   constructor() {
@@ -8,26 +18,129 @@ class Validate extends Base<IValidate> implements IBase<IValidate> {
         name: "setpoint",
         label: "Setpoint",
         type: "setpoint" as ValidateType,
-        options: { default: 70, min: 55, max: 85 },
+        options: { default: -1, min: 55, max: 85 },
       },
       {
         name: "deadband",
         label: "Deadband",
         type: "setpoint" as ValidateType,
-        options: { default: 4, min: 2, max: 6 },
+        options: { default: -1, min: 2, max: 6 },
       },
       {
         name: "heating",
         label: "Heating",
         type: "setpoint" as ValidateType,
-        options: { default: 60, min: 55, max: 85 },
+        options: { default: -1, min: 55, max: 85 },
       },
       {
         name: "cooling",
         label: "Cooling",
         type: "setpoint" as ValidateType,
-        options: { default: 80, min: 55, max: 85 },
+        options: { default: -1, min: 55, max: 85 },
       },
+      {
+        name: "supplyDuctPressure",
+        label: "SupplyDuctPressure",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 50, max: 410 },
+      },
+      {
+        name: "coolingCoilValve",
+        label: "CoolingCoilValve",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "heatingCoilValve",
+        label: "HeatingCoilValve",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "coolingCoilPump",
+        label: "CoolingCoilPump",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "heatingCoilPump",
+        label: "HeatingCoilPump",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "supplyFanSpeed",
+        label: "SupplyFanSpeed",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      }, 
+      {
+        name: "supplyAirSetpoint",
+        label: "SupplyAirSetpoint",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 55, max: 85 },
+      },
+      {
+        name: "supplyHeaterSetpoint",
+        label: "SupplyHeaterSetpoint",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 55, max: 85 },
+      },
+      {
+        name: "outsideAirDamperPosition",
+        label: "OutsideAirDamperPosition",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "returnAirDamperPosition",
+        label: "ReturnAirDamperPosition",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "zoneDamperPosition",
+        label: "ZoneDamperPosition",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "zoneReheatControl",
+        label: "ZoneReheatControl",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+      {
+        name: "zoneAirCoolingSetpoint",
+        label: "ZoneAirCoolingSetpoint",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 55, max: 85 },
+      },
+      {
+        name: "zoneAirHeatingSetpoint",
+        label: "ZoneAirHeatingSetpoint",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 55, max: 85 },
+      },
+      {
+        name: "zoneOperativeCoolingSetpoint",
+        label: "ZoneOperativeCoolingSetpoint",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 55, max: 85 },
+      },
+      {
+        name: "zoneOperativeHeatingSetpoint",
+        label: "ZoneOperativeHeatingSetpoint",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 55, max: 85 },
+      },
+      {
+        name: "controlStagePump",
+        label: "ControlStagePump",
+        type: "setpoint" as ValidateType,
+        options: { default: -1, min: 0, max: 1 },
+      },
+
       { name: "startTime", label: "Start Time", type: "schedule" as ValidateType, options: { default: "08:00" } },
       { name: "endTime", label: "End Time", type: "schedule" as ValidateType, options: { default: "18:00" } },
       { name: "occupied", label: "Occupied", type: "schedule" as ValidateType, options: { default: true } },
@@ -128,6 +241,23 @@ class Validate extends Base<IValidate> implements IBase<IValidate> {
   DeadbandType = this.parseStrict("deadband");
   HeatingType = this.parseStrict("heating");
   CoolingType = this.parseStrict("cooling");
+  SupplyDuctPressureType = this.parseStrict("supplyDuctPressure");
+  CoolingCoilValveType = this.parseStrict("coolingCoilValve");
+  HeatingCoilValveType = this.parseStrict("heatingCoilValve");
+  CoolingCoilPumpType = this.parseStrict("coolingCoilPump");
+  HeatingCoilPumpType = this.parseStrict("heatingCoilPump");
+  SupplyFanSpeedType = this.parseStrict("supplyFanSpeed");
+  SupplyAirSetpointType = this.parseStrict("supplyAirSetpoint");
+  SupplyHeaterSetpointType = this.parseStrict("supplyHeaterSetpoint");
+  OutsideAirDamperPositionType = this.parseStrict("outsideAirDamperPosition");
+  ReturnAirDamperPositionType = this.parseStrict("returnAirDamperPosition");
+  ZoneDamperPositionType = this.parseStrict("zoneDamperPosition");
+  ZoneReheatControlType = this.parseStrict("zoneReheatControl");
+  ZoneAirCoolingSetpointType = this.parseStrict("zoneAirCoolingSetpoint");
+  ZoneAirHeatingSetpointType = this.parseStrict("zoneAirHeatingSetpoint");
+  ZoneOperativeCoolingSetpointType = this.parseStrict("zoneOperativeCoolingSetpoint");
+  ZoneOperativeHeatingSetpointType = this.parseStrict("zoneOperativeHeatingSetpoint");
+  ControlStagePumpType = this.parseStrict("controlStagePump");
 
   StartTimeType = this.parseStrict("startTime");
   EndTimeType = this.parseStrict("endTime");

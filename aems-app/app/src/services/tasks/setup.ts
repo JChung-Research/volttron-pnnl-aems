@@ -56,20 +56,36 @@ const createConfigurationLabel = (unit: Partial<Units>) => {
   return `${unit.label} - ${moment().format("dddd, MMMM Do YYYY")}`;
 };
 
-const createSetpointLabel = (type: "all" | "setpoint" | "deadband" | "heating" | "cooling", setpoint: any): string => {
+const createSetpointLabel = (type: "all" | "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump", setpoint: any): string => {
   switch (type) {
     case "all":
       return `Occupied Setpoint: ${createSetpointLabel("setpoint", setpoint)} Deadband: ${createSetpointLabel(
-        "deadband",
-        setpoint
-      )} Unoccupied Heating: ${createSetpointLabel("heating", setpoint)} Cooling: ${createSetpointLabel(
-        "cooling",
-        setpoint
-      )}`;
+        "deadband", setpoint)} Unoccupied Heating: ${createSetpointLabel("heating", setpoint)} Cooling: ${createSetpointLabel(
+        "cooling", setpoint)} Supply Duct Pressure: ${createSetpointLabel("supplyDuctPressure", setpoint)} Cooling Coil Valve: ${createSetpointLabel(
+        "coolingCoilValve", setpoint)}  Heating Coil Valve: ${createSetpointLabel("heatingCoilValve", setpoint)}  Cooling Coil Pump: ${createSetpointLabel(
+        "coolingCoilPump", setpoint)}  Heating Coil Pump: ${createSetpointLabel("heatingCoilPump", setpoint)}  Supply Fan Speed: ${createSetpointLabel(
+        "supplyFanSpeed", setpoint)} Supply Air Setpoint: ${createSetpointLabel("supplyAirSetpoint", setpoint)} Supply Heater Setpoint: ${createSetpointLabel("supplyHeaterSetpoint", setpoint)} Outside Air Damper Position: ${createSetpointLabel("outsideAirDamperPosition", setpoint)} Return Air Damper Position: ${createSetpointLabel("returnAirDamperPosition", setpoint)} Zone Damper Position: ${createSetpointLabel("zoneDamperPosition", setpoint)} Zone Reheat Control: ${createSetpointLabel("zoneReheatControl", setpoint)} Zone Air Cooling Setpoint: ${createSetpointLabel("zoneAirCoolingSetpoint", setpoint)} Zone Air Heating Setpoint: ${createSetpointLabel("zoneAirHeatingSetpoint", setpoint)} Zone Operative Cooling Setpoint: ${createSetpointLabel("zoneOperativeCoolingSetpoint", setpoint)} Zone Operative Heating Setpoint: ${createSetpointLabel("zoneOperativeHeatingSetpoint", setpoint)} Control Stage Pump: ${createSetpointLabel("controlStagePump", setpoint)}`;
     case "setpoint":
     case "deadband":
     case "heating":
     case "cooling":
+    case "supplyDuctPressure":
+    case "coolingCoilValve":
+    case "heatingCoilValve":
+    case "coolingCoilPump":
+    case "heatingCoilPump":
+    case "supplyFanSpeed":
+    case "supplyAirSetpoint":
+    case "supplyHeaterSetpoint":
+    case "outsideAirDamperPosition":
+    case "returnAirDamperPosition":
+    case "zoneDamperPosition":
+    case "zoneReheatControl":
+    case "zoneAirCoolingSetpoint":
+    case "zoneAirHeatingSetpoint":
+    case "zoneOperativeCoolingSetpoint":
+    case "zoneOperativeHeatingSetpoint":
+    case "controlStagePump":
     default:
       return `${setpoint[type]}º\xa0F`;
   }
@@ -116,6 +132,23 @@ const createConfigurationDefault = (unit: Partial<Units>): DeepPartial<UnitsFull
     deadband: ValidateType.DeadbandType.options?.default as number,
     heating: ValidateType.HeatingType.options?.default as number,
     cooling: ValidateType.CoolingType.options?.default as number,
+    supplyDuctPressure: ValidateType.SupplyDuctPressureType.options?.default as number,
+    coolingCoilValve: ValidateType.CoolingCoilValveType.options?.default as number,
+    heatingCoilValve: ValidateType.HeatingCoilValveType.options?.default as number,
+    coolingCoilPump: ValidateType.CoolingCoilPumpType.options?.default as number,
+    heatingCoilPump: ValidateType.HeatingCoilPumpType.options?.default as number,
+    supplyFanSpeed: ValidateType.SupplyFanSpeedType.options?.default as number,
+    supplyAirSetpoint: ValidateType.SupplyAirSetpoint.options?.default as number,
+    supplyHeaterSetpoint: ValidateType.SupplyHeaterSetpoint.options?.default as number,
+    outsideAirDamperPosition: ValidateType.OutsideAirDamperPosition.options?.default as number,
+    returnAirDamperPosition: ValidateType.ReturnAirDamperPosition.options?.default as number,
+    zoneDamperPosition: ValidateType.ZoneDamperPosition.options?.default as number,
+    zoneReheatControl: ValidateType.ZoneReheatControl.options?.default as number,
+    zoneAirCoolingSetpoint: ValidateType.ZoneAirCoolingSetpoint.options?.default as number,
+    zoneAirHeatingSetpoint: ValidateType.ZoneAirHeatingSetpoint.options?.default as number,
+    zoneOperativeCoolingSetpoint: ValidateType.ZoneOperativeCoolingSetpoint.options?.default as number,
+    zoneOperativeHeatingSetpoint: ValidateType.ZoneOperativeHeatingSetpoint.options?.default as number,
+    controlStagePump: ValidateType.ControlStagePump.options?.default as number
   };
   setpoint.label = createSetpointLabel("all", setpoint);
   const schedule: Partial<Schedules> = {
@@ -174,6 +207,23 @@ const updateConfigurationDefaults = (unit: DeepPartial<UnitsFull>, json: any) =>
     ["configuration.setpoint.setpoint", "default_setpoints.OccupiedSetPoint"],
     ["configuration.setpoint.heating", "default_setpoints.UnoccupiedHeatingSetPoint"],
     ["configuration.setpoint.cooling", "default_setpoints.UnoccupiedCoolingSetPoint"],
+    ["configuration.setpoint.supplyDuctPressure", "default_setpoints.SupplyDuctPressure"],
+    ["configuration.setpoint.coolingCoilValve", "default_setpoints.CoolingCoilValve"],
+    ["configuration.setpoint.heatingCoilValve", "default_setpoints.HeatingCoilValve"],
+    ["configuration.setpoint.coolingCoilPump", "default_setpoints.CoolingCoilPump"],
+    ["configuration.setpoint.heatingCoilPump", "default_setpoints.HeatingCoilPump"],
+    ["configuration.setpoint.supplyFanSpeed", "default_setpoints.SupplyFanSpeed"],
+    ["configuration.setpoint.supplyAirSetpoint", "default_setpoints.SupplyAirSetpoint"],
+    ["configuration.setpoint.supplyHeaterSetpoint", "default_setpoints.SupplyHeaterSetpoint"],
+    ["configuration.setpoint.outsideAirDamperPosition", "default_setpoints.OutsideAirDamperPosition"],
+    ["configuration.setpoint.returnAirDamperPosition", "default_setpoints.ReturnAirDamperPosition"],
+    ["configuration.setpoint.zoneDamperPosition", "default_setpoints.ZoneDamperPosition"],
+    ["configuration.setpoint.zoneReheatControl", "default_setpoints.ZoneReheatControl"],
+    ["configuration.setpoint.zoneAirCoolingSetpoint", "default_setpoints.ZoneAirCoolingSetpoint"],
+    ["configuration.setpoint.zoneAirHeatingSetpoint", "default_setpoints.ZoneAirHeatingSetpoint"],
+    ["configuration.setpoint.zoneOperativeCoolingSetpoint", "default_setpoints.ZoneOperativeCoolingSetpoint"],
+    ["configuration.setpoint.zoneOperativeHeatingSetpoint", "default_setpoints.ZoneOperativeHeatingSetpoint"],
+    ["configuration.setpoint.controlStagePump", "default_setpoints.ControlStagePump"],
   ]) {
     set(unit, k, get(json, v, get(unit, k)));
   }
@@ -240,7 +290,7 @@ const execute = (options: SetupOptions) => async () => {
           const file = resolve(process.cwd(), f);
           const text = await readFile(file, "utf-8");
           const json = JSON.parse(text);
-          const { campus, building, system, local_tz: timezone } = json;
+          const { campus, building, system, local_tz: timezone, bldg_type: bldgType, operator, image, description } = json;
           const name = `${transform(campus)}-${transform(building)}-${transform(system)}`;
           const label = `${campus} ${building} ${system}`;
           logger.info(`Checking if unit "${name}" exists.`);
@@ -251,7 +301,7 @@ const execute = (options: SetupOptions) => async () => {
                 return unit;
               } else {
                 logger.info(`Creating unit "${name}".`);
-                const data = createConfigurationDefault({ name, label, campus, building, system, timezone });
+                const data = createConfigurationDefault({ name, label, campus, building, system, timezone, bldgType, operator, image, description });
                 updateConfigurationDefaults(data, json);
                 const record = transformUnit(data, "create");
                 record.stage = StageType.UpdateType.enum;
@@ -304,7 +354,7 @@ const execute = (options: SetupOptions) => async () => {
             const file = resolve(process.cwd(), f);
             const text = await readFile(file, "utf-8");
             const json = JSON.parse(text);
-            const { campus, building, systems }: { campus: string; building: string; systems: string[] } = json;
+            const { campus, building, systems }: { campus: string; building: string; systems: string[]; } = json;
             const name = `${transform(campus)}-${transform(building)}`;
             let control = controls.find((v) => v.name === name);
             if (!control) {
