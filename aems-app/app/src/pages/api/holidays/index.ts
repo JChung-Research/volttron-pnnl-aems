@@ -4,10 +4,13 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { authUser } from "@/auth";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import {prisma} from "@/prisma";
 import { enum_holiday, Holidays } from "@prisma/client";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const user = await authUser(req);
   if (!user.roles.user) {
     return res.status(401).json(null);
@@ -37,9 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }),
         },
       })
-      .then((response) => {
-        recordChange("Create", "Holidays", response.id.toString(), user, convertToJsonObject(response));
-        return res.status(201).json(response);
+      .then((holiday) => {
+        return res.status(201).json(holiday);
       })
       .catch((error) => {
         logger.warn(error);

@@ -6,7 +6,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { authUser } from "@/auth";
 import { StageType } from "@/common";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await authUser(req);
@@ -60,13 +60,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .update({
         data: occupancy,
         where: { id: parseInt(id) },
-        include: {
-          schedule: true,
-        },
       })
-      .then((response) => {
-        recordChange("Update", "Occupancies", response.id.toString(), user, convertToJsonObject(response));
-        return res.status(200).json(response);
+      .then((occupancy) => {
+        if (!occupancy) {
+          return res.status(404).json("Occupancy not found.");
+        }
+        return res.status(200).json(occupancy);
       })
       .catch((error) => {
         logger.warn(error);
@@ -77,8 +76,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .delete({
         where: { id: parseInt(id) },
       })
-      .then((response) => {
-        recordChange("Delete", "Occupancies", response.id.toString(), user);
+      .then((occupancy) => {
+        if (!occupancy) {
+          return res.status(404).json("Occupancy not found.");
+        }
         return res.status(200).json(null);
       })
       .catch((error) => {

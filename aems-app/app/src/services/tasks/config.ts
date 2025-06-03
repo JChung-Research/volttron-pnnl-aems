@@ -14,15 +14,21 @@ import { buildOptions, schedule, startService } from "../util";
 import { ServiceState } from "../types";
 
 async function makeApiCall(options: LogOptions, unit: Units, method: string, token: string | undefined, data: any) {
+
+  const cleanedData = Object.fromEntries(
+    Object.entries(data).filter(([_, value]) => value !== -1)
+  );
+
   const body = {
     jsonrpc: "2.0",
-    id: `manager.${unit.system.toLowerCase()}`,
+    id: `manager.${unit.system.toLowerCase()}`,    
     method: method,
     params: {
       authentication: token,
-      data: data,
+      data: cleanedData
     },
   };
+
   const response = await axios
     .post(`${options.state.apiUrl}`, body, {
       timeout: options.state.timeout,
@@ -39,6 +45,7 @@ async function makeApiCall(options: LogOptions, unit: Units, method: string, tok
   } else if (!response.data?.result) {
     throw new Error(`Failed API call to ${method}.`);
   }
+  
   return response.data;
 }
 
@@ -97,9 +104,26 @@ const execute = (options: LogOptions) => async () => {
 
             const set_temperature_setpoints = {
               OccupiedSetPoint: unit.configuration?.setpoint?.setpoint ?? 0,
-              DeadBand: (unit.configuration?.setpoint?.deadband ?? 0) / 2,
+              DeadBand: unit.configuration?.setpoint?.deadband ?? 0 ,
               UnoccupiedCoolingSetPoint: unit.configuration?.setpoint?.cooling ?? 0,
               UnoccupiedHeatingSetPoint: unit.configuration?.setpoint?.heating ?? 0,
+              SupplyDuctPressure: unit.configuration?.setpoint?.supplyDuctPressure ?? 0,
+              CoolingCoilValve: unit.configuration?.setpoint?.coolingCoilValve ?? 0,
+              HeatingCoilValve: unit.configuration?.setpoint?.heatingCoilValve ?? 0,
+              CoolingCoilPump: unit.configuration?.setpoint?.coolingCoilPump ?? 0,
+              HeatingCoilPump: unit.configuration?.setpoint?.heatingCoilPump ?? 0,
+              SupplyFanSpeed: unit.configuration?.setpoint?.supplyFanSpeed ?? 0,
+              SupplyAirSetpoint: unit.configuration?.setpoint?.supplyAirSetpoint ?? 0,
+              SupplyHeaterSetpoint: unit.configuration?.setpoint?.supplyHeaterSetpoint ?? 0,
+              OutsideAirDamperPosition: unit.configuration?.setpoint?.outsideAirDamperPosition ?? 0,
+              ReturnAirDamperPosition: unit.configuration?.setpoint?.returnAirDamperPosition ?? 0,
+              ZoneDamperPosition: unit.configuration?.setpoint?.zoneDamperPosition ?? 0,
+              ZoneReheatControl: unit.configuration?.setpoint?.zoneReheatControl ?? 0,
+              ZoneAirCoolingSetpoint: unit.configuration?.setpoint?.zoneAirCoolingSetpoint ?? 0,
+              ZoneAirHeatingSetpoint: unit.configuration?.setpoint?.zoneAirHeatingSetpoint ?? 0,
+              ZoneOperativeCoolingSetpoint: unit.configuration?.setpoint?.zoneOperativeCoolingSetpoint ?? 0,
+              ZoneOperativeHeatingSetpoint: unit.configuration?.setpoint?.zoneOperativeHeatingSetpoint ?? 0,
+
             };
             await makeApiCall(options, unit, "set_temperature_setpoints", token, set_temperature_setpoints);
 
@@ -282,6 +306,7 @@ const task = () => {
       holidaySchedule: parseBoolean(process.env.HOLIDAY_SCHEDULE),
     }
   );
+
   const worker = execute(options);
   schedule(worker, options);
 };

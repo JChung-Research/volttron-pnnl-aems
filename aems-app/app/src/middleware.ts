@@ -70,7 +70,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   if (option.authenticate) {
-    const authUrl = `http://localhost:3000/api/auth/validate`;
+    const authUrl = `http://localhost:3000/auth/validate`;
     const authHeaders = new Headers(req.headers);
     authHeaders.delete("Content-Length");
     authHeaders.delete("content-length");

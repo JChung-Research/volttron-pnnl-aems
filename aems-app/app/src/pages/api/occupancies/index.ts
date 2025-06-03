@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { authUser } from "@/auth";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 import { Occupancies, Schedules } from "@prisma/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -27,13 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
           }),
         },
-        include: {
-          schedule: true,
-        },
       })
-      .then((response) => {
-        recordChange("Create", "Occupancies", response.id.toString(), user, convertToJsonObject(response));
-        return res.status(201).json(response);
+      .then((occupancy) => {
+        return res.status(201).json(occupancy);
       })
       .catch((error) => {
         logger.warn(error);

@@ -6,7 +6,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { authUser } from "@/auth";
 import { StageType } from "@/common";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 import { Setpoints } from "@prisma/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -51,9 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: setpoint,
         where: { id: parseInt(id) },
       })
-      .then((response) => {
-        recordChange("Update", "Setpoints", response.id.toString(), user, convertToJsonObject(response));
-        return res.status(200).json(response);
+      .then((setpoint) => {
+        if (!setpoint) {
+          return res.status(404).json("Setpoint not found.");
+        }
+        return res.status(200).json(setpoint);
       })
       .catch((error) => {
         logger.warn(error);
@@ -67,8 +69,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .delete({
         where: { id: parseInt(id) },
       })
-      .then((response) => {
-        recordChange("Delete", "Setpoints", response.id.toString(), user);
+      .then((setpoint) => {
+        if (!setpoint) {
+          return res.status(404).json("Setpoint not found.");
+        }
         return res.status(200).json(null);
       })
       .catch((error) => {

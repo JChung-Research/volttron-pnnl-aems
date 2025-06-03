@@ -6,7 +6,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { authUser } from "@/auth";
 import { StageType } from "@/common";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await authUser(req);
@@ -27,8 +27,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           id: parseInt(id),
         },
       })
-      .then((response) => {
-        recordChange("Delete", "Units", response.id.toString(), user);
+      .then((unit) => {
+        if (!unit) {
+          return res.status(404).json("Unit not found.");
+        }
         return res.status(200).json(null);
       })
       .catch((error) => {
@@ -143,31 +145,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: {
           id: parseInt(id),
         },
-        include: {
-          configuration: {
-            include: {
-              setpoint: true,
-              mondaySchedule: true,
-              tuesdaySchedule: true,
-              wednesdaySchedule: true,
-              thursdaySchedule: true,
-              fridaySchedule: true,
-              saturdaySchedule: true,
-              sundaySchedule: true,
-              holidaySchedule: true,
-              holidays: { orderBy: [{ id: "desc" }] },
-              occupancies: {
-                include: { schedule: true },
-                orderBy: [{ date: "desc" }, { id: "desc" }],
-              },
-            },
-          },
-          location: true,
-        },
       })
-      .then((response) => {
-        recordChange("Update", "Units", response.id.toString(), user, convertToJsonObject(response));
-        return res.status(200).json(response);
+      .then((unit) => {
+        if (!unit) {
+          return res.status(404).json("Unit not found.");
+        }
+        return res.status(200).json(unit);
       })
       .catch((error) => {
         logger.warn(error);

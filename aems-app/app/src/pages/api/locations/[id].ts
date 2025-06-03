@@ -5,7 +5,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { authUser } from "@/auth";
 import { logger } from "@/logging";
-import { convertToJsonObject, prisma, recordChange } from "@/prisma";
+import { prisma } from "@/prisma";
 import { Locations } from "@prisma/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -49,9 +49,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: location,
         where: { id: parseInt(id) },
       })
-      .then((response) => {
-        recordChange("Update", "Locations", response.id.toString(), user, convertToJsonObject(response));
-        return res.status(200).json(response);
+      .then((location) => {
+        if (!location) {
+          return res.status(404).json("Location not found.");
+        }
+        return res.status(200).json(location);
       })
       .catch((error) => {
         logger.warn(error);
@@ -65,8 +67,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .delete({
         where: { id: parseInt(id) },
       })
-      .then((response) => {
-        recordChange("Delete", "Locations", response.id.toString(), user);
+      .then((location) => {
+        if (!location) {
+          return res.status(404).json("Location not found.");
+        }
         return res.status(200).json(null);
       })
       .catch((error) => {
