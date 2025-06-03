@@ -6,6 +6,8 @@ import { RouteType } from "./types";
 import controlRoute from "./Control/route";
 import errorRoute from "./Error/route";
 import homeRoute from "./Home/route";
+import overviewRoute from "./Overview/route";
+import dashboardRoute from "./Dashboard/route";
 import infoRoute from "./Info/route";
 import layoutRoute from "./Layout/route";
 import logRoute from "./Log/route";
@@ -17,6 +19,8 @@ import accountRoute from "./Account/route";
 export { default as Layout } from "./Layout/index";
 export { default as Error } from "./Error/index";
 export { default as Home } from "./Home/index";
+export { default as Overview } from "./Overview/index";
+export { default as Dashboard } from "./Dashboard/index";
 export { default as Info } from "./Info/index";
 export { default as NotFound } from "./NotFound/index";
 
@@ -42,6 +46,8 @@ export const routes = buildTree(
   [
     layoutRoute,
     homeRoute,
+    overviewRoute,
+    dashboardRoute,
     infoRoute,
     errorRoute,
     notfoundRoute,
