@@ -22,7 +22,7 @@ The diagram below illustrates the overall system architecture and highlights the
 
 
 ## Key contributions
-1. **Sensor Data Integrationb**: Enables AEMS to collect real-time sensor data from VOLTTRON, store it in a short-term DB, and relay it to the client application.
+1. **Sensor Data Integration**: Enables AEMS to collect real-time sensor data from VOLTTRON, store it in a short-term DB, and relay it to the client application.
 
 2. **Building Unit Overview**: Displays available building units in both grid and list views on the `Overview` page for intuitive system navigation and interaction.
 
