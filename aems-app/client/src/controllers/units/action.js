@@ -4,7 +4,7 @@ export const key = "units";
 
 // read units
 export const READ_UNITS = generateTypes(key, "all");
-export const [readUnits, readUnitsSuccess, readUnitsError, readUnitsBusy, readUnitsPoll] = generateActions(READ_UNITS);
+export const [readUnits, readUnitsSuccess, readUnitsError, readUnitsBusy, readUnitsPoll, readSensors] = generateActions(READ_UNITS);
 export const [selectReadUnits, selectReadUnitsError, selectReadUnitsBusy, selectReadUnitsPoll, selectReadUnitsRequest] =
   generateSelectors(READ_UNITS);
 

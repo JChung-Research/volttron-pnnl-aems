@@ -26,7 +26,7 @@ import { zxcvbn, zxcvbnOptions } from "@zxcvbn-ts/core";
 import * as zxcvbnCommonPackage from "@zxcvbn-ts/language-common";
 import * as zxcvbnEnPackage from "@zxcvbn-ts/language-en";
 import { Tooltip2 } from "@blueprintjs/popover2";
-import { IUnit, readUnits, selectReadUnits } from "controllers/units/action";
+import { IUnit, readUnits, selectReadUnits, readSensors } from "controllers/units/action";
 
 const options = {
   dictionary: {
@@ -41,6 +41,7 @@ zxcvbnOptions.setOptions(options);
 interface AccountProps extends RootProps {
   readUsers: () => void;
   readUnits: () => void;
+  readSensors: () => void;
   filterUsers: (payload: IFilter) => void;
   createUser: (payload: DeepPartial<IUser>) => void;
   updateUser: (payload: DeepPartial<IUser>) => void;
@@ -89,6 +90,7 @@ class Account extends React.Component<AccountProps, AccountState> {
       });
     }
     this.props.readUnits();
+    this.props.readSensors();
   }
 
   handleChange = (field: keyof AccountState, account?: DeepPartial<IUser>) => {
@@ -513,6 +515,7 @@ const mapStateToProps = (state: any) => ({
 const mapActionToProps = {
   readUsers,
   readUnits,
+  readSensors,
   filterUsers,
   createUser,
   updateUser,

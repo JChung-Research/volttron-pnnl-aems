@@ -1,15 +1,5 @@
-import { IBase, IConstant, IValidate, ValidateType } from "../types";
+import { IBase, IValidate, ValidateType } from "../types";
 import Base from "./base";
-
-export type ValidateType = "unit" | "schedule" | "setpoint";
-
-export interface IValidate extends IConstant {
-  type: ValidateType;
-  options?:
-    | { default: string; min?: string; max?: string }
-    | { default: boolean; min?: undefined; max?: undefined }
-    | { default: number; min: number; max: number };
-}
 
 class Validate extends Base<IValidate> implements IBase<IValidate> {
   constructor() {

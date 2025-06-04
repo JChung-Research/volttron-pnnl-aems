@@ -17,6 +17,12 @@ export const readUnits = () => {
   return read(`${SERVICE_ENDPOINT}`, null, isAuthenticate);
 };
 
+// Jihoon: To enable read sensors
+export const readSensors = () => {
+  // if (isMocked()) return doMocked(key, SERVICE_ENDPOINT_READ_UNITS);
+  return read(`${SERVICE_ENDPOINT}/sensors`, null, isAuthenticate);
+};
+
 export const createUnit = (body) => {
   if (isMocked()) return doMocked(key, SERVICE_ENDPOINT_CREATE_UNIT);
   return create(`${SERVICE_ENDPOINT}`, body, null, isAuthenticate);
@@ -28,6 +34,8 @@ export const readUnit = (id) => {
 };
 
 export const updateUnit = (id, body) => {
+  // console.log("id: ", id);
+  // console.log("body: ", body);
   if (isMocked()) return doMocked(key, SERVICE_ENDPOINT_UPDATE_UNIT);
   return update(`${SERVICE_ENDPOINT}/${id}`, body, null, isAuthenticate);
 };

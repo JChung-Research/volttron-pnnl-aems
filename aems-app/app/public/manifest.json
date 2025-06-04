@@ -1,6 +1,6 @@
 {
-  "short_name": "BEMS",
-  "name": "ORNL BEMS",
+  "short_name": "AEMS",
+  "name": "AEMS",
   "icons": [
     {
       "src": "favicon.ico",

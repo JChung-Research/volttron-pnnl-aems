@@ -9,6 +9,10 @@ export interface IUnit {
   building: string;
   system: string;
   timezone: string;
+  bldgType: string;
+  operator: string;
+  image: string;
+  description: string;
   label: string;
   coolingCapacity: number;
   compressors: number;
@@ -60,6 +64,7 @@ export function selectCreateUnitBusy(state: any): boolean | undefined;
 export function selectCreateUnitRequest(state: any): DeepPartial<IUnit> | undefined;
 
 export function readUnits(): void;
+export function readSensors(): void;
 export function readUnitsPoll(payload: number | undefined): void;
 export function selectReadUnits(state: any): List<IUnit> | undefined;
 
