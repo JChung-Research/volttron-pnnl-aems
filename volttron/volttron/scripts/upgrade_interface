@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Build a temp file string for use with the configuration
+python ./scripts/install-agent.py \
+    -s app_agents/InterfaceAgent \
+    -i interface \
+    --tag interface \
+    --config config/interface_config \
+    --start \
+    --force
