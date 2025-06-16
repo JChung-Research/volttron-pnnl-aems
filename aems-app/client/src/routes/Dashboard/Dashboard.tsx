@@ -805,7 +805,8 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       {name: "on/off", label: "Pump stage (on/off)"},
       {name: "kg/s", label: "Supply air flow rate (kg/s)"},
       {name: "ppm", label: "CO2 concentration (ppm)"},
-      {name: "W", label: "Power consumption (W)"}
+      {name: "W", label: "Power consumption (W)"},
+      {name: "CFM", label: "Supply air flow rate (CFM)"}
     ]
 
     // Retrieve sensor data and update chart data    
