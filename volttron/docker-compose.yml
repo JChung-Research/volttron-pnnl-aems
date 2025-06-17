@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  volttron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    volumes:
+      - ./start.sh:/usr/local/bin/start.sh
+    command: ["bash", "/usr/local/bin/start.sh"]
