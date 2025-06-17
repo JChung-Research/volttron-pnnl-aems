@@ -14,8 +14,8 @@ The diagram below illustrates the overall system architecture and highlights the
 
 **Main Components**
 1. **Mock VOLTTRON**: Simulates core VOLTTRON agents' behavior including topic-based message publish/subscrib messaging and callback execution.
-1.1. **Interface Agent** (from [Sen's work](https://github.com/SenHuang19/volttron-pnnl-aems)): Periodically polls a mock backend API (e.g., BOPTEST), packages structured sensor data and metadata, and publishes messages to a specified VOLTTRON topic.  
-1.2. **Recv Agent** (from [Sen's work](https://github.com/SenHuang19/volttron-pnnl-aems)): Subscribes to VOLTTRON topics, captures published messages, invokes a dynamic callback function, and re-publishes to the next stage (e.g., UI server).
+- **Interface Agent** (from [Sen's work](https://github.com/SenHuang19/volttron-pnnl-aems)): Periodically polls a mock backend API (e.g., BOPTEST), packages structured sensor data and metadata, and publishes messages to a specified VOLTTRON topic.  
+- **Recv Agent** (from [Sen's work](https://github.com/SenHuang19/volttron-pnnl-aems)): Subscribes to VOLTTRON topics, captures published messages, invokes a dynamic callback function, and re-publishes to the next stage (e.g., UI server).
 2. **UI Server**: Interfaces the AEMS server wtih VOLTTRON backend through JSON-RPC. [Detailed documentation](https://github.com/JChung-Research/volttron-pnnl-aems/tree/web-ui-development/aems-edge/Manager/server).
 3. **Mock BOPTEST Server** (from [Sen's work](https://github.com/SenHuang19/volttron-pnnl-aems)): Simulates behavior or BOPTEST server by providing building control and environmental data.
 
