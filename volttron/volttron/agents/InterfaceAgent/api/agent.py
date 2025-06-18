@@ -90,15 +90,22 @@ class InterfaceAgent(Agent):
             raw_data = result['payload']['output']
             temp1 = {}
             temp2 = {}
+            temp3 = {}
+            temp4 = {}
             Request_SAT_tot = 0
             for key in raw_data:
                 for subkey in raw_data[key]:
                     temp1[key+'_'+subkey] = raw_data[key][subkey]
                     temp2[key+'_'+subkey] = self.points[subkey]
+                    # Keep the structured raw data instead of the flattened data
+                    temp3[key] = raw_data[key]
+                    temp4[key] = self.points
                
             message = []
             message.append(temp1)
-            message.append(temp2)        
+            message.append(temp2) 
+            message.append(temp3)
+            message.append(temp4)    
             try:
                 self.vip.pubsub.publish(peer='pubsub',
                                         topic=self.topic,

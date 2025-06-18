@@ -39,6 +39,22 @@
      "W_zone":
     {"type":"float",
      "units":"%",
+     "tz":"UTC"},
+     "ZoneAirCoolingSetpoint":
+    {"type":"float",
+     "units":"F",
+     "tz":"UTC"},
+     "ZoneAirHeatingSetpoint":
+    {"type":"float",
+     "units":"F",
+     "tz":"UTC"},
+     "SupplyFanSpeed":
+    {"type":"float",
+     "units":"[0-1]",
+     "tz":"UTC"},
+     "SupplyAirSetpoint":
+    {"type":"float",
+     "units":"F",
      "tz":"UTC"}
     }
 }

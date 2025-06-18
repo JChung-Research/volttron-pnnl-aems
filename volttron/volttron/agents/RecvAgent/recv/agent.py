@@ -107,7 +107,7 @@ class RecvAgent(Agent):
         """
         msg = message if type(message) == type([]) else [message]
         _log.info(f"Received: {topic}")
-        y = self.call_back(msg[0])
+        y = self.call_back(msg[2])
         try:
             self.vip.pubsub.publish(peer='pubsub',
                                     topic=self.topic,

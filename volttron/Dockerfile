@@ -22,6 +22,9 @@ COPY volttron/volttron_config/auth.json /home/volttron/.volttron_central/
 
 USER root
 
+RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
+    echo "Etc/UTC" > /etc/timezone
+
 RUN chown volttron /home/volttron/.volttron_central/keystore
 
 RUN chown volttron /home/volttron/.volttron_central/config
