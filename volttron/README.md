@@ -53,5 +53,8 @@ python test/server_fake_BOPTEST.py
 ```
 
 ## Prerequisites
-Before starting the UI server, ensure that a valid SSL certificate and private key are installed. This is required to enable HTTPS and avoid any technical issues from insecure communication between the UI server and AEMS server.
+Before starting the UI server:
+- Ensure that a valid SSL certificate and private key are installed. This is required to enable HTTPS and avoid any technical issues from insecure communication between the UI server and AEMS server. 
+- Update IP addresses in your config and scripts to match your **local network setup**.
 
+This ensures secure, functional communication and avoids issues arising from default or mismatched host configurations.
