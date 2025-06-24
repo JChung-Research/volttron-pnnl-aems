@@ -2,5 +2,5 @@
     "inputs":{"topic":"devices/ORNL/FRP2/all"},
     "module":"app_agents.client",
     "topic":"devices/ORNL/FRP2/control",
-    "class":"UI"
+    "class":"UI_test"
 }

@@ -1,6 +1,0 @@
-{
-    "inputs":{"topic":"devices/ORNL/FRP2/all"},
-    "module":"agents.client",
-    "topic":"devices/ORNL/FRP2/control",
-    "class":"UI"
-}

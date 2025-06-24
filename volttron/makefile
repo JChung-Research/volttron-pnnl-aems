@@ -10,7 +10,7 @@ COMMAND_RUN=docker run \
 	  ${IMG_NAME} /bin/bash -c
 
 build:
-	docker build -f Dockerfile_volttron --network host --no-cache --rm -t ${IMG_NAME} .
+	docker build -f Dockerfile --network host --no-cache --rm -t ${IMG_NAME} .
 
 remove-image:
 	docker rmi ${IMG_NAME}

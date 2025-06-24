@@ -1,60 +1,193 @@
 {
-    "url": "http://10.53.16.43:5000",
-    "api": "get_point",
+    "module":"app_agents.client",
+    "class":"control_init",
     "topic":"devices/ORNL/FRP2/all",
     "inputs":{"topic":"devices/ORNL/FRP2/control"},
     "data_point": {
-    "T_OA":
-    {"name":"T_out",
-     "type":"float",
-     "units":"F",
-     "tz":"UTC"},
-    "Flowrate_RTU":
+    "time":
     {"type":"float",
-     "units":"CFM",
+     "units":"S",
      "tz":"UTC"},
-    "Flowrate_VAV":
-    {"name":"Flowrate",
-     "type":"float",
-     "units":"CFM",
+    "zon_reaPPlu_y":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"},
+    "zon_weaSta_reaWeaRelHum_y":
+    {"type":"float",
+     "units":"[0-1]",
+     "tz":"UTC"},
+    "zon_weaSta_reaWeaTDewPoi_y":
+    {"type":"float",
+     "units":"K",
      "tz":"UTC"},
      "T_inlet":
     {"name":"T_inlet",
      "type":"float",
      "units":"F",
      "tz":"UTC"},
-     "T_outlet_VAV":
-    {"name":"T_outlet",
-     "type":"float",
-     "units":"F",
-     "tz":"UTC"},
-    "W_inlet":
+     "zon_weaSta_reaWeaPAtm_y":
     {"type":"float",
-     "units":"%",
+     "units":"a",
      "tz":"UTC"},
-    "T_zone":
+    "zon_weaSta_reaWeaLon_y":
     {"type":"float",
-     "units":"F",
+     "units":"rad",
      "tz":"UTC"},
-     "W_zone":
+    "zon_weaSta_reaWeaWinDir_y":
     {"type":"float",
-     "units":"%",
+     "units":"rad",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaTDryBul_y":
+    {"type":"float",
+     "units":"K",
      "tz":"UTC"},
      "ZoneAirCoolingSetpoint":
     {"type":"float",
      "units":"F",
      "tz":"UTC"},
-     "ZoneAirHeatingSetpoint":
+     "fcu_reaPFan_y":
     {"type":"float",
-     "units":"F",
+     "units":"W",
      "tz":"UTC"},
-     "SupplyFanSpeed":
+     "zon_weaSta_reaWeaNOpa_y":
     {"type":"float",
      "units":"[0-1]",
      "tz":"UTC"},
-     "SupplyAirSetpoint":
+     "zon_weaSta_reaWeaHDirNor_y":
     {"type":"float",
-     "units":"F",
+     "units":"W/m2",
+     "tz":"UTC"},
+     "fcu_reaFloSup_y":
+    {"type":"float",
+     "units":"kg/s",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaHGloHor_y":
+    {"type":"float",
+     "units":"W/m2",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaHDifHor_y":
+    {"type":"float",
+     "units":"W/m2",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaSolDec_y":
+    {"type":"float",
+     "units":"rad",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaTBlaSky_y":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaCeiHei_y":
+    {"type":"float",
+     "units":"m",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaLat_y":
+    {"type":"float",
+     "units":"rad",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaNTot_y":
+    {"type":"float",
+     "units":"[0-1]",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaWinSpe_y":
+    {"type":"float",
+     "units":"m/s",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaHHorIR_y":
+    {"type":"float",
+     "units":"W/m2",
+     "tz":"UTC"},
+     "zon_reaTRooAir_y":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaCloTim_y":
+    {"type":"float",
+     "units":"s",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaTWetBul_y":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "fcu_reaPHea_y":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"},
+     "fcu_reaPCoo_y":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"},
+     "zon_reaPLig_y":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaSolZen_y":
+    {"type":"float",
+     "units":"rad",
+     "tz":"UTC"},
+     "zon_reaCO2RooAir_y":
+    {"type":"float",
+     "units":"ppm",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaSolHouAng_y":
+    {"type":"float",
+     "units":"rad",
+     "tz":"UTC"},
+     "zon_weaSta_reaWeaSolAlt_y":
+    {"type":"float",
+     "units":"rad",
+     "tz":"UTC"},
+     "con_oveTSetCoo_y":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "con_oveTSetHea_y":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "fcu_oveTSup_y":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "fcu_oveFan_y":
+    {"type":"float",
+     "units":"[0-1]",
+     "tz":"UTC"},
+     "con_oveTSetCoo_activate":
+    {"type":"bool",
+     "units":"None",
+     "tz":"UTC"},
+     "con_oveTSetHea_activate":
+    {"type":"bool",
+     "units":"None",
+     "tz":"UTC"},
+     "fcu_oveFan_activate":
+    {"type":"bool",
+     "units":"None",
+     "tz":"UTC"},
+     "fcu_oveTSup_activate":
+    {"type":"bool",
+     "units":"None",
+     "tz":"UTC"},
+     "con_oveTSetCoo_u":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "con_oveTSetHea_u":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+     "fcu_oveFan_u":
+    {"type":"bool",
+     "units":"None",
+     "tz":"UTC"},
+     "fcu_oveTSup_u":
+    {"type":"float",
+     "units":"K",
+     "tz":"UTC"},
+    "zon_weaSta_reaWeaSolTim_y":
+    {"type":"float",
+     "units":"s",
      "tz":"UTC"}
-    }
+}
 }

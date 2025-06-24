@@ -106,8 +106,9 @@ class RecvAgent(Agent):
         :return:
         """
         msg = message if type(message) == type([]) else [message]
-        _log.info(f"Received: {topic}")
-        y = self.call_back(msg[2])
+
+        y = self.call_back(msg[0])
+                
         try:
             self.vip.pubsub.publish(peer='pubsub',
                                     topic=self.topic,
