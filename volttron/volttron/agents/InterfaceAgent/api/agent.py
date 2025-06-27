@@ -39,6 +39,7 @@
 
 import logging
 import sys
+import importlib
 
 import requests
 import json
@@ -55,6 +56,7 @@ _log = logging.getLogger(__name__)
 __version__ = '3.3'
 
 DEFAULT_HEARTBEAT_PERIOD =10
+API_HEADER = {'Content-Type': 'application/json'}
 
 class InterfaceAgent(Agent):
     """Listens to everything and publishes a heartbeat according to the
@@ -66,11 +68,19 @@ class InterfaceAgent(Agent):
         self.config = utils.load_config(config_path)
         self._heartbeat_period = self.config.get('heartbeat_period',
                                                  DEFAULT_HEARTBEAT_PERIOD)
-        self.url = self.config['url']
-        self.api = self.config['api']
-        self.topic = self.config['topic']          
-        self.points = self.config['data_point']
-        self.inputs = self.config['inputs']          
+        self.url = self.config.get('url', None)
+        self.api = self.config.get('api', None)
+        self.topic = self.config.get('topic', None)         
+        self.points = self.config.get('data_point', None)
+        self.inputs = self.config.get('inputs', None)
+        self.u = None  
+        if self.config['module'] is not None:
+            try:
+                control_class="{}.{}".format(self.config['module'],self.config['class'])
+                controller = importlib.import_module(control_class)
+                self.initialize = controller.initialize
+            except:
+                _log.error('Invalid control module')    
         try:
             self._heartbeat_period = int(self._heartbeat_period)
         except:
@@ -79,33 +89,35 @@ class InterfaceAgent(Agent):
 
     @Core.receiver('onstart')
     def onstart(self, sender, **kwargs):
+        self.subscribe()
+        if self.config['module'] is not None:
+            self.url = self.initialize()            
         if self._heartbeat_period != 0:
             self.core.schedule(periodic(self._heartbeat_period), self.control_update)
 
     def control_update(self):
         headers = {TIMESTAMP: format_timestamp(get_aware_utc_now())}
-        result = requests.get('{0}/{1}'.format(self.url,self.api),
-                                                 headers={"Content-type":"application/json"}).json()
+        if self.u is not None:
+            data = self.u
+        else:
+            data = {} 
+
+        result = requests.post('{}'.format(self.url),
+                                                 json=data,
+                                                 headers=API_HEADER).json()
         if result['status'] == 200:           
-            raw_data = result['payload']['output']
+            raw_data = result['payload']
+            
             temp1 = {}
             temp2 = {}
-            temp3 = {}
-            temp4 = {}
             Request_SAT_tot = 0
             for key in raw_data:
-                for subkey in raw_data[key]:
-                    temp1[key+'_'+subkey] = raw_data[key][subkey]
-                    temp2[key+'_'+subkey] = self.points[subkey]
-                    # Keep the structured raw data instead of the flattened data
-                    temp3[key] = raw_data[key]
-                    temp4[key] = self.points
+                temp1[key] = raw_data[key]
+                temp2[key] = self.points[key]
                
             message = []
             message.append(temp1)
-            message.append(temp2) 
-            message.append(temp3)
-            message.append(temp4)    
+            message.append(temp2)    
             try:
                 self.vip.pubsub.publish(peer='pubsub',
                                         topic=self.topic,
@@ -139,8 +151,9 @@ class InterfaceAgent(Agent):
         :param message: actual message
         :return:
         """
-        msg = message if type(message) == type([]) else [message]
-        _log.info(f"Received: {topic}")
+        if message is not None:
+            self.u = message
+        _log.info(f"Received: {self.u}")
 
 
 
