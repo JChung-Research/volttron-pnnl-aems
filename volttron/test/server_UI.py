@@ -25,7 +25,6 @@ VALID_PASSWORD = "admin"
 u = {}
 y = {}
 
-building_control_url = "http://127.0.0.1:5000"
 
 # ----------------- DATA CONVERSION TOOL -----------------
 
@@ -33,98 +32,158 @@ data_mapping = {
     'T_OA': {
         "name": "OutdoorTemperature",
         "label": "Outdoor air temperature",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "°F"
     },
     'Flowrate_RTU': {
         "name": "SupplyAirflowRateRTU",
         "label": "Supply air mass flow rate of RTU unit",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "CFM"
     },
     'Flowrate_VAV': {
         "name": "SupplyAirflowRateVAV",
         "label": "Supply air mass flow rate of VAV unit",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "CFM"
     },
     'T_inlet': {
         "name": "SupplyAirTemperatureInlet",
         "label": "Inlet supply air temperature",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "°F"
     },
     'T_outlet_VAV': {
         "name": "SupplyAirTemperatureVAV",
         "label": "Outlet supply air temperature",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "°F"
     },
     'W_inlet': {
         "name": "HumidityInlet",
         "label": "Inlet air humidity",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "%"
     },
     'T_zone': {
         "name": "ZoneAirTemperature",
         "label": "Zone air temperature",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "°F"
     },
     'W_zone': {
         "name": "HumidityZone",
         "label": "Zone air humidity",
-        "type": "enviroment",
+        "type": "environment",
         "unit": "%"
     },
-    "SupplyFanSpeed": {
+    "fcu_oveFan_u": {
         "name": "SupplyFanSpeed",
         "label": "Supply fan Speed",
         "type": "control",
         "unit": "[0-1]"
     },
-    "SupplyAirSetpoint": {
+    "fcu_oveTSup_u": {
         "name": "SupplyAirSetpoint",
         "label": "Supply air temperature setpoint",
         "type": "control",
         "unit": "°F"
     },
-    "ZoneAirCoolingSetpoint": {
+    "con_oveTSetCoo_u": {
         "name": "ZoneAirCoolingSetpoint",
         "label": "Zone temperature setpoint for cooling",
         "type": "control",
         "unit": "°F"
     },
-    "ZoneAirHeatingSetpoint": {
+    "con_oveTSetHea_u": {
         "name": "ZoneAirHeatingSetpoint",
         "label": "Zone temperature setpoint for heating",
         "type": "control",
         "unit": "°F"
     },
-    "SupplyHeaterSetpoint": {
+    "fcu_reaFloSup_y": {
+        "name": "SupplyAirflowRate",
+        "label": "Supply air mass flow rate",
+        "type": "environment",
+        "unit": "kg/s"
+    },
+    "zon_reaCO2RooAir_y": {
+        "name": "ZoneCo2Concentration",
+        "label": "Zone air CO2 concentration",
+        "type": "environment",
+        "unit": "ppm"
+    },
+    "zon_reaTRooAir_y": {
+        "name": "ZoneAirTemperature",
+        "label": "Zone air temperature",
+        "type": "environment",
+        "unit": "°F"
+    },
+    "fcu_reaPFan_y": {
+        "name": "SupplyFanPowerConsumption",
+        "label": "Supply fan power consumption",
+        "type": "environment",
+        "unit": "W"
+    },
+    "fcu_reaPCoo_y": {
+        "name": "CoolingPowerConsumption",
+        "label": "Cooling power consumption",
+        "type": "environment",
+        "unit": "W"
+    },
+    "fcu_reaPHea_y": {
+        "name": "HeatingPowerConsumption",
+        "label": "Heating power consumption",
+        "type": "environment",
+        "unit": "W"
+    },
+    "oveTSetSup_u": {
         "name": "SupplyHeaterSetpoint",
         "label": "Supply setpoint of the heater",
         "type": "control",
         "unit": "°F"
     },
-    "ControlStagePump": {
+    "ovePum_u": {
         "name": "ControlStagePump",
         "label": "Control signal to control pump stage",
         "type": "control",
         "unit": "on/off"
     },
-    "ZoneOperativeCoolingSetpoint": {
+    "oveTSetCoo_u": {
         "name": "ZoneOperativeCoolingSetpoint",
         "label": "Zone temperature setpoint for cooling",
         "type": "control",
         "unit": "°F"
     },
-    "ZoneOperativeHeatingSetpoint": {
+    "oveTSetHea_u": {
         "name": "ZoneOperativeHeatingSetpoint",
         "label": "Zone temperature setpoint for heating",
         "type": "control",
         "unit": "°F"
+    },
+    "reaCO2RooAir_y": {
+        "name": "ZoneCo2Concentration",
+        "label": "CO2 concentration in the zone",
+        "type": "environment",
+        "unit": "ppm"
+    },
+    "reaTRoo_y": {
+        "name": "ZoneOperativeTemperature",
+        "label": "Operative zone temperature",
+        "type": "environment",
+        "unit": "°F"
+    },
+    "reaPPum_y": {
+        "name": "PumpPowerConsumption",
+        "label": "Pump power consumption",
+        "type": "environment",
+        "unit": "W"
+    },
+    "reaQHea_y": {
+        "name": "HeatingPowerConsumption",
+        "label": "Heating power consumption",
+        "type": "environment",
+        "unit": "W"
     }
 }
 
@@ -143,11 +202,10 @@ def restructure_sensor_data_by_zone(raw_zone_data):
     
     for system_id, sensors in raw_zone_data.items():
         structured_entries = []
-        for key, value in sensors.items():
-            if key in data_mapping:
-                entry = data_mapping[key].copy()
-                entry["value"] = value
-                structured_entries.append(entry)
+        for boptest_var, value in sensors.items():           
+            entry = data_mapping[boptest_var].copy()
+            entry["value"] = value
+            structured_entries.append(entry)
         output[f"manager.zone-{system_id}"] = structured_entries
     
     return output
@@ -166,13 +224,18 @@ def restructure_control_data(control_dict):
     
     output = []
     for key, value in control_dict.items():
-        if key in data_mapping and data_mapping[key].get("type") == "control":
+        matched = next(
+            (d for d in data_mapping.values() if d.get("type") == "control" and d.get("name") == key),
+            None
+        )
+
+        if matched:
             entry = {
-                "name": data_mapping[key]["name"],
-                "label": data_mapping[key]["label"],
-                "type": data_mapping[key]["type"],
+                "name": matched["name"],
+                "label": matched["label"],
+                "type": matched["type"],
                 "value": value,
-                "unit": data_mapping[key]["unit"]
+                "unit": matched["unit"]
             }
             output.append(entry)
     
@@ -182,7 +245,7 @@ def restructure_control_data(control_dict):
 
 def update_zone_environment(y_, y_env_data):
     """
-    Updates the 'enviroment' entries for each system (zone) in the global 'y' dictionary.ovided enviroment data.
+    Updates the 'environment' entries for each system (zone) in the global 'y' dictionary.ovided environment data.
 
     Args:
         y_ (dict): The existing y variable (global zone data).
@@ -191,12 +254,15 @@ def update_zone_environment(y_, y_env_data):
     Returns:
         dict: The updated y dictionary.
     """
-    
+
     for system_id, new_env_list in y_env_data.items():
         if system_id in y_:
-            # Retain only existing control entries
-            control_entries = [entry for entry in y_[system_id] if entry.get("type") == "control"]
-            y_[system_id] = new_env_list + control_entries
+            # Create a mapping from name to value in new_env_list
+            new_values = {entry['name']: entry['value'] for entry in new_env_list if entry.get("type") == "environment"}
+            # Update values in existing list if the name matches
+            for entry in y_[system_id]:
+                if entry['name'] in new_values:
+                    entry['value'] = new_values[entry['name']]
         else:
             # Zone doesn't exist — create with new environmental data
             y_[system_id] = new_env_list.copy()
@@ -217,9 +283,15 @@ def update_zone_controls(y_, system_id, control_data):
     """
 
     if system_id in y_:
-        # Keep only environment entries
-        env_entries = [entry for entry in y_[system_id] if entry.get("type") != "control"]
-        y_[system_id] = env_entries + control_data
+        # Create a mapping from name to value in new_env_list
+        new_values = {entry['name']: entry['value'] for entry in control_data if entry.get("type") == "control"}
+        
+        # Update values in existing list if the name matches
+        for entry in y_[system_id]:
+            if entry['name'] in new_values:
+                entry['value'] = new_values[entry['name']]
+        
+        
     else:
         # Zone doesn't exist: create it with control entries
         y_[system_id] = control_data.copy()
@@ -268,27 +340,20 @@ def set_temperature_setpoints(system_id, control_signals): #(y_, control_signals
     
     Returns:
         tuple: (response dict, updated y dict)
-    """
+    """    
+    try:
+        global u
+        global y
 
-    control_data = restructure_control_data(control_signals)
-    # y_ = update_zone_controls(y_, system_id, control_data)
+        control_data = restructure_control_data(control_signals)
+        y = update_zone_controls(y, system_id, control_data)
 
-    print("control_signals: ", control_signals)
-    print("control_data: ", control_data)
-    
-    json_object = json.dumps({
-                                "id": control_signals,
-                                "data": control_data
-                                }, default=str) 
-    
-    try:        
-        result = requests.put('{0}/set_point'.format(building_control_url),
-                                                headers={"Content-type":"application/json"},
-                                                data=json_object).json()
-        if result['status'] == 200:
-            return result #, y_
-    except: 
+        name_to_key = {v["name"]: k for k, v in data_mapping.items()}
+        u[system_id] = {name_to_key[k]: v for k, v in control_signals.items() if k in name_to_key}
+
+    except:
         return {'status':400, 'message':'Unexpected Input', 'payload':None} #, y_
+    return {'status':200, 'message':'Success', 'payload':y}
 
 
 # ----------------- AUTHENTICATION ENDPOINT -----------------
@@ -326,12 +391,17 @@ class building_control(Resource):
     def put(self):        
         try:
             global y
-            body = request.get_json() 
+            body = request.get_json()
             y_env = restructure_sensor_data_by_zone(body)
             y = update_zone_environment(y, y_env)
+                        
+            global u
+            system_id = next(iter(body.keys()))
+
+            u.setdefault(f"manager.zone-{system_id}", {key: value for key, value in next(iter(body.values())).items() if data_mapping[key]["type"] == "control"})
         except:
             return {'status':400, 'message':'Unexpected Input', 'payload':None}
-        return {'status':200, 'message':'Success', 'payload':u}
+        return {'status':200, 'message':'Success', 'payload': u[f"manager.zone-{system_id}"]}
         
 
 # ----------------- JSON-RPC INTERFACE -----------------
@@ -365,12 +435,12 @@ class ui_control(Resource):
         payload = {}
 
         if req.params.authentication:
-            # global y
             if req.method == "get_temperature_setpoints":
                 payload = get_temperature_setpoints(y, req.id) if (len(y) > 0) else None
             elif req.method == "set_temperature_setpoints":
-                payload = set_temperature_setpoints(req.id, req.params.data) # (y, req.id, req.params.data)
-                # y = y_
+                payload = set_temperature_setpoints(req.id, req.params.data)
+            elif req.method in ["set_occupancy_override", "set_holidays", "set_schedule", "set_optimal_start", "set_configurations", "set_location"]:
+                payload = {}
             else:
                 return {'status': 400, 'message': f"Method '{req.method}' not implemented", 'payload': None}
         else:
@@ -378,7 +448,7 @@ class ui_control(Resource):
 
         return {
             'status': 200,
-            'message': 'Success',            
+            "result": {"status": "success"},
             'jsonrpc': req.jsonrpc,
             'id': req.id,
             'method': req.method,
@@ -419,24 +489,3 @@ if __name__ == '__main__':
     t2 = threading.Thread(target=run_aems_server)
     t1.start()
     t2.start()
-    
-
-"""
-[BOPTEST variable name]: [AEMS variable name]
-
-testCaseAirInputs = {
-    "fcu_oveTSup_u": "SupplyAirSetpoint",
-    "fcu_oveFan_u": "SupplyFanSpeed",
-    "con_oveTSetCoo_u": "ZoneAirCoolingSetpoint",
-    "con_oveTSetHea_u": "ZoneAirHeatingSetpoint"
-}
-
-testCaseAirOutputs = {
-    "fcu_reaFloSup_y": "SupplyAirflowRate",
-    "zon_reaCO2RooAir_y": "ZoneCo2Concentration",
-    "zon_reaTRooAir_y": "ZoneAirTemperature",
-    "fcu_reaPFan_y": "SupplyFanPowerConsumption",
-    "fcu_reaPCoo_y": "CoolingPowerConsumption",
-    "fcu_reaPHea_y": "HeatingPowerConsumption"
-}
-"""

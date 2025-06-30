@@ -65,8 +65,9 @@ class RecvAgent(Agent):
     def __init__(self, config_path, **kwargs):
         super().__init__(**kwargs)
         self.config = utils.load_config(config_path)
-        self.inputs = self.config['inputs']   
-        self.topic = self.config['topic']        
+        self.inputs = self.config.get('inputs', None)   
+        self.topic = self.config.get('topic', None)
+        self.systemid = self.config.get('topic', None).split('/')[2]
         try:
             control_class="{}.{}".format(self.config['module'],self.config['class'])
             controller = importlib.import_module(control_class)
@@ -107,7 +108,9 @@ class RecvAgent(Agent):
         """
         msg = message if type(message) == type([]) else [message]
 
-        y = self.call_back(msg[0])
+        # Input format for '/set_point' endpoint of server_UI: {system_id: sensor_data}
+        # Response format: sensor_data corresponding to the input system_id
+        y = self.call_back({self.systemid: msg[0]})
                 
         try:
             self.vip.pubsub.publish(peer='pubsub',

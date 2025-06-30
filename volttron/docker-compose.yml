@@ -5,10 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: backend
+    # container_name: backend # It should be removed to create separate Docker instances for each testcase
     volumes:
       - ./start.sh:/usr/local/bin/start.sh
-    ports:
-      - "5000:5000"
-      - "5100:5100"
     command: ["bash", "/usr/local/bin/start.sh"]

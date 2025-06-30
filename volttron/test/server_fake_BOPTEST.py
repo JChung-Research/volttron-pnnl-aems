@@ -1,12 +1,21 @@
+import random
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 # Global simulation state
 test_cases = ['bestest_air', 'bestest_hydronic']
-current_test_id = None
+# Testcase IDs should be multiple consdering scalability
+current_test_ids = {}
+# u object for each testcase ID should be updated whenever AEMS apps send control inputs
+current_test_u = {}
 step = 300
 sim_time = 0
+scenario_period = 'peak_heat_day'
+scenario_pricing = 'dynamic'
+
+def randomize (value):
+    return value * round(random.uniform(0.95, 1.05), 4)
 
 @app.route('/testcases', methods=['GET'])
 def list_testcases():
@@ -18,16 +27,29 @@ def list_testcases():
 
 @app.route('/testcases/<string:name>/select', methods=['POST'])
 def select_testcase(name):
-    global current_test_id
+    global current_test_ids
     if name in test_cases:
-        current_test_id = f'testid_{name}'
-        return jsonify({'testid': current_test_id})
+        current_test_ids[f'testid_{name}'] = name
+        current_test_u[f'testid_{name}'] = {}
+
+        return jsonify({'testid': f'testid_{name}'})
     else:
         return jsonify({'status': 404, 'message': 'Test case not found', 'payload': {}}), 404
 
 @app.route('/initialize/<string:testid>', methods=['PUT'])
 def initialize(testid):
     return jsonify({'status': 200, 'message': 'Initialized', 'payload': {}})
+
+@app.route('/scenario/<string:testid>', methods=['GET'])
+def get_scenario(testid):
+    return jsonify({'status': 200, 'message': 'OK', 'payload': {'time_period': scenario_period, 'electricity_price': scenario_pricing}})
+
+@app.route('/scenario/<string:testid>', methods=['PUT'])
+def set_scenario(testid):
+    global scenario_period, scenario_pricing
+    scenario_period = request.json.get('time_period', 'peak_heat_day')
+    scenario_pricing = request.json.get('electricity_price', 'dynamic')
+    return jsonify({'status': 200, 'message': 'Scenario set', 'payload': {'time_period': scenario_period, 'electricity_price': scenario_pricing}})
 
 @app.route('/step/<string:testid>', methods=['GET'])
 def get_step(testid):
@@ -52,49 +74,37 @@ def advance(testid):
     global sim_time
     sim_time += step
 
-    payload = {
-        'time': sim_time,
-        'fcu_reaFloSup_y': 0.55,
-        'fcu_reaPCoo_y': 0,
-        'fcu_reaPFan_y': 173.05008447568497,
-        'fcu_reaPHea_y': 811.0584278278242,
-        'zon_reaCO2RooAir_y': 316.0569045066186,
-        'zon_reaPLig_y': 56.64000000000001,
-        'zon_reaPPlu_y': 25.92,
-        'zon_reaTRooAir_y': 292.84001603352203,
-        'zon_weaSta_reaWeaCeiHei_y': 77777,
-        'zon_weaSta_reaWeaCloTim_y': sim_time,
-        'zon_weaSta_reaWeaHDifHor_y': 0,
-        'zon_weaSta_reaWeaHDirNor_y': 0,
-        'zon_weaSta_reaWeaHGloHor_y': 0,
-        'zon_weaSta_reaWeaHHorIR_y': 253,
-        'zon_weaSta_reaWeaLat_y': 0.6939429105929453,
-        'zon_weaSta_reaWeaLon_y': -1.830152253641254,
-        'zon_weaSta_reaWeaNOpa_y': 0.3,
-        'zon_weaSta_reaWeaNTot_y': 0.7,
-        'zon_weaSta_reaWeaPAtm_y': 101325,
-        'zon_weaSta_reaWeaRelHum_y': 0.57,
-        'zon_weaSta_reaWeaSolAlt_y': -1.2117031187437468,
-        'zon_weaSta_reaWeaSolDec_y': -0.40283294927680513,
-        'zon_weaSta_reaWeaSolHouAng_y': -2.893169371920129,
-        'zon_weaSta_reaWeaSolTim_y': 3416.0653373907476,
-        'zon_weaSta_reaWeaSolZen_y': 2.7824994455386434,
-        'zon_weaSta_reaWeaTBlaSky_y': 258.4543868019217,
-        'zon_weaSta_reaWeaTDewPoi_y': 266.54999999999995,
-        'zon_weaSta_reaWeaTDryBul_y': 273.15,
-        'zon_weaSta_reaWeaTWetBul_y': 270.67504560460424,
-        'zon_weaSta_reaWeaWinDir_y': 3.543018381548489,
-        'zon_weaSta_reaWeaWinSpe_y': 2.8,
-        'con_oveTSetCoo_activate': 1,
-        'con_oveTSetCoo_u': 278.15,
-        'con_oveTSetHea_activate': 0,
-        'con_oveTSetHea_u': 288.15,
-        'fcu_oveFan_activate': 0,
-        'fcu_oveFan_u': 1,
-        'fcu_oveTSup_activate': 0,
-        'fcu_oveTSup_u': 294.15
-    }
+    data = request.get_json()
+    print("Inputs for BOPTEST advance: ", data)
 
+    # If the testcase is 'bestest_air'
+    if current_test_ids[testid] == 'bestest_air':
+        payload = {
+            'fcu_oveTSup_u': 294.15,
+            'fcu_oveFan_u': 1,
+            'con_oveTSetCoo_u': 278.15,
+            'con_oveTSetHea_u': 288.15,
+            'fcu_reaFloSup_y': 0.55,
+            'zon_reaCO2RooAir_y': 316.0569045066186,
+            'zon_reaTRooAir_y': 292.84001603352203,
+            'fcu_reaPFan_y': 173.05008447568497,
+            'fcu_reaPCoo_y': 0,
+            'fcu_reaPHea_y': 811.0584278278242
+        }
+
+    # If the testcase is 'bestest_hydronic'
+    elif current_test_ids[testid] == 'bestest_hydronic':
+        payload = {
+            'oveTSetSup_u': 294.15,
+            'ovePum_u': 1,           
+            'oveTSetCoo_u': 278.15,
+            'oveTSetHea_u': 288.15,
+            'reaCO2RooAir_y': 316.0569045066186,
+            'reaTRoo_y': 292.84001603352203,
+            'reaPPum_y': 173.05008447568497,
+            'reaQHea_y': 811.0584278278242
+        }
+        
     return jsonify({'status': 200, 'message': 'Advanced', 'payload': payload})
 
 @app.route('/kpi/<string:testid>', methods=['GET'])

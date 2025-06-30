@@ -58,6 +58,13 @@ __version__ = '3.3'
 DEFAULT_HEARTBEAT_PERIOD =10
 API_HEADER = {'Content-Type': 'application/json'}
 
+# Temperature unit converters (Kelvin / Fahrenheit degree)
+def temp_f_to_k(f: float) -> float:
+    return ((f - 32) * 5) / 9 + 273.15
+
+def temp_k_to_f(k: float) -> float:
+    return ((k - 273.15) * 9) / 5 + 32
+
 class InterfaceAgent(Agent):
     """Listens to everything and publishes a heartbeat according to the
     heartbeat period specified in the settings module.
@@ -91,22 +98,37 @@ class InterfaceAgent(Agent):
     def onstart(self, sender, **kwargs):
         self.subscribe()
         if self.config['module'] is not None:
-            self.url = self.initialize()            
+            self.url = self.initialize(self.topic.split('/')[2]) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
         if self._heartbeat_period != 0:
             self.core.schedule(periodic(self._heartbeat_period), self.control_update)
 
     def control_update(self):
         headers = {TIMESTAMP: format_timestamp(get_aware_utc_now())}
+
+        # Check the temperature variables whose unit is Kelvin to convert it to Fahrenheit degree, using 'interface_config' files
+        temp_k_vars = [k for k, v in self.points.items() if v['units'] == 'K']
+
         if self.u is not None:
-            data = self.u
+            # Convert Fahrenheit degree to Kelvin unit for the BOPTEST API
+            data = {
+                k: temp_f_to_k(v) if k in temp_k_vars else v
+                for k, v in self.u.get('payload').items()
+                }
+
         else:
             data = {} 
 
         result = requests.post('{}'.format(self.url),
                                                  json=data,
                                                  headers=API_HEADER).json()
-        if result['status'] == 200:           
-            raw_data = result['payload']
+        
+        if result['status'] == 200:
+            _log.info('system_id "{}": {}'.format(self.topic.split('/')[2], result['message']))
+            raw_data = {
+                    k: temp_k_to_f(v) if k in temp_k_vars else v # Convert Kelvin unit to Fahrenheit degree considering the BOPTEST API
+                    for k, v in result.get('payload').items() 
+                    if k in self.points # Include only variables defined in the 'interface_config' file
+                }
             
             temp1 = {}
             temp2 = {}
@@ -126,6 +148,8 @@ class InterfaceAgent(Agent):
             except Unreachable as exc:
                 self.connect_error = True
                 self.stop()
+        else:
+            _log.error('Error during BOPTEST advance: ' + result['message'])
 
 
     def subscribe(self):

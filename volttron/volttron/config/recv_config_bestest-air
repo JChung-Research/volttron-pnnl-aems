@@ -1,0 +1,6 @@
+{
+    "inputs":{"topic":"devices/BOPTEST/bestest_air/all"},
+    "module":"app_agents.client",
+    "topic":"devices/BOPTEST/bestest_air/control",
+    "class":"UI"
+}
