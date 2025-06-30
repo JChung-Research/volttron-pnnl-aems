@@ -19,14 +19,6 @@ const CONFIG = {
   timeout: 5000,
 };
 
-function tempFtoK(f: number): number {
-  return ((f - 32) * 5) / 9 + 273.15;
-}
-
-function tempKtoF(k: number): number {
-  return ((k - 273.15) * 9) / 5 + 32;
-}
-
 // Parse CSV files into array of objects
 const parseCsv = async (filePath: string): Promise<string[][]> => {
   const raw = await fs.readFile(filePath, "utf8");
@@ -251,6 +243,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             };
 
           } else {
+            resSensorData[unitId] = resSensorData[unitId] ?? {};
             resSensorData[unitId].linechartData = { error: response.data?.error ?? "No result" };
           }
         } catch (err: any) {

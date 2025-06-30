@@ -311,7 +311,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
     const { editing } = this.state;
     if (editing) {
       this.props.updateUnit(editing);
-      this.setState({ editing: null, expanded: null });
+      // this.setState({ editing: null, expanded: null });
     }
   };
 
@@ -379,7 +379,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
     const temp = merge({}, unit, editing);
     const valid = temp.configuration?.setpoint ? isSetpointValid(temp.configuration.setpoint) : true;
     return (
-      valid &&
+      // valid &&
       !isEqualWith(unit, temp, (_a, _b, k) =>
         ["createdAt", "updatedAt", "action"].includes(k as any) ? true : undefined
       )
@@ -528,7 +528,6 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
     const usedVariables = Object.keys(chartData.values);
     const selectMetadata = this.state.sensorMetadata.filter(item => usedVariables.includes(item.name));
     
-// HERE!!!
     return (
       <Label>
         <b>{label}</b>
@@ -590,7 +589,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
               {/* Environmental Column */}
               <Menu style={{ flex: 1 }}>
                 <MenuItem text="Environment" disabled />
-                {selectMetadata?.filter((v) => v.type === "enviroment").map((item) => {
+                {selectMetadata?.filter((v) => v.type === "environment").map((item) => {
                   const isChecked = selectedOutputs.includes(item.name);
                   return (
                     <MenuItem
@@ -764,9 +763,9 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
             yaxis2: {
               title: {
                 text: 
-                  secondaryIndex !== null && yAxisInfo[secondaryIndex]
-                  ? `${this.unitLabels.find((o) => o.name === yAxisInfo[secondaryIndex].unit)?.label}`
-                  : '',
+                  secondaryIndex !== null && yAxisInfo[secondaryIndex as number]
+                    ? `${this.unitLabels.find((o) => o.name === yAxisInfo[secondaryIndex as number].unit)?.label}`
+                    : '',
                 font: { size: 14 },
                 standoff: 10,
               },
@@ -1120,7 +1119,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                     </Label>
                   </div>
                   <div className="col-md-2" style={{textAlign: "right", marginTop: "20px"}}>
-                    {/* {this.renderStatus(unit)} */}
+                    {this.renderStatus(unit)}
                     <Tooltip2 content="Edit" placement={Position.TOP}>
                         <Button
                           icon={IconNames.EDIT}

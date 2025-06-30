@@ -123,7 +123,7 @@ const execute = (options: LogOptions) => async () => {
               ZoneAirHeatingSetpoint: unit.configuration?.setpoint?.zoneAirHeatingSetpoint ?? 0,
               ZoneOperativeCoolingSetpoint: unit.configuration?.setpoint?.zoneOperativeCoolingSetpoint ?? 0,
               ZoneOperativeHeatingSetpoint: unit.configuration?.setpoint?.zoneOperativeHeatingSetpoint ?? 0,
-
+              ControlStagePump: unit.configuration?.setpoint?.controlStagePump ?? 0,
             };
             await makeApiCall(options, unit, "set_temperature_setpoints", token, set_temperature_setpoints);
 
