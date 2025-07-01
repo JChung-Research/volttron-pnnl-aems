@@ -15,6 +15,8 @@ scenario_period = 'peak_heat_day'
 scenario_pricing = 'highly_dynamic'
 
 def initialize(testcase):
+    _log.info('[INFO] Select testcase: {}'.format(testcase))
+
     testid = requests.post('{}/testcases/{}/select'.format(BASE,testcase)).json()['testid'] # testcase info should be imported from config files
     
     init_result = requests.put('{}/initialize/{}'.format(BASE, testid), json={'start_time': 1*24*3600,

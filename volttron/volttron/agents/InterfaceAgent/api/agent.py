@@ -80,6 +80,8 @@ class InterfaceAgent(Agent):
         self.topic = self.config.get('topic', None)         
         self.points = self.config.get('data_point', None)
         self.inputs = self.config.get('inputs', None)
+        self.building_id = self.topic.split('/')[1]
+        self.system_id = self.topic.split('/')[2]
         self.u = None  
         if self.config['module'] is not None:
             try:
@@ -98,7 +100,7 @@ class InterfaceAgent(Agent):
     def onstart(self, sender, **kwargs):
         self.subscribe()
         if self.config['module'] is not None:
-            self.url = self.initialize(self.topic.split('/')[2]) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
+            self.url = self.initialize(self.system_id) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
         if self._heartbeat_period != 0:
             self.core.schedule(periodic(self._heartbeat_period), self.control_update)
 
@@ -118,12 +120,34 @@ class InterfaceAgent(Agent):
         else:
             data = {} 
 
+        # BOPTEST API inputs to activate all building systems in the test case
+        if self.building_id == 'BOPTEST':
+            if self.system_id == 'bestest_air':
+                activate_systems = {
+                      'con_oveTSetCoo_activate': 1,
+                      'con_oveTSetHea_activate': 1,
+                      'fcu_oveFan_activate': 1,
+                      'fcu_oveTSup_activate': 1
+                 }
+                data.update(activate_systems)
+
+            elif self.system_id == 'bestest_hydronic':
+                activate_systems = {
+                      'ovePum_activate': 1,
+                      'oveTSetCoo_activate': 1,
+                      'oveTSetHea_activate': 1,
+                      'oveTSetSup_activate': 1
+                 }
+                data.update(activate_systems)
+
+        _log.info('Inputs for advance "{}": {}'.format(self.system_id, data))
         result = requests.post('{}'.format(self.url),
                                                  json=data,
                                                  headers=API_HEADER).json()
         
         if result['status'] == 200:
-            _log.info('system_id "{}": {}'.format(self.topic.split('/')[2], result['message']))
+            _log.info('system_id "{}": {}'.format(self.system_id, result['message']))
+            _log.info('Advance result: {}'.format(result.get('payload')))
             raw_data = {
                     k: temp_k_to_f(v) if k in temp_k_vars else v # Convert Kelvin unit to Fahrenheit degree considering the BOPTEST API
                     for k, v in result.get('payload').items() 

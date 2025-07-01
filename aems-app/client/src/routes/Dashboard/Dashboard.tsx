@@ -737,7 +737,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
             margin: { l: 40, r: 20, t: 0, b: 130 },
             xaxis: {
               title: {
-                text: 'Time from beginning of the year (days)',
+                text: 'Time (hh:mm:ss)',
                 font: { size: 14 },
                 standoff: 14,
               },

@@ -15,8 +15,8 @@ sleep 30
 # Run upgrade scripts
 bash upgrade_scripts/upgrade_interface_bestest-air
 bash upgrade_scripts/upgrade_rec_bestest-air
-# bash upgrade_scripts/upgrade_interface_bestest-hydronic
-# bash upgrade_scripts/upgrade_rec_bestest-hydronic
+bash upgrade_scripts/upgrade_interface_bestest-hydronic
+bash upgrade_scripts/upgrade_rec_bestest-hydronic
 
 # Keep container running and output logs
 tail -f v.log
