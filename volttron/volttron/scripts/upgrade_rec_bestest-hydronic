@@ -2,8 +2,8 @@
 # Build a temp file string for use with the configuration
 python ./scripts/install-agent.py \
     -s app_agents/RecvAgent \
-    -i rec \
-    --tag rec \
+    -i rec_bestest_hydronic \
+    --tag rec_bestest_hydronic \
     --config config/recv_config_bestest-hydronic \
     --start \
     --force
