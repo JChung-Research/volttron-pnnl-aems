@@ -334,9 +334,9 @@ export function Setpoint(props: {
     </Label>
   );
 
-  const renderUnoccupied = () => (
+  const renderUnoccupied = (setpointHeatingName: string, setpointCoolingName: string) => (
     <Label>
-      <b>Unoccupied</b>
+      <b>Unoccupied Zone Temperature</b>
       <MultiSlider
         min={SETPOINT_MIN}
         max={SETPOINT_MAX}
@@ -350,11 +350,6 @@ export function Setpoint(props: {
           intentBefore={Intent.WARNING}
           value={getValue(`${path}.heating`)}
           onChange={(v) => {
-            const setpoint = getValue(`${path}.setpoint`);
-            const deadband = getValue(`${path}.deadband`);
-            const padding = SETPOINT_PADDING + deadband / 2;
-            const heating = clamp(v, HEATING_MIN, COOLING_MAX);
-            const cooling = getValue(`${path}.cooling`);
             const supplyDuctPressure = getValue(`${path}.supplyDuctPressure`);
             const coolingCoilValve = getValue(`${path}.coolingCoilValve`);
             const heatingCoilValve = getValue(`${path}.heatingCoilValve`);
@@ -373,6 +368,14 @@ export function Setpoint(props: {
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
 
+            const setpoint = getValue(`${path}.setpoint`);
+            const deadband = getValue(`${path}.deadband`);
+            const padding = SETPOINT_PADDING + deadband / 2;
+            const heating = clamp(v, HEATING_MIN, getValue(`${path}.${setpointHeatingName}`)-SETPOINT_PADDING);
+            const cooling = getValue(`${path}.cooling`);
+
+            props.handleSetpointValueChange?.("heating", heating);
+
             const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
             handleChange(`${path}`, editing)({ heating, label });
           }}
@@ -383,11 +386,6 @@ export function Setpoint(props: {
           intentAfter={Intent.PRIMARY}
           value={getValue(`${path}.cooling`)}
           onChange={(v) => {
-            const setpoint = getValue(`${path}.setpoint`);
-            const deadband = getValue(`${path}.deadband`);
-            const padding = SETPOINT_PADDING + deadband / 2;
-            const heating = getValue(`${path}.heating`);
-            const cooling = clamp(v, HEATING_MIN, COOLING_MAX);
             const supplyDuctPressure = getValue(`${path}.supplyDuctPressure`);
             const coolingCoilValve = getValue(`${path}.coolingCoilValve`);
             const heatingCoilValve = getValue(`${path}.heatingCoilValve`);
@@ -405,6 +403,14 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+
+            const setpoint = getValue(`${path}.setpoint`);
+            const deadband = getValue(`${path}.deadband`);
+            const padding = SETPOINT_PADDING + deadband / 2;
+            const heating = getValue(`${path}.heating`);
+            const cooling = clamp(v, getValue(`${path}.${setpointCoolingName}`)+SETPOINT_PADDING, COOLING_MAX);
+
+            props.handleSetpointValueChange?.("cooling", cooling);
 
             const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
             handleChange(`${path}`, editing)({ cooling, label });
@@ -1121,7 +1127,7 @@ export function Setpoint(props: {
             const zoneReheatControl = getValue(`${path}.zoneReheatControl`);
             const zoneAirCoolingSetpoint = getValue(`${path}.zoneAirCoolingSetpoint`);
             const zoneAirHeatingSetpoint = parseFloat(
-              (Math.round(clamp(v, HEATING_MIN, COOLING_MAX) * 10) / 10).toFixed(1)
+              (Math.round(clamp(v, heating + SETPOINT_PADDING, cooling - SETPOINT_PADDING) * 10) / 10).toFixed(1)
             );
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
@@ -1158,7 +1164,7 @@ export function Setpoint(props: {
             const zoneDamperPosition = getValue(`${path}.zoneDamperPosition`);
             const zoneReheatControl = getValue(`${path}.zoneReheatControl`);
             const zoneAirCoolingSetpoint = parseFloat(
-              (Math.round(clamp(v, HEATING_MIN, COOLING_MAX) * 10) / 10).toFixed(1)
+              (Math.round(clamp(v, heating + SETPOINT_PADDING, cooling - SETPOINT_PADDING) * 10) / 10).toFixed(1)
             );
             const zoneAirHeatingSetpoint = getValue(`${path}.zoneAirHeatingSetpoint`);
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
@@ -1213,7 +1219,7 @@ export function Setpoint(props: {
             const zoneAirHeatingSetpoint = getValue(`${path}.zoneAirHeatingSetpoint`);
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = parseFloat(
-              (Math.round(clamp(v, HEATING_MIN, COOLING_MAX) * 10) / 10).toFixed(1)
+              (Math.round(clamp(v, heating + SETPOINT_PADDING, cooling - SETPOINT_PADDING) * 10) / 10).toFixed(1)
             );
             const controlStagePump = getValue(`${path}.controlStagePump`);
 
@@ -1250,7 +1256,7 @@ export function Setpoint(props: {
             const zoneAirCoolingSetpoint = getValue(`${path}.zoneAirCoolingSetpoint`);
             const zoneAirHeatingSetpoint = getValue(`${path}.zoneAirHeatingSetpoint`);
             const zoneOperativeCoolingSetpoint = parseFloat(
-              (Math.round(clamp(v, HEATING_MIN, COOLING_MAX) * 10) / 10).toFixed(1)
+              (Math.round(clamp(v, heating + SETPOINT_PADDING, cooling - SETPOINT_PADDING) * 10) / 10).toFixed(1)
             );
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
@@ -1322,6 +1328,14 @@ export function Setpoint(props: {
           <div className="row">
             <div className="setpoint">{renderSetpoint()}</div>
             <div className="break" />
+            <div className="setpoint">{renderZoneDamperPosition()}</div>
+            <div className="break" /> 
+            <div className="setpoint">{renderZoneReheatControl()}</div>
+            <div className="break" /> 
+            <div className="setpoint">{renderZoneAirTempSetpoint()}</div>
+            <div className="break" /> 
+            <div className="setpoint">{renderZoneOperativeTempSetpoint()}</div>
+            <div className="break" /> 
             <div className="setpoint">{renderSupplyAirSetpoint()}</div>
             <div className="break" /> 
             <div className="setpoint">{renderSupplyHeaterSetpoint()}</div>
@@ -1341,14 +1355,6 @@ export function Setpoint(props: {
             <div className="setpoint">{renderOutsideAirDamperPosition()}</div>
             <div className="break" /> 
             <div className="setpoint">{renderReturnAirDamperPosition()}</div>
-            <div className="break" /> 
-            <div className="setpoint">{renderZoneDamperPosition()}</div>
-            <div className="break" /> 
-            <div className="setpoint">{renderZoneReheatControl()}</div>
-            <div className="break" /> 
-            <div className="setpoint">{renderZoneAirTempSetpoint()}</div>
-            <div className="break" /> 
-            <div className="setpoint">{renderZoneOperativeTempSetpoint()}</div>
             <div className="break" /> 
             <div className="setpoint">{renderControlStagePump()}</div>
             <div className="break" /> 
@@ -1370,6 +1376,22 @@ export function Setpoint(props: {
           {isDefined("setpoint") && (
             <>
               <div className="setpoint">{renderSetpoint()}</div>
+              <div className="break" />
+            </>
+          )}
+          {(isDefined("zoneAirCoolingSetpoint") || isDefined("zoneAirHeatingSetpoint")) && (
+            <>
+              <div className="setpoint">{renderZoneAirTempSetpoint()}</div>
+              <div className="break" />
+              <div className="setpoint">{renderUnoccupied('zoneAirHeatingSetpoint', 'zoneAirCoolingSetpoint')}</div>
+              <div className="break" />
+            </>
+          )}
+          {(isDefined("zoneOperativeCoolingSetpoint") || isDefined("zoneOperativeHeatingSetpoint")) && (
+            <>
+              <div className="setpoint">{renderZoneOperativeTempSetpoint()}</div>
+              <div className="break" />
+              <div className="setpoint">{renderUnoccupied('zoneOperativeHeatingSetpoint', 'zoneOperativeCoolingSetpoint')}</div>
               <div className="break" />
             </>
           )}
@@ -1445,18 +1467,6 @@ export function Setpoint(props: {
               <div className="break" />
             </>
           )}
-          {(isDefined("zoneAirCoolingSetpoint") || isDefined("zoneAirHeatingSetpoint")) && (
-            <>
-              <div className="setpoint">{renderZoneAirTempSetpoint()}</div>
-              <div className="break" />
-            </>
-          )}
-          {(isDefined("zoneOperativeCoolingSetpoint") || isDefined("zoneOperativeHeatingSetpoint")) && (
-            <>
-              <div className="setpoint">{renderZoneOperativeTempSetpoint()}</div>
-              <div className="break" />
-            </>
-          )}
           {isDefined("controlStagePump") && (
             <>
               <div className="setpoint">{renderControlStagePump()}</div>
@@ -1471,9 +1481,6 @@ export function Setpoint(props: {
 
   return (
     <>
-      <div className="row" style={{ marginBottom: "1.5rem" }}>
-        <h2>Controllers</h2>
-      </div>
       {renderSliders()}
     </>
   );

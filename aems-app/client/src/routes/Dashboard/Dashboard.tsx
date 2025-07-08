@@ -26,8 +26,11 @@ import { IconName, IconNames } from "@blueprintjs/icons";
 import { cloneDeep, get, isEqualWith, isNil, isObject, merge, isString, set } from "lodash";
 
 import { Configuration } from "./Configuration";
+import { Holidays } from "./Holidays";
+import { Occupancies } from "./Occupancies";
 import React from "react";
 import { RootProps } from "routes";
+import { Schedules } from "./Schedules";
 import { Setpoints } from "./Setpoints";
 import { HolidayType, RoleType, StageType } from "common";
 import { Popover2, Tooltip2 } from "@blueprintjs/popover2";
@@ -37,6 +40,8 @@ import { defaultPollInterval } from "controllers/poll/action";
 import { isSetpointValid } from "utils/setpoint";
 import { DeepPartial } from "../../utils/types";
 import { ISetpoint, updateSetpoint } from "controllers/setpoints/action";
+import { getCommon } from "utils/util";
+import { Holiday } from "./Holiday";
 import { IEnum } from "common/types";
 import Plot from 'react-plotly.js';
 import axios from "axios";
@@ -737,7 +742,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
             margin: { l: 40, r: 20, t: 0, b: 130 },
             xaxis: {
               title: {
-                text: 'Time (hh:mm:ss)',
+                text: 'Time from beginning of the year (days)',
                 font: { size: 14 },
                 standoff: 14,
               },
@@ -815,7 +820,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
         console.log("this.state.unitManagerData: ", this.state.unitManagerData);
         console.log("res: ", res);
 
-        if (this.state.sensorMetadata.length == 0) {
+        if (this.state.sensorMetadata.length === 0) {
           this.setState({sensorMetadata: res.metadata});
         }
         
@@ -850,7 +855,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
             };
           });
 
-          if (unitData.varList.length == 0) {
+          if (unitData.varList.length === 0) {
             this.setState(prevState => { 
               const unitData = prevState.unitManagerData[unitId];
               const unitVarList = Object.keys(unitData.lineChartData[0]).filter(key => key !== "time");
@@ -928,10 +933,100 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
     const selectedUnitId = Number(this.props.location?.state?.selectedUnitId);
     var unitData = !isNaN(selectedUnitId) ? this.state.unitManagerData[selectedUnitId] : undefined;  
 
+    const defaultUnit = {
+      location: filtered
+        ? getCommon(
+            filtered.map((f) => f.location ?? {}),
+            ["createdAt", "updatedAt", "action", "terms"]
+          )
+        : {},
+      configuration: {
+        holidays: HolidayType.values.map((t) =>
+          filtered
+            ? getCommon(
+                filtered.map((f) => f.configuration?.holidays?.find((h) => h?.label === t.label) ?? {}),
+                ["createdAt", "updatedAt", "action", "terms"]
+              )
+            : {}
+        ),
+      },
+    };
+
     return (
       <div className={"dashboard"}>
         {this.renderPrompt()}
         <Header {...this.props} />
+        {defaultUnit && (
+          <div className="list padding update-all-units">
+            <Card interactive>
+              <div className="row">
+                <div>
+                  <Label>
+                    <h3>Update All Units</h3>
+                  </Label>
+                </div>
+                <div>
+                  {this.isSave(defaultUnit, editingAll) ? (
+                    <>
+                      <Tooltip2 content="Save" placement={Position.TOP}>
+                        <Button
+                          icon={IconNames.FLOPPY_DISK}
+                          intent={Intent.PRIMARY}
+                          minimal
+                          onClick={() => this.handleSaveAll()}
+                        />
+                      </Tooltip2>
+                      <Tooltip2 content="Exit" placement={Position.TOP}>
+                        <Button
+                          icon={IconNames.CROSS}
+                          intent={Intent.PRIMARY}
+                          minimal
+                          onClick={() => this.handleClearAll()}
+                        />
+                      </Tooltip2>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+              <div>
+                <Tree
+                  contents={[
+                    {
+                      id: "holidays-all",
+                      label: "Holidays",
+                      icon: IconNames.SERIES_CONFIGURATION,
+                      hasCaret: true,
+                      isExpanded: expanded === "holidays-all",
+                    },
+                  ]}
+                  onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                  onNodeCollapse={() => this.setState({ expanded: null })}
+                  onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                />
+                <Collapse isOpen={expanded === "holidays-all"}>
+                  <Label>
+                    <h3>Predefined Holidays</h3>
+                    <ul>
+                      {defaultUnit?.configuration?.holidays?.map((holiday, i) => (
+                        <li key={holiday?.label ?? i}>
+                          <Holiday
+                            key={holiday?.label}
+                            path={`configuration.holidays.${i}`}
+                            unit={defaultUnit}
+                            editing={editingAll}
+                            holiday={holiday!}
+                            handleChange={this.handleChange}
+                            readOnly={!this.isAdmin()}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </Label>
+                </Collapse>
+              </div>
+            </Card>
+          </div>
+        )}
 
         <h1>Building Units</h1>
         <div className="list">
@@ -968,7 +1063,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                     </Tooltip2>
                   </div>
                 </div>
-                <div className="row">
+                <div className="row"  style={{marginBottom: "20px"}}>
                   <div className="col-md-6">
                     <div className="row">
                       <div className="col-md-6">
@@ -997,7 +1092,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                       </div>
                       <div className="col-md-6">
                         <Label>
-                          <b>Operator (source)</b>
+                          <b>Operator</b>
                           <InputGroup type="text" value={`${unit.operator}`} readOnly />
                         </Label>
                       </div>
@@ -1053,7 +1148,91 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                           </Collapse>
                         </>
                       )}
+                      <div className="row" style={{  marginTop: "1.5rem", marginBottom: "1rem" }}>
+                        <h2>Controllers</h2>
+                      </div>
+                      <Tree
+                        contents={[
+                          {
+                            id: "setpoints",
+                            label: "Setpoints",
+                            icon: IconNames.TEMPERATURE,
+                            hasCaret: true,
+                            isExpanded: expanded === "setpoints",
+                          },
+                        ]}
+                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                        onNodeCollapse={() => this.setState({ expanded: null })}
+                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                      />
+                      <Collapse isOpen={expanded === "setpoints"}>
+                      <div style={{ marginTop: "20px" }}>
                         <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number) => this.handleSetpointValueChange(unit.id!, name, value)}/> 
+                      </div>
+                      </Collapse>
+                      <Tree
+                        contents={[
+                          {
+                            id: "schedules",
+                            label: "Occupancy Schedules",
+                            icon: IconNames.TIME,
+                            hasCaret: true,
+                            isExpanded: expanded === "schedules",
+                          },
+                        ]}
+                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                        onNodeCollapse={() => this.setState({ expanded: null })}
+                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                      />
+                      <Collapse isOpen={expanded === "schedules"}>
+                      <div style={{ marginTop: "20px" }}>
+                        <Schedules
+                          unit={unit}
+                          editing={editing}
+                          handleChange={this.handleChange}
+                          readOnly={!this.isAdmin()}                          
+                        />
+                      </div>
+                      </Collapse>
+                      <Tree
+                        contents={[
+                          {
+                            id: "holidays",
+                            label: "Holidays",
+                            icon: IconNames.TIMELINE_EVENTS,
+                            hasCaret: true,
+                            isExpanded: expanded === "holidays",
+                          },
+                        ]}
+                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                        onNodeCollapse={() => this.setState({ expanded: null })}
+                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                      />
+                      <Collapse isOpen={expanded === "holidays"}>
+                        <Holidays
+                          unit={unit}
+                          editing={editing}
+                          handleChange={this.handleChange}
+                          readOnly={!this.isAdmin()}
+                        />
+                      </Collapse>
+                      <Tree
+                        contents={[
+                          {
+                            id: "occupancies",
+                            label: "Temporary Occupancy",
+                            icon: IconNames.HOME,
+                            hasCaret: true,
+                            isExpanded: expanded === "occupancies",
+                          },
+                        ]}
+                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                        onNodeCollapse={() => this.setState({ expanded: null })}
+                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                      />
+                      <Collapse isOpen={expanded === "occupancies"}>
+                        <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} />
+                      </Collapse>
                     </Collapse>
                   </div>
                   <div className="col-md-6">
@@ -1162,3 +1341,4 @@ const mapActionToProps = {
 };
 
 export default connect(mapStateToProps, mapActionToProps)(withLocation(Dashboard));
+``
