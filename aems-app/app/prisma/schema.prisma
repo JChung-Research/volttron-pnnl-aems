@@ -301,6 +301,7 @@ model Configurations {
   saturdaySchedule    Schedules?    @relation("Configurations_saturdaySchedules", fields: [saturdayScheduleId], references: [id], onDelete: Cascade)
   sundaySchedule      Schedules?    @relation("Configurations_sundaySchedules", fields: [sundayScheduleId], references: [id], onDelete: Cascade)
   holidaySchedule     Schedules?    @relation("Configurations_holidaySchedules", fields: [holidayScheduleId], references: [id], onDelete: Cascade)
+  chartConfigs        Json?
   // indirect relations
   units               Units[]       @relation("Units_configurations")
   occupancies         Occupancies[] @relation("Occupancies_configurations")

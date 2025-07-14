@@ -5,7 +5,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { authUser } from "@/auth";
 import { logger } from "@/logging";
 import { prisma } from "@/prisma";
-import { Units } from "@prisma/client";
 import httpsAgent from "../../../services/agent";
 import axios from "axios";
 import fs from "fs-extra";
@@ -48,11 +47,11 @@ async function buildLineChartData(tsPath: string, unitMap: Record<string, string
 
   return tsRows.map((row, i) => {
     const time = row[0];
-    const values: { [key: string]: number } = {};
+    const values: { [key: string]: number | string } = {};
 
     for (let j = 1; j < tsHeader.length; j++) {
       const varName = tsHeader[j];
-      const rawValue = parseFloat(row[j]);
+      const rawValue = row[j];
       const unit = unitMap[varName];
       //const value = unit === "°F" ? tempKtoF(rawValue) : rawValue;
       values[varName] = rawValue //value;
@@ -134,35 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const unitId = unit.id;
         const systemId = `manager.${unit.system.toLowerCase()}`;
         const timeseriesPath = path.join(TMP_DIR, `timeseries-${systemId}.csv`);
-        
-
-        if (await fs.pathExists(timeseriesPath)) {
-          const lines = (await fs.readFile(timeseriesPath, "utf8")).trim().split("\n");
-          const lastLine = lines[lines.length - 1];
-          const lastTimestamp = lastLine.split(",")[0]; // assuming timestamp is first column
-          const lastTime = new Date(lastTimestamp).getTime();
-          const now = new Date().getTime();
-
-          if (!isNaN(lastTime) && now - lastTime < 10 * 1000) {
-            console.log(`Skipping unit ${unit.id} (updated ${((now - lastTime) / 1000).toFixed(1)} seconds ago)`);
-            // Read metadata
-
-            const { unitMap, typeMap } = await getMetadataMap(metadataPath);
-            const lineChartData = await buildLineChartData(timeseriesPath, unitMap);
-            const ctrlData = await buildCtrlData(timeseriesPath, typeMap);
-
-            resSensorData[unitId] = {
-              id: unitId,
-              building: unit.building,
-              system: unit.system,
-              ctrlValues: ctrlData,
-              lineChartData: lineChartData,
-            };
-
-            continue;
-          }
-        }
-
+      
         const body = {
           jsonrpc: "2.0",
           id: systemId,
@@ -179,7 +150,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(httpsAgent && { httpsAgent, keepAlive: false }), 
         });
 
-          if (response.data?.payload) {                               
+          if (response.data?.payload) {          
+            if (await fs.pathExists(timeseriesPath)) {
+              const lines = (await fs.readFile(timeseriesPath, "utf8")).trim().split("\n");
+              const lastLine = lines[lines.length - 1];
+              const lastTimestamp = lastLine.split(",")[0]; // assuming timestamp is first column
+              const lastTime = new Date(lastTimestamp).getTime();
+              //const now = new Date().getTime();
+              const now = response.data.timestamp;
+
+              if (!isNaN(lastTime) && now - lastTime < 5 * 1000) {
+                console.log(`Skipping unit ${unit.id} (updated ${((now - lastTime) / 1000).toFixed(1)} seconds ago)`);
+                // Read metadata
+
+                const { unitMap, typeMap } = await getMetadataMap(metadataPath);
+                const lineChartData = await buildLineChartData(timeseriesPath, unitMap);
+                const ctrlData = await buildCtrlData(timeseriesPath, typeMap);
+
+                resSensorData[unitId] = {
+                  id: unitId,
+                  building: unit.building,
+                  system: unit.system,
+                  ctrlValues: ctrlData,
+                  lineChartData: lineChartData,
+                };
+
+                continue;
+              }
+            }
+
             // Create or update the metadata CSV file
             const newMetadata: string[] = response.data.payload.map(
               (item: any) => `${item.name},${item.label},${item.unit},${item.type}`
@@ -207,9 +206,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               }
             }
 
-            // Create or update timeseries CSV files
-            const tsHeader = ["timestamp", ...response.data.payload.map((item: any) => item.name)];
-            const tsRow = [response.data.timestamp, ...response.data.payload.map((item: any) => item.value)];
+
+            const uniquePayloadMap = new Map();
+            for (const item of response.data.payload) {
+              if (!uniquePayloadMap.has(item.name)) {
+                uniquePayloadMap.set(item.name, item.value);
+              }
+            }
+
+            const tsHeader = ["timestamp", ...Array.from(uniquePayloadMap.keys())];
+            const tsRow = [response.data.timestamp, ...Array.from(uniquePayloadMap.values())];
 
             if (!(await fs.pathExists(timeseriesPath))) {
               // Create new file with header and first row if there is no existing file
@@ -219,8 +225,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const header = rows[0];
               const existingRows = rows.slice(1);
 
-              // Enforce max 30 rows (excluding header)
-              if (existingRows.length >= 30) {
+              // Enforce max 600 rows (excluding header)
+              if (existingRows.length >= 600) {
                 existingRows.shift(); // remove the oldest row if the number of the rows reaches 30
               }
 

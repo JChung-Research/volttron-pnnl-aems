@@ -66,6 +66,7 @@ CREATE TABLE "Configurations" (
     "saturdayScheduleId" INTEGER,
     "sundayScheduleId" INTEGER,
     "holidayScheduleId" INTEGER,
+    "chartConfigs" JSON,
 
     CONSTRAINT "Configurations_pkey" PRIMARY KEY ("id")
 );

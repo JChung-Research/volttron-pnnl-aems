@@ -71,6 +71,28 @@ function getSecondsFromStartOfYear(simDate: Date): number {
   return Math.floor(diffMs / 1000) - 18000; 
 }
 
+function convertChartConfigs(input: Record<string, any>) {
+  return Object.entries(input).map(([_, config], id) => {
+    const type = config.chartConfigType as string;
+    const selectedVariables = Object.values(config.chartSelectVars) as string[];
+
+    let vizSettings;
+    if (type === "line") {
+      vizSettings = Object.values(config.chartVizSetting);
+    } else if (type === "scatter") {
+      vizSettings = config.chartVizSetting;
+    } else if (type === "box") {
+      vizSettings = config.chartVizSetting;
+    }
+
+    return {
+      id,
+      type,
+      selectedVariables,
+      vizSettings
+    };
+  });
+}
 
 interface UnitsProps extends RootProps {
   readUnits: () => void;
@@ -101,6 +123,14 @@ interface MetadataItem {
   type: string; 
 }
 
+interface VizSetting {
+  color?: string;
+  marker_size?: number;
+  line_width?: number;
+  marker_symbol?: string;
+  line_dash?: string;
+}
+
 interface UnitsState {
   editing: DeepPartial<IUnit> | null;
   editingAll: DeepPartial<IUnit> | null;
@@ -114,7 +144,7 @@ interface UnitsState {
       varList: string[];
       ctrlValues: Record<string, number>;
       lineChartData: { index: number; time: string; values: {[key:string]: number; }}[];
-      chartConfigs: { id: number; selectedOutputs: string[] }[];
+      chartConfigs: { id: number; type: string; selectedVariables: string[]; vizSettings?: Record<string, VizSetting>; }[];
     };
   };
   startCollect: boolean | null;
@@ -127,7 +157,7 @@ type AxisInfo = {
   unit: string;
   min: number;
   max: number;
-  yList: number[];
+  values: number[];
 };
 
 type OutputOption = {
@@ -178,7 +208,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       // console.log(`[${now.toLocaleTimeString()}] The sensor data in the selected unit was retrieved`);
 
       this.getVoltData();      
-      }, 10000);
+      }, 5000);
   }
 
   // Scroll to selected unit and reinitialize unit data on props update
@@ -489,13 +519,14 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       const nextChartId = currentCharts.length > 0 
         ? Math.max(...currentCharts.map(c => c.id)) + 1 
         : 0;
+      const nextChartType = "line";
 
       return {
         unitManagerData: {
           ...prevState.unitManagerData,
           [unitId]: {
             ...prevState.unitManagerData[unitId],
-            chartConfigs: [...currentCharts, { id: nextChartId, selectedOutputs: [] }]
+            chartConfigs: [...currentCharts, { id: nextChartId, type: nextChartType, selectedVariables: [], vizSettings: [] }]
           }
         }
       };
@@ -527,23 +558,26 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
     chartId: number,
     label: string,
     chartData: { index: number; time: string; values: {[key:string]: number}; }, //OutputOption[],
-    selectedOutputs: string[],
+    selectedVariables: string[],
     onChange: (selection: string[]) => void
   ) => {
     const usedVariables = Object.keys(chartData.values);
     const selectMetadata = this.state.sensorMetadata.filter(item => usedVariables.includes(item.name));
-    
+    const chartConfig = this.state.unitManagerData[unitId].chartConfigs[chartId];
+    const chartTypes = ['line', 'scatter', 'box'];
+
     return (
       <Label>
         <b>{label}</b>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
         <Popover2
           content={
             <div style={{ display: 'flex', gap: '5px', padding: '10px' }}>
               {/* Control Column */}
               <Menu style={{ flex: 1, width: '450px' }}>
                 <MenuItem text="Control" disabled />
-                {selectMetadata?.filter((v) => v.type === "control").map((item) => {      
-                  const isChecked = selectedOutputs.includes(item.name);
+                {selectMetadata?.filter((v) => v.type === "control").map((item) => {
+                  const isChecked = selectedVariables.includes(item.name);
                   return (
                     <MenuItem
                       key={item.label}
@@ -557,16 +591,16 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                             const itemName = item.name;
 
                             this.setState(prevState => {
-                              const chartConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config, idx) => {
+                              const updatedConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config, idx) => {
                                 if (idx !== chartId) return config;
 
-                                const updatedSelectedOutputs = isChecked
-                                  ? [...config.selectedOutputs, itemName]
-                                  : config.selectedOutputs.filter((v) => v !== itemName);
+                                const updatedSelectedVars = isChecked
+                                  ? [...config.selectedVariables, itemName]
+                                  : config.selectedVariables.filter((v) => v !== itemName);
 
                                 return {
                                   ...config,
-                                  selectedOutputs: updatedSelectedOutputs,
+                                  selectedVariables: updatedSelectedVars,
                                 };
                               });
 
@@ -575,7 +609,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                                   ...prevState.unitManagerData,
                                   [unitId]: {
                                     ...prevState.unitManagerData[unitId],
-                                    chartConfigs: chartConfigs,
+                                    chartConfigs: updatedConfigs,
                                   }
                                 }
                               };
@@ -595,7 +629,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
               <Menu style={{ flex: 1 }}>
                 <MenuItem text="Environment" disabled />
                 {selectMetadata?.filter((v) => v.type === "environment").map((item) => {
-                  const isChecked = selectedOutputs.includes(item.name);
+                  const isChecked = selectedVariables.includes(item.name);
                   return (
                     <MenuItem
                       key={item.label}
@@ -609,16 +643,16 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                               const itemName = item.name;
 
                               this.setState(prevState => {
-                                const chartConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config, idx) => {
+                                const updatedConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config, idx) => {
                                   if (idx !== chartId) return config;
 
-                                  const updatedSelectedOutputs = isChecked
-                                    ? [...config.selectedOutputs, itemName]
-                                    : config.selectedOutputs.filter((v) => v !== itemName);
+                                  const updatedSelectedVars = isChecked
+                                    ? [...config.selectedVariables, itemName]
+                                    : config.selectedVariables.filter((v) => v !== itemName);
 
                                   return {
                                     ...config,
-                                    selectedOutputs: updatedSelectedOutputs,
+                                    selectedVariables: updatedSelectedVars,
                                   };
                                 });
 
@@ -627,7 +661,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                                     ...prevState.unitManagerData,
                                     [unitId]: {
                                       ...prevState.unitManagerData[unitId],
-                                      chartConfigs: chartConfigs,
+                                      chartConfigs: updatedConfigs,
                                     }
                                   }
                                 };
@@ -647,40 +681,91 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
           placement="bottom-start"
         >
         <Button rightIcon={IconNames.CARET_DOWN} minimal>
-          {selectedOutputs.length > 0
-            ? `${selectedOutputs.length} selected`
+          {selectedVariables.length > 0
+            ? `${selectedVariables.length} selected`
             : "Select variables..."}
         </Button>
         </Popover2>
+
+        {/* Chart Type Dropdown */}
+        <Popover2
+          content={
+            <Menu>
+              {chartTypes.map((type) => (
+                <MenuItem
+                  key={type}
+                  text={type === 'line' 
+                          ? 'Line Chart' 
+                          : type === 'scatter' 
+                          ? 'Scatter Plot'
+                          : type === 'box'
+                          ? 'Box Plot'
+                          : 'Unknown Plot Type'}
+                  onClick={() => {
+                    this.setState((prevState) => {
+                      const updatedConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config) =>
+                        config.id === chartId
+                          ? { ...config, type }
+                          : config
+                      );
+                      return {
+                        unitManagerData: {
+                          ...prevState.unitManagerData,
+                          [unitId]: {
+                            ...prevState.unitManagerData[unitId],
+                            chartConfigs: updatedConfigs,
+                          },
+                        },
+                      };
+                    });
+                  }}
+                />
+              ))}
+            </Menu>
+          }
+          placement="bottom-start"
+        >
+          <Button rightIcon={IconNames.CARET_DOWN} minimal>
+            {chartConfig?.type === 'scatter'
+              ? 'Scatter Plot'
+              : chartConfig?.type === 'line'
+              ? 'Line Chart'
+              : chartConfig?.type === 'box'
+              ? 'Box Plot'
+              : 'Select Chart Type'}
+          </Button>
+        </Popover2>
+        </div>
+
       </Label>
     );
   };
 
-  handleChartSelect = (unitId:number, chartId: number, selectedOutputs: string[]) => {
+  handleChartSelect = (unitId:number, chartId: number, selectedVariables: string[]) => {
     this.setState((prevState) => ({
       unitManagerData: {
         ...prevState.unitManagerData,
         [unitId]: {
           ...prevState.unitManagerData[unitId],
           chartConfigs: prevState.unitManagerData[unitId].chartConfigs.map((cfg) =>
-            cfg.id === chartId ? { ...cfg, selectedOutputs } : cfg
+            cfg.id === chartId ? { ...cfg, selectedVariables } : cfg
           ),
         },
       },
     }));
   };
 
-  buildYAxisInfo = (unitId: number, chartId: number): AxisInfo[] => {
+  buildAxisInfo = (unitId: number, chartId: number): AxisInfo[] => {
     const unitData = this.state.unitManagerData[unitId];
     if (!unitData) return [];
   
     const chartConfig = unitData.chartConfigs.find((c) => c.id === chartId);
     if (!chartConfig) return [];
   
-    return chartConfig.selectedOutputs.map((outputName) => {
-      const yList = unitData.lineChartData.map((d) => d.values[outputName]);
-      const yAxisMin = Math.min(...yList);
-      const yAxisMax = Math.max(...yList);
+    return chartConfig.selectedVariables.map((outputName) => {
+      const values = unitData.lineChartData.map((d) => d.values[outputName]);
+      const yAxisMin = Math.min(...values);
+      const yAxisMax = Math.max(...values);
       const match = this.state.sensorMetadata.find(
         (o) => o.name === outputName
       );
@@ -690,7 +775,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
         unit: match?.unit || '', 
         min: yAxisMin,
         max: yAxisMax,
-        yList,
+        values,
       };
     });
   };  
@@ -700,9 +785,10 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
 
     // Unit setting for line charts
     const unitData = this.state.unitManagerData[unitId];
-    const yAxisInfo = this.buildYAxisInfo(unitId, chartIndex);
+    const yAxisInfo = this.buildAxisInfo(unitId, chartIndex);
     const primaryUnit = yAxisInfo[0]?.unit;
     let secondaryIndex: number | null = null;
+    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartIndex);
 
     for (let i = 1; i < yAxisInfo.length; i++) {
       if (yAxisInfo[i].unit !== primaryUnit) {
@@ -711,27 +797,34 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       }
     }
 
-    // Separate yLists based on axis assignment
+    // Separate values based on axis assignment
     const primaryYValues = yAxisInfo
       .filter((_, idx) => idx !== secondaryIndex)
-      .flatMap((info) => info.yList);
+      .flatMap((info) => info.values);
 
     const secondaryYValues = secondaryIndex !== null
-      ? yAxisInfo[secondaryIndex].yList
+      ? yAxisInfo[secondaryIndex].values
       : [];
+
+    const getDashStyle = (dash: string | undefined): Plotly.Dash => {
+      const valid: Plotly.Dash[] = ["solid", "dot", "dash", "longdash", "dashdot", "longdashdot"];
+      return valid.includes(dash as Plotly.Dash) ? (dash as Plotly.Dash) : "solid";
+    };
 
     return (
         <Plot
           key={`${unitId}-${chartIndex}`}
           data={yAxisInfo.map((info, idx) => ({
-            x: unitData.lineChartData.map((d) => d.time.split(" ")[1]),
-            y: info.yList,
+            x: unitData.lineChartData.slice(-100).map((d) => d.time.split(" ")[1]),
+            y: info.values.slice(-100),
             type: 'scatter',
             mode: 'lines',
             name: `${info.label} (${info.unit})`,
             line: {
               shape: 'spline',
-              color: `hsl(${(idx * 60) % 360}, 70%, 40%)`,
+              color: chartConfig?.vizSettings?.[idx]?.color ?? `hsl(${(idx * 60) % 360}, 70%, 40%)`,
+              width: chartConfig?.vizSettings?.[idx]?.line_width ?? 2,
+              dash: getDashStyle(chartConfig?.vizSettings?.[idx]?.line_dash)
             },
             yaxis: idx === secondaryIndex ? 'y2' : 'y', 
             hovertemplate: `%{y} ${info.unit}<extra>${info.label}</extra>`,
@@ -742,7 +835,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
             margin: { l: 40, r: 20, t: 0, b: 130 },
             xaxis: {
               title: {
-                text: 'Time from beginning of the year (days)',
+                text: 'Time (hh:mm:ss)',
                 font: { size: 14 },
                 standoff: 14,
               },
@@ -791,6 +884,199 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
               orientation: 'h',
               x: 0.5,
               y: -0.19,
+              xanchor: 'center',
+              yanchor: 'top',
+            },
+          }}
+          config={{ responsive: true }}
+          useResizeHandler
+          style={{ width: '100%', height: '100%' }}
+        />
+      );
+
+    };
+
+
+  // Render a Plotly scatter plot for selected outputs
+  renderScatterPlot = (unitId: number, chartIndex: number) => {
+
+    // Unit setting for line charts
+    const unitData = this.state.unitManagerData[unitId];
+    const axisInfo = this.buildAxisInfo(unitId, chartIndex);    
+    const xVar = axisInfo[0];
+    const yVar = axisInfo[1];
+    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartIndex);
+
+    return (
+        <Plot
+          key={`${unitId}-${chartIndex}`}
+          data={xVar && yVar ? Object.entries(
+                  unitData.lineChartData.reduce((acc, point) => {
+                    const occ = point.values["Occupancy"] ?? "unknown";
+                    const x = parseFloat(String(point.values[xVar.name]));
+                    const y = parseFloat(String(point.values[yVar.name]));
+
+                    if (!isNaN(x) && !isNaN(y)) {
+                      acc[occ] = acc[occ] || { x: [], y: [] };
+                      acc[occ].x.push(x);
+                      acc[occ].y.push(y);
+                    }
+                    return acc;
+                  }, {} as Record<string, { x: number[]; y: number[] }>)
+                ).map(([occ, coords], idx) => ({
+                  x: coords.x,
+                  y: coords.y,
+                  type: 'scatter',
+                  mode: 'markers',
+                  name: `${occ}`,
+                  marker: {
+                    color: chartConfig?.vizSettings?.[occ]?.color ?? `hsl(${(idx * 90) % 360}, 70%, 40%)`,
+                    size: chartConfig?.vizSettings?.[occ]?.marker_size ?? 6,
+                    symbol: chartConfig?.vizSettings?.[occ]?.marker_symbol ?? "circle"
+                  },
+                  xaxis: 'x',
+                  yaxis: 'y', 
+                  hovertemplate: `%{x} ${xVar.unit}, %{y} ${yVar.unit}<br>Occupancy: ${occ}`,
+                }))
+              : []}              
+          layout={{
+            autosize: true,
+            height: 370,
+            margin: { l: 40, r: 20, t: 0, b: 80 },
+
+            xaxis: {
+              title: {
+                text: xVar ? `${xVar.label} (${xVar.unit})` : 'X Axis',
+                font: { size: 14 },
+                standoff: 14,
+              },
+              tickfont: { size: 12, family: 'Arial' },
+              range:
+                xVar?.values?.length
+                  ? [Math.min(...xVar.values) * 0.99, Math.max(...xVar.values) * 1.01]
+                  : undefined,
+              showline: true,
+              tickmode: 'auto',
+              nticks: 5
+            },
+            yaxis: {
+              title: {
+                text: yVar ? `${yVar.label} (${yVar.unit})` : 'Y Axis',
+                font: { size: 14 },
+                standoff: 10,
+              },
+              tickfont: { size: 12, family: 'Arial' },
+              range:
+                yVar?.values?.length
+                  ? [Math.min(...yVar.values) * 0.99, Math.max(...yVar.values) * 1.01]
+                  : undefined,
+              showline: true,
+              automargin: true,
+            },
+
+            legend: {
+              font: { size: 14, family: 'Arial' },
+              orientation: 'h',
+              x: 0.5,
+              y: -0.19,
+              xanchor: 'center',
+              yanchor: 'top',
+            },
+          }}
+          config={{ responsive: true }}
+          useResizeHandler
+          style={{ width: '100%', height: '100%' }}
+        />
+      );
+
+    };
+
+  // Render a Plotly box plot with a selected outputs
+  renderBoxPlot = (unitId: number, chartIndex: number) => {
+
+    // Unit setting for line charts
+    const unitData = this.state.unitManagerData[unitId];
+    const axisInfo = this.buildAxisInfo(unitId, chartIndex);    
+    const yVar = axisInfo[0];
+    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartIndex);
+    
+    return (
+        <Plot
+          key={`${unitId}-${chartIndex}`}
+          data={
+            yVar
+              ? Object.entries(
+                  unitData.lineChartData.reduce((acc, point) => {
+                    const hour = new Date(point.time).getHours();
+                    const occ = point.values["Occupancy"] ?? "unknown";
+                    const y = parseFloat(String(point.values[yVar.name]));
+
+                    if (hour < 6 || hour > 20 || isNaN(y)) return acc;
+
+                    acc[occ] = acc[occ] || { x: [], y: [] };
+                    acc[occ].x.push(`Hour ${hour}`);
+                    acc[occ].y.push(y);
+
+                    return acc;
+                  }, {} as Record<string, { x: string[]; y: number[] }>)
+                ).map(([occ, coords], occIndex) => ({
+                  x: coords.x,
+                  y: coords.y,
+                  type: 'box',
+                  name: occ,
+                  // width: 0.9,
+                  marker: {
+                    color: chartConfig?.vizSettings?.[occ]?.color ?? `hsl(${(occIndex * 90) % 360}, 70%, 40%)`,
+                    size: chartConfig?.vizSettings?.[occ]?.marker_size ?? 6,
+                  },
+                  line: {
+                    width: chartConfig?.vizSettings?.[occ]?.line_width ?? 2,
+                  },
+                  boxpoints: 'outliers',
+                  hovertemplate: `%{y}<br>Occupancy: ${occ}`,
+                }))
+              : []
+          }         
+          layout={{
+            autosize: true,
+            height: 390,
+            margin: { l: 40, r: 20, t: 0, b: 100 },
+
+            xaxis: {
+              title: {
+                text: 'Hour of Day',
+                font: { size: 14 },
+                standoff: 14,
+              },
+              tickfont: { size: 12, family: 'Arial' },
+              categoryorder: 'array',
+              categoryarray: [
+                'Hour 6', 'Hour 7', 'Hour 8', 'Hour 9', 'Hour 10',
+                'Hour 11', 'Hour 12', 'Hour 13', 'Hour 14', 'Hour 15',
+                'Hour 16', 'Hour 17', 'Hour 18', 'Hour 19', 'Hour 20'
+              ],
+              showline: true,
+            },
+            yaxis: {
+              title: {
+                text: yVar ? `${yVar.label} (${yVar.unit})` : 'Y Axis',
+                font: { size: 14 },
+                standoff: 10,
+              },
+              tickfont: { size: 12, family: 'Arial' },
+              range:
+                yVar?.values?.length
+                  ? [Math.min(...yVar.values) * 0.99, Math.max(...yVar.values) * 1.01]
+                  : undefined,
+              showline: true,
+              automargin: true,
+            },
+            boxmode: 'group',
+            legend: {
+              font: { size: 14, family: 'Arial' },
+              orientation: 'h',
+              x: 0.5,
+              y: -0.26,
               xanchor: 'center',
               yanchor: 'top',
             },
@@ -887,6 +1173,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
           if (!unit?.id) continue; 
 
           const unitId = unit.id;
+          const defaultChartConfigs = convertChartConfigs((unit.configuration as any)?.chartConfigs);
 
           newUnitManagerData[unitId] = {
             id: unitId,
@@ -894,12 +1181,12 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
             system: unit.system,
             varList: [],
             ctrlValues: {},
-            chartConfigs: [{ id: 0, selectedOutputs: [] }], 
+            chartConfigs: defaultChartConfigs, //[{ id: 0, type: "line", selectedVariables: [] }], 
             lineChartData: [
               { index: 0, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 60} },
-              { index: 0, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 62} },
-              { index: 0, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 66} },
-              { index: 0, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 64} },
+              { index: 1, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 62} },
+              { index: 2, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 66} },
+              { index: 3, time: "2025-01-01 00:00:00", values: {con_oveTSetCoo_u: 64} },
             ],
           };
       
@@ -1263,20 +1550,28 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
                     </div>
 
                     <div className="row">
-                      {unitData?.chartConfigs?.map((chart) => {                        
+                      {unitData?.chartConfigs?.map((chart) => { 
+                        const chartType = chart.type;
+                        
                         return (
                           <div key={`${unit.id}-${chart.id}`} style={{ marginBottom: "10px" }}>
                             <div className="select">
                               {this.renderChartSelect(
                                 unit.id!,
                                 chart.id,
-                                `Line chart ${chart.id + 1}`,
+                                `Chart ${chart.id + 1}`,
                                 this.state.unitManagerData[unit.id!].lineChartData[0],
-                                chart.selectedOutputs,
+                                chart.selectedVariables,
                                 (newSelection) => this.handleChartSelect(unit.id!, chart.id, newSelection)
                               )}
                             </div>
-                            {this.renderLineChart(unit.id!, chart.id)}
+                            {chartType === "line" 
+                              ? this.renderLineChart(unit.id!, chart.id)
+                              : chartType === "scatter" 
+                              ? this.renderScatterPlot(unit.id!, chart.id)
+                              : chartType === "box"
+                              ? this.renderBoxPlot(unit.id!, chart.id)
+                              : null}
                           </div>
                         );
                       })}
@@ -1341,4 +1636,3 @@ const mapActionToProps = {
 };
 
 export default connect(mapStateToProps, mapActionToProps)(withLocation(Dashboard));
-``

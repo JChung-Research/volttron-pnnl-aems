@@ -193,6 +193,7 @@ const createConfigurationDefault = (unit: Partial<Units>): DeepPartial<UnitsFull
       sundaySchedule: unoccupied,
       holidaySchedule: unoccupied,
       holidays: holidays,
+      chartConfigs: {}
     },
   });
 };
@@ -246,6 +247,8 @@ const updateConfigurationDefaults = (unit: DeepPartial<UnitsFull>, json: any) =>
     }
     set(unit, `${k}.label`, createScheduleLabel("all", get(unit, k)));
   }
+
+  set(unit, "configuration.chartConfigs", get(json, "chart_configs", {}));
 };
 
 const transformUnit = (v: any, t: "create" | "update") => {

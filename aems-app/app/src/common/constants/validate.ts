@@ -1,7 +1,7 @@
 import { IBase, IConstant } from "../types";
 import Base from "./base";
 
-export type ValidateType = "unit" | "schedule" | "setpoint" | "controlSignal" | "damperPosition";
+export type ValidateType = "unit" | "schedule" | "setpoint";
 
 export interface IValidate extends IConstant {
   type: ValidateType;
@@ -9,8 +9,6 @@ export interface IValidate extends IConstant {
     | { default: string; min?: string; max?: string }
     | { default: boolean; min?: undefined; max?: undefined }
     | { default: number; min: number; max: number }
-    | { default: number; min: number; max: number }
-    | { default: number; min: number; max: number };
 }
 
 class Validate extends Base<IValidate> implements IBase<IValidate> {
@@ -234,7 +232,7 @@ class Validate extends Base<IValidate> implements IBase<IValidate> {
         label: "Economizer Setpoint",
         type: "unit" as ValidateType,
         options: { default: 45, min: 45, max: 70 },
-      },
+      }
     ]);
   }
 
