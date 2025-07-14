@@ -7,7 +7,7 @@ from flask import Flask, jsonify, request
 from flask_restful import Resource, Api, reqparse
 import pandas as pd
 from time import gmtime, strftime
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import BaseModel
 from typing import Optional, Dict
 import threading
@@ -32,7 +32,11 @@ VALID_PASSWORD = "admin"
 u = {} # Control values for forwarding to the VOLTTRON backend
 y = {} # Environmental and control values for forwarding to the AEMS applications
 t = {} # Control values for schedules, holidays, occupancy override
-u_uo = {} # Control values for unoccuppied zone teperature setpoints
+u_uo = {} # Control values for unoccuppied zone temperature setpoints
+u_o = {} # Control values for occupied zone temperature setpoints
+o = {} # Occupancy values for each building system / zone
+timestamp = datetime.now()
+time_accelerator = True # Accelerate the time step to 5 min (same as the time step of the BOPTEST emulation), otherwise the time step is 5 second
 
 # ----------------- DATA CONVERSION TOOL -----------------
 
@@ -192,6 +196,18 @@ data_mapping = {
         "label": "Heating power consumption",
         "type": "environment",
         "unit": "W"
+    },
+    "reaQHea_y": {
+        "name": "HeatingPowerConsumption",
+        "label": "Heating power consumption",
+        "type": "environment",
+        "unit": "W"
+    },
+    "occupancy": {
+        "name": "Occupancy",
+        "label": "Occuapncy",
+        "type": "occupancy",
+        "unit": "bool"
     }
 }
 
@@ -333,8 +349,13 @@ def get_temperature_setpoints(y_, system_id):
     Returns:
         list[dict]: Emulated or actual sensor readings / control signals for that system
     """
+
+    occ_object = data_mapping['occupancy'].copy()
+    occ_object['value'] = o[system_id]
+    y_copied = y_[system_id].copy()
+    y_copied.append(occ_object)
     
-    return y_[system_id]
+    return y_copied
 
 # ------------------ VOLTTRON AGENTS CONTROLLER ---------------
 def set_temperature_setpoints(system_id, control_signals): #(y_, control_signals):
@@ -352,6 +373,7 @@ def set_temperature_setpoints(system_id, control_signals): #(y_, control_signals
     try:
         global u
         global u_uo
+        global u_o
         global y
 
         control_data = restructure_control_data(control_signals)
@@ -359,7 +381,8 @@ def set_temperature_setpoints(system_id, control_signals): #(y_, control_signals
 
         name_to_key = {v["name"]: k for k, v in data_mapping.items()}
         u[system_id] = {name_to_key[k]: v for k, v in control_signals.items() if k in name_to_key}
-        u_uo[system_id] = {k: v for k, v in control_signals.items() if k in ['UnoccupiedCoolingSetPoint', 'UnoccupiedHeatingSetPoint']}        
+        u_o[system_id] = {k: v for k, v in control_signals.items() if k in ['ZoneAirCoolingSetpoint', 'ZoneAirHeatingSetpoint', 'ZoneOperativeCoolingSetpoint', 'ZoneOperativeHeatingSetpoint']}
+        u_uo[system_id] = {k: v for k, v in control_signals.items() if k in ['UnoccupiedCoolingSetPoint', 'UnoccupiedHeatingSetPoint']}
 
     except Exception as e:
         return {'status': 400, 'message': f'Unexpected input: {str(e)}', 'payload': None}
@@ -518,9 +541,9 @@ def get_current_occupancy_state(system_id, t):
         str: "occupied" or "unoccupied"
     """
     
-    now = datetime.now()
-    today_str = now.strftime("%Y-%m-%d")
-    current_time = now.time()
+    # now = datetime.now()
+    today_str = timestamp.strftime("%Y-%m-%d")
+    current_time = timestamp.time()
 
     # 1. Check manual occupancy overrides
     occupancies = t[system_id].get("occupancies", {})
@@ -537,7 +560,7 @@ def get_current_occupancy_state(system_id, t):
         return "unoccupied"
 
     # 3. Check weekly schedule
-    weekday = now.strftime("%A")  # 'Monday', 'Tuesday', ...
+    weekday = timestamp.strftime("%A")  # 'Monday', 'Tuesday', ...
     schedule = t[system_id].get("schedules", {}).get(weekday)
 
     if schedule == "always_off":
@@ -597,6 +620,7 @@ class building_control(Resource):
             global u
             global u_uo
             global t
+            global o
 
             body = request.get_json()
             y_env = restructure_sensor_data_by_zone(body)
@@ -608,9 +632,11 @@ class building_control(Resource):
 
             # These default values will be replaced with the values from configuration files in the next updates
             u.setdefault(system_id, {key: value for key, value in control_signals.items() if data_mapping[key]["type"] == "control"})
+            u_o.setdefault(system_id, {'ZoneOperativeCoolingSetpoint': 80, 'ZoneOperativeHeatingSetpoint': 60, 'ZoneAirCoolingSetpoint': 80, 'ZoneAirHeatingSetpoint': 60})
             u_uo.setdefault(system_id, {'UnoccupiedCoolingSetPoint': 80, 'UnoccupiedHeatingSetPoint': 60})
             t.setdefault(system_id, {'occupancies': {}, 'holidays': ['2025-01-01', '2025-05-26', '2025-06-19', '2025-07-04', '2025-09-01', '2025-11-27', '2025-11-28', '2025-12-24', '2025-12-25'], 'schedules': {'Monday': {'start': '06:30', 'end': '18:00'}, 'Tuesday': {'start': '06:30', 'end': '18:00'}, 'Wednesday': {'start': '06:30', 'end': '18:00'}, 'Thursday': {'start': '06:30', 'end': '18:00'}, 'Friday': {'start': '06:30', 'end': '18:00'}, 'Saturday': 'always_off', 'Sunday': 'always_off'}})
-            
+            o.setdefault(system_id, 'unoccupied')
+
             # Check if holiday, schedule, and occupancy informaion is available.
             if system_id not in t or not all(k in t[system_id] for k in ["holidays", "schedules", "occupancies"]):
                 print("[INFO] Holiday, schedule, and occupancy information is currently unavailable.")
@@ -618,16 +644,17 @@ class building_control(Resource):
             else:
                 # Check an occupancy state at the current time
                 current_state = get_current_occupancy_state(system_id, t)
+                o[system_id] = current_state
                 print(f"[INFO] System '{system_id}' is currently: {current_state}")
                 
-                if current_state == "unoccupied":                    
-                    target_names = {
-                        "ZoneAirCoolingSetpoint",
-                        "ZoneAirHeatingSetpoint",
-                        "ZoneOperativeCoolingSetpoint",
-                        "ZoneOperativeHeatingSetpoint"
-                    }
+                target_names = {
+                    "ZoneAirCoolingSetpoint",
+                    "ZoneAirHeatingSetpoint",
+                    "ZoneOperativeCoolingSetpoint",
+                    "ZoneOperativeHeatingSetpoint"
+                }
 
+                if current_state == "unoccupied":
                     # Replace occupied temperature setpoints with unoccupied temperature setpoints within global u variable
                     for key in u[system_id]:
                         setpoint_name = data_mapping[key]["name"]
@@ -636,15 +663,32 @@ class building_control(Resource):
                                 u[system_id][key] = u_uo[system_id]['UnoccupiedCoolingSetPoint']
                             elif 'Heating' in setpoint_name:
                                 u[system_id][key] = u_uo[system_id]['UnoccupiedHeatingSetPoint']
-                    
-                    renamed_data = {
-                        data_mapping[key]["name"]: value
-                        for key, value in u[system_id].items()
-                    }
 
-                    # Update global y variable
-                    control_data = restructure_control_data(renamed_data)
-                    y = update_zone_controls(y, system_id, control_data)                               
+                else:
+                    # Replace unoccupied temperature setpoints with occupied temperature setpoints within global u variable
+                    for key in u[system_id]:
+                        setpoint_name = data_mapping[key]["name"]
+                        if setpoint_name in target_names:
+                            if 'Cooling' in setpoint_name:
+                                u[system_id][key] = u_o[system_id][setpoint_name]
+                            elif 'Heating' in setpoint_name:
+                                u[system_id][key] = u_o[system_id][setpoint_name]
+                    
+                renamed_data = {
+                    data_mapping[key]["name"]: value
+                    for key, value in u[system_id].items()
+                }
+
+                # Update global y variable
+                control_data = restructure_control_data(renamed_data)
+                y = update_zone_controls(y, system_id, control_data)
+
+            if time_accelerator: 
+                global timestamp
+                timestamp += timedelta(minutes=5)
+                print("timestamp2: ", timestamp)
+            else:
+                timestamp = datetime.now()
 
         except Exception as e:
             return {'status': 400, 'message': f'Unexpected input: {str(e)}', 'payload': None}
@@ -680,13 +724,12 @@ class ui_control(Resource):
         except Exception as e:
             return {'status': 400, 'message': f'Invalid input: {str(e)}', 'payload': None}
 
-        currentTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # currentTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         payload = {}
 
         if req.params.authentication:
             if req.method == "get_temperature_setpoints":
                 payload = get_temperature_setpoints(y, req.id) if (len(y) > 0) else None
-                # print("\nPayload for get_temp", payload)
             elif req.method == "set_temperature_setpoints":
                 payload = set_temperature_setpoints(req.id, req.params.data)
             elif req.method == "set_holidays":
@@ -713,7 +756,7 @@ class ui_control(Resource):
             'jsonrpc': req.jsonrpc,
             'id': req.id,
             'method': req.method,
-            'timestamp': currentTimestamp,
+            'timestamp': timestamp.strftime("%Y-%m-%d %H:%M:%S"),# currentTimestamp,
             'payload': payload
         }
 

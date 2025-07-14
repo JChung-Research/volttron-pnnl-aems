@@ -55,7 +55,7 @@ utils.setup_logging()
 _log = logging.getLogger(__name__)
 __version__ = '3.3'
 
-DEFAULT_HEARTBEAT_PERIOD =10
+DEFAULT_HEARTBEAT_PERIOD =5
 API_HEADER = {'Content-Type': 'application/json'}
 
 # Temperature unit converters (Kelvin / Fahrenheit degree)
