@@ -36,7 +36,7 @@ u_uo = {} # Control values for unoccuppied zone temperature setpoints
 u_o = {} # Control values for occupied zone temperature setpoints
 o = {} # Occupancy values for each building system / zone
 timestamp = datetime.now()
-time_accelerator = True # Accelerate the time step to 5 min (same as the time step of the BOPTEST emulation), otherwise the time step is 5 second
+time_accelerator = False # Accelerate the time step to 5 min (same as the time step of the BOPTEST emulation), otherwise the time step is 5 second
 
 # ----------------- DATA CONVERSION TOOL -----------------
 
@@ -208,6 +208,30 @@ data_mapping = {
         "label": "Occuapncy",
         "type": "occupancy",
         "unit": "bool"
+    },
+    "ZoneTemperature": {
+        "name": "ZoneAirTemperature",
+        "label": "Zone air temperature",
+        "type": "environment",
+        "unit": "°F"
+    },
+    "desiredHeat": {
+        "name": "ZoneAirHeatingSetpoint",
+        "label": "Zone temperature setpoint for heating",
+        "type": "control",
+        "unit": "°F"
+    },
+    "desiredCool": {
+        "name": "ZoneAirCoolingSetpoint",
+        "label": "Zone temperature setpoint for cooling",
+        "type": "control",
+        "unit": "°F"
+    },
+    "HVACMode": {
+        "name": "HVACMode",
+        "label": "HVAC mode",
+        "type": "control",
+        "unit": "bool"
     }
 }
 
@@ -226,12 +250,12 @@ def restructure_sensor_data_by_zone(raw_zone_data):
     
     for system_id, sensors in raw_zone_data.items():
         structured_entries = []
-        for boptest_var, value in sensors.items():           
-            entry = data_mapping[boptest_var].copy()
+        for var, value in sensors.items():           
+            entry = data_mapping[var].copy()
             entry["value"] = value
             structured_entries.append(entry)
         output[f"manager.zone-{system_id}"] = structured_entries
-    
+
     return output
 
 
@@ -351,6 +375,8 @@ def get_temperature_setpoints(y_, system_id):
     """
 
     occ_object = data_mapping['occupancy'].copy()
+    print("global o: ", o)
+    
     occ_object['value'] = o[system_id]
     y_copied = y_[system_id].copy()
     y_copied.append(occ_object)
@@ -358,7 +384,7 @@ def get_temperature_setpoints(y_, system_id):
     return y_copied
 
 # ------------------ VOLTTRON AGENTS CONTROLLER ---------------
-def set_temperature_setpoints(system_id, control_signals): #(y_, control_signals):
+def set_temperature_setpoints(system_id, control_signals):
     """`    
     Updates control data in 'y' and sends control signals to the physical/emulated backend (e.g., BOPTEST).
 
@@ -429,7 +455,6 @@ def set_holidays(system_id, holidays):
         # Create a temporary holiday calendar with these rules        
         TempCalendar = type("TempCalendar", (AbstractHolidayCalendar,), {"rules": holiday_rules})
 
-        # HERE: error:  name 'rules' is not defined!!!
         holiday_dates = pd.to_datetime(TempCalendar().holidays(start=start_date, end=end_date))
         holiday_dates = holiday_dates.sort_values().unique()
 
@@ -540,8 +565,7 @@ def get_current_occupancy_state(system_id, t):
     Returns:
         str: "occupied" or "unoccupied"
     """
-    
-    # now = datetime.now()
+
     today_str = timestamp.strftime("%Y-%m-%d")
     current_time = timestamp.time()
 
@@ -623,76 +647,77 @@ class building_control(Resource):
             global o
 
             body = request.get_json()
-            y_env = restructure_sensor_data_by_zone(body)
-            y = update_zone_environment(y, y_env)
-                         
-            
-            system_id = f"manager.zone-{next(iter(body.keys()))}"
-            control_signals = next(iter(body.values()))
+            system_data = body.get(next(iter(body))) if next(iter(body)) == '3147' else body
 
-            # These default values will be replaced with the values from configuration files in the next updates
-            u.setdefault(system_id, {key: value for key, value in control_signals.items() if data_mapping[key]["type"] == "control"})
-            u_o.setdefault(system_id, {'ZoneOperativeCoolingSetpoint': 80, 'ZoneOperativeHeatingSetpoint': 60, 'ZoneAirCoolingSetpoint': 80, 'ZoneAirHeatingSetpoint': 60})
-            u_uo.setdefault(system_id, {'UnoccupiedCoolingSetPoint': 80, 'UnoccupiedHeatingSetPoint': 60})
-            t.setdefault(system_id, {'occupancies': {}, 'holidays': ['2025-01-01', '2025-05-26', '2025-06-19', '2025-07-04', '2025-09-01', '2025-11-27', '2025-11-28', '2025-12-24', '2025-12-25'], 'schedules': {'Monday': {'start': '06:30', 'end': '18:00'}, 'Tuesday': {'start': '06:30', 'end': '18:00'}, 'Wednesday': {'start': '06:30', 'end': '18:00'}, 'Thursday': {'start': '06:30', 'end': '18:00'}, 'Friday': {'start': '06:30', 'end': '18:00'}, 'Saturday': 'always_off', 'Sunday': 'always_off'}})
-            o.setdefault(system_id, 'unoccupied')
+            y_env = restructure_sensor_data_by_zone(system_data)
+            y = update_zone_environment(y, y_env)                         
 
-            # Check if holiday, schedule, and occupancy informaion is available.
-            if system_id not in t or not all(k in t[system_id] for k in ["holidays", "schedules", "occupancies"]):
-                print("[INFO] Holiday, schedule, and occupancy information is currently unavailable.")
-            
-            else:
-                # Check an occupancy state at the current time
-                current_state = get_current_occupancy_state(system_id, t)
-                o[system_id] = current_state
-                print(f"[INFO] System '{system_id}' is currently: {current_state}")
+            for key in system_data.keys():
+                system_id = f"manager.zone-{key}"
+                control_signals = system_data[key]
+
+                # These default values will be replaced with the values from configuration files in the next updates
+                u.setdefault(system_id, {key: value for key, value in control_signals.items() if data_mapping[key]["type"] == "control"})
+                u_o.setdefault(system_id, {'ZoneOperativeCoolingSetpoint': 80, 'ZoneOperativeHeatingSetpoint': 60, 'ZoneAirCoolingSetpoint': 80, 'ZoneAirHeatingSetpoint': 60})
+                u_uo.setdefault(system_id, {'UnoccupiedCoolingSetPoint': 80, 'UnoccupiedHeatingSetPoint': 60})
+                t.setdefault(system_id, {'occupancies': {}, 'holidays': ['2025-01-01', '2025-05-26', '2025-06-19', '2025-07-04', '2025-09-01', '2025-11-27', '2025-11-28', '2025-12-24', '2025-12-25'], 'schedules': {'Monday': {'start': '06:30', 'end': '18:00'}, 'Tuesday': {'start': '06:30', 'end': '18:00'}, 'Wednesday': {'start': '06:30', 'end': '18:00'}, 'Thursday': {'start': '06:30', 'end': '18:00'}, 'Friday': {'start': '06:30', 'end': '18:00'}, 'Saturday': 'always_off', 'Sunday': 'always_off'}})
+                o.setdefault(system_id, 'unoccupied')
+
+                # Check if holiday, schedule, and occupancy informaion is available.
+                if system_id not in t or not all(k in t[system_id] for k in ["holidays", "schedules", "occupancies"]):
+                    print("[INFO] Holiday, schedule, and occupancy information is currently unavailable.")
                 
-                target_names = {
-                    "ZoneAirCoolingSetpoint",
-                    "ZoneAirHeatingSetpoint",
-                    "ZoneOperativeCoolingSetpoint",
-                    "ZoneOperativeHeatingSetpoint"
-                }
-
-                if current_state == "unoccupied":
-                    # Replace occupied temperature setpoints with unoccupied temperature setpoints within global u variable
-                    for key in u[system_id]:
-                        setpoint_name = data_mapping[key]["name"]
-                        if setpoint_name in target_names:
-                            if 'Cooling' in setpoint_name:
-                                u[system_id][key] = u_uo[system_id]['UnoccupiedCoolingSetPoint']
-                            elif 'Heating' in setpoint_name:
-                                u[system_id][key] = u_uo[system_id]['UnoccupiedHeatingSetPoint']
-
-                else:
-                    # Replace unoccupied temperature setpoints with occupied temperature setpoints within global u variable
-                    for key in u[system_id]:
-                        setpoint_name = data_mapping[key]["name"]
-                        if setpoint_name in target_names:
-                            if 'Cooling' in setpoint_name:
-                                u[system_id][key] = u_o[system_id][setpoint_name]
-                            elif 'Heating' in setpoint_name:
-                                u[system_id][key] = u_o[system_id][setpoint_name]
+                else:                    
+                    # Check an occupancy state at the current time
+                    current_state = get_current_occupancy_state(system_id, t)
+                    o[system_id] = current_state
+                    print(f"[INFO] System '{system_id}' is currently: {current_state}")
                     
-                renamed_data = {
-                    data_mapping[key]["name"]: value
-                    for key, value in u[system_id].items()
-                }
+                    target_names = {
+                        "ZoneAirCoolingSetpoint",
+                        "ZoneAirHeatingSetpoint",
+                        "ZoneOperativeCoolingSetpoint",
+                        "ZoneOperativeHeatingSetpoint"
+                    }
 
-                # Update global y variable
-                control_data = restructure_control_data(renamed_data)
-                y = update_zone_controls(y, system_id, control_data)
+                    for key in u[system_id]:
+                        setpoint_name = data_mapping[key]["name"]
+                        if setpoint_name in target_names:
+                            # Replace occupied temperature setpoints with unoccupied temperature setpoints within global u variable, vice versa
+                            if current_state == "unoccupied":
+                                if 'Cooling' in setpoint_name:
+                                    u[system_id][key] = u_uo[system_id]['UnoccupiedCoolingSetPoint']
+                                elif 'Heating' in setpoint_name:
+                                    u[system_id][key] = u_uo[system_id]['UnoccupiedHeatingSetPoint']
+                            else:
+                                u[system_id][key] = u_o[system_id][setpoint_name]
+            
+                    renamed_data = {
+                        data_mapping[key]["name"]: value
+                        for key, value in u[system_id].items()
+                    }
+
+                    # Update global y variable
+                    control_data = restructure_control_data(renamed_data)
+                    y = update_zone_controls(y, system_id, control_data)
+
+
+            if next(iter(body)) == '3147':
+                updated_u = {key: u[f"manager.zone-{key}"] for key in system_data.keys() if f"manager.zone-{key}" in u.keys()}
+            else:
+                updated_u = next((v for k, v in u.items() if k in [f"manager.zone-{key}" for key in system_data.keys()]), None)
+                print("updated_u: ", updated_u)
 
             if time_accelerator: 
                 global timestamp
                 timestamp += timedelta(minutes=5)
-                print("timestamp2: ", timestamp)
+                print("timestamp: ", timestamp)
             else:
                 timestamp = datetime.now()
 
         except Exception as e:
             return {'status': 400, 'message': f'Unexpected input: {str(e)}', 'payload': None}
-        return {'status':200, 'message':'Success', 'payload': u[system_id]}
+        return {'status':200, 'message':'Success', 'payload': updated_u}
         
 
 # ----------------- JSON-RPC INTERFACE -----------------

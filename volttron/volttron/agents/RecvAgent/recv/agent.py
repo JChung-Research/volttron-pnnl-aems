@@ -91,7 +91,7 @@ class RecvAgent(Agent):
         topic = self.inputs.get('topic', None)
         if topic is not None:
             callback = self.on_match_topic
-            _log.info('subscribed to ' + topic)
+            _log.info('[RecvAgent] subscribed to ' + topic)
             self.vip.pubsub.subscribe(peer='pubsub', prefix=topic, callback=callback)
 
 
