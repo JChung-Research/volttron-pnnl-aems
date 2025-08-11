@@ -20,6 +20,7 @@ import {
   ZONEOPERATIVECOOLINGSETPOINT_DEFAULT,
   ZONEOPERATIVEHEATINGSETPOINT_DEFAULT,
   CONTROLSTAGEPUMP_DEFAULT,
+  HVACMODE_DEFAULT,
   createSetpointLabel,
 } from "utils/setpoint";
 import { END_TIME_DEFAULT, START_TIME_DEFAULT, createScheduleLabel, toDataFormat } from "utils/schedule";
@@ -61,7 +62,8 @@ const createConfigurationDefault = (label: string = createConfigurationLabel()):
     zoneAirHeatingSetpoint: ZONEAIRHEATINGSETPOINT_DEFAULT,
     zoneOperativeCoolingSetpoint: ZONEOPERATIVECOOLINGSETPOINT_DEFAULT,
     zoneOperativeHeatingSetpoint: ZONEOPERATIVEHEATINGSETPOINT_DEFAULT,
-    controlStagePump: CONTROLSTAGEPUMP_DEFAULT
+    controlStagePump: CONTROLSTAGEPUMP_DEFAULT,
+    hvacMode: HVACMODE_DEFAULT
   };
   setpoint.label = createSetpointLabel("all", setpoint);
   const schedule = {

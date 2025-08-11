@@ -140,6 +140,12 @@ class Validate extends Base<IValidate> implements IBase<IValidate> {
         type: "setpoint" as ValidateType,
         options: { default: -1, min: 0, max: 1 },
       },
+      {
+        name: "hvacMode",
+        label: "HVACMode",
+        type: "setpoint" as ValidateType,
+        options: { default: "" },
+      },
 
       { name: "startTime", label: "Start Time", type: "schedule" as ValidateType, options: { default: "08:00" } },
       { name: "endTime", label: "End Time", type: "schedule" as ValidateType, options: { default: "18:00" } },
@@ -258,6 +264,7 @@ class Validate extends Base<IValidate> implements IBase<IValidate> {
   ZoneOperativeCoolingSetpoint = this.parseStrict("zoneOperativeCoolingSetpoint");
   ZoneOperativeHeatingSetpoint = this.parseStrict("zoneOperativeHeatingSetpoint");
   ControlStagePump = this.parseStrict("controlStagePump");
+  HVACMode = this.parseStrict("hvacMode");
 
   StartTimeType = this.parseStrict("startTime");
   EndTimeType = this.parseStrict("endTime");

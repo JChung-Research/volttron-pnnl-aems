@@ -56,7 +56,7 @@ const createConfigurationLabel = (unit: Partial<Units>) => {
   return `${unit.label} - ${moment().format("dddd, MMMM Do YYYY")}`;
 };
 
-const createSetpointLabel = (type: "all" | "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump", setpoint: any): string => {
+const createSetpointLabel = (type: "all" | "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump" | "hvacMode", setpoint: any): string => {
   switch (type) {
     case "all":
       return `Occupied Setpoint: ${createSetpointLabel("setpoint", setpoint)} Deadband: ${createSetpointLabel(
@@ -64,7 +64,7 @@ const createSetpointLabel = (type: "all" | "setpoint" | "deadband" | "heating" |
         "cooling", setpoint)} Supply Duct Pressure: ${createSetpointLabel("supplyDuctPressure", setpoint)} Cooling Coil Valve: ${createSetpointLabel(
         "coolingCoilValve", setpoint)}  Heating Coil Valve: ${createSetpointLabel("heatingCoilValve", setpoint)}  Cooling Coil Pump: ${createSetpointLabel(
         "coolingCoilPump", setpoint)}  Heating Coil Pump: ${createSetpointLabel("heatingCoilPump", setpoint)}  Supply Fan Speed: ${createSetpointLabel(
-        "supplyFanSpeed", setpoint)} Supply Air Setpoint: ${createSetpointLabel("supplyAirSetpoint", setpoint)} Supply Heater Setpoint: ${createSetpointLabel("supplyHeaterSetpoint", setpoint)} Outside Air Damper Position: ${createSetpointLabel("outsideAirDamperPosition", setpoint)} Return Air Damper Position: ${createSetpointLabel("returnAirDamperPosition", setpoint)} Zone Damper Position: ${createSetpointLabel("zoneDamperPosition", setpoint)} Zone Reheat Control: ${createSetpointLabel("zoneReheatControl", setpoint)} Zone Air Cooling Setpoint: ${createSetpointLabel("zoneAirCoolingSetpoint", setpoint)} Zone Air Heating Setpoint: ${createSetpointLabel("zoneAirHeatingSetpoint", setpoint)} Zone Operative Cooling Setpoint: ${createSetpointLabel("zoneOperativeCoolingSetpoint", setpoint)} Zone Operative Heating Setpoint: ${createSetpointLabel("zoneOperativeHeatingSetpoint", setpoint)} Control Stage Pump: ${createSetpointLabel("controlStagePump", setpoint)}`;
+        "supplyFanSpeed", setpoint)} Supply Air Setpoint: ${createSetpointLabel("supplyAirSetpoint", setpoint)} Supply Heater Setpoint: ${createSetpointLabel("supplyHeaterSetpoint", setpoint)} Outside Air Damper Position: ${createSetpointLabel("outsideAirDamperPosition", setpoint)} Return Air Damper Position: ${createSetpointLabel("returnAirDamperPosition", setpoint)} Zone Damper Position: ${createSetpointLabel("zoneDamperPosition", setpoint)} Zone Reheat Control: ${createSetpointLabel("zoneReheatControl", setpoint)} Zone Air Cooling Setpoint: ${createSetpointLabel("zoneAirCoolingSetpoint", setpoint)} Zone Air Heating Setpoint: ${createSetpointLabel("zoneAirHeatingSetpoint", setpoint)} Zone Operative Cooling Setpoint: ${createSetpointLabel("zoneOperativeCoolingSetpoint", setpoint)} Zone Operative Heating Setpoint: ${createSetpointLabel("zoneOperativeHeatingSetpoint", setpoint)} Control Stage Pump: ${createSetpointLabel("controlStagePump", setpoint)} HVAC Mode: ${createSetpointLabel("hvacMode", setpoint)}`;
     case "setpoint":
     case "deadband":
     case "heating":
@@ -86,6 +86,7 @@ const createSetpointLabel = (type: "all" | "setpoint" | "deadband" | "heating" |
     case "zoneOperativeCoolingSetpoint":
     case "zoneOperativeHeatingSetpoint":
     case "controlStagePump":
+    case "hvacMode":
     default:
       return `${setpoint[type]}º\xa0F`;
   }
@@ -148,7 +149,8 @@ const createConfigurationDefault = (unit: Partial<Units>): DeepPartial<UnitsFull
     zoneAirHeatingSetpoint: ValidateType.ZoneAirHeatingSetpoint.options?.default as number,
     zoneOperativeCoolingSetpoint: ValidateType.ZoneOperativeCoolingSetpoint.options?.default as number,
     zoneOperativeHeatingSetpoint: ValidateType.ZoneOperativeHeatingSetpoint.options?.default as number,
-    controlStagePump: ValidateType.ControlStagePump.options?.default as number
+    controlStagePump: ValidateType.ControlStagePump.options?.default as number,
+    hvacMode: ValidateType.HVACMode.options?.default as string
   };
   setpoint.label = createSetpointLabel("all", setpoint);
   const schedule: Partial<Schedules> = {
@@ -225,6 +227,7 @@ const updateConfigurationDefaults = (unit: DeepPartial<UnitsFull>, json: any) =>
     ["configuration.setpoint.zoneOperativeCoolingSetpoint", "default_setpoints.ZoneOperativeCoolingSetpoint"],
     ["configuration.setpoint.zoneOperativeHeatingSetpoint", "default_setpoints.ZoneOperativeHeatingSetpoint"],
     ["configuration.setpoint.controlStagePump", "default_setpoints.ControlStagePump"],
+    ["configuration.setpoint.hvacMode", "default_setpoints.HVACMode"],
   ]) {
     set(unit, k, get(json, v, get(unit, k)));
   }

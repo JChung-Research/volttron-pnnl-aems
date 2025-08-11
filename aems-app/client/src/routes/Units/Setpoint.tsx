@@ -47,7 +47,11 @@ import {
   Label,
   MultiSlider,
   NumericInput,
+  ButtonGroup,
+  Button,
+  IconName
 } from "@blueprintjs/core";
+import { IconNames } from "@blueprintjs/icons";
 import { clamp, get, merge } from "lodash";
 import { useCallback, useMemo } from "react";
 
@@ -110,8 +114,9 @@ export function Setpoint(props: {
           const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
           const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
           const controlStagePump = getValue(`${path}.controlStagePump`);
+          const hvacMode = getValue(`${path}.hvacMode`);
 
-          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
           handleChange(`${path}`, editing)({ heating, label });
         }}
       />
@@ -142,9 +147,10 @@ export function Setpoint(props: {
           const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
           const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
           const controlStagePump = getValue(`${path}.controlStagePump`);
+          const hvacMode = getValue(`${path}.hvacMode`);
           const value = v + deadband / 2;
           const setpoint = clamp(value, heating + padding, cooling - padding);
-          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
           handleChange(`${path}`, editing)({ setpoint, label });
         }}
       />
@@ -175,9 +181,10 @@ export function Setpoint(props: {
           const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
           const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
           const controlStagePump = getValue(`${path}.controlStagePump`);
+          const hvacMode = getValue(`${path}.hvacMode`);
           const value = v - deadband / 2;
           const setpoint = clamp(value, heating + padding, cooling - padding);
-          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
           handleChange(`${path}`, editing)({ setpoint, label });
         }}
       />
@@ -209,7 +216,8 @@ export function Setpoint(props: {
           const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
           const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
           const controlStagePump = getValue(`${path}.controlStagePump`);
-          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+          const hvacMode = getValue(`${path}.hvacMode`);
+          const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
           handleChange(`${path}`, editing)({ cooling, label });
         }}
       />
@@ -255,9 +263,10 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
             const value = v + deadband / 2;
             const setpoint = clamp(value, heating + padding, cooling - padding);
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ setpoint, label });
           }}
         />
@@ -289,9 +298,10 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
             const value = v - deadband / 2;
             const setpoint = clamp(value, heating + padding, cooling - padding);
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ setpoint, label });
           }}
         />
@@ -337,8 +347,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ heating, label });
           }}
         />
@@ -370,8 +381,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ cooling, label });
           }}
         />
@@ -418,8 +430,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ heating, label });
           }}
         />
@@ -452,8 +465,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ cooling, label });
           }}
         />
@@ -500,8 +514,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ supplyDuctPressure, label });
           }}
         />
@@ -547,8 +562,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ coolingCoilValve, label });
           }}
         />
@@ -593,8 +609,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ heatingCoilValve, label });
           }}
         />
@@ -639,8 +656,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ coolingCoilPump, label });
           }}
         />
@@ -685,8 +703,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ heatingCoilPump, label });
           }}
         />
@@ -731,8 +750,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ supplyFanSpeed, label });
           }}
         />
@@ -778,8 +798,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ supplyAirSetpoint, label });
           }}
         />
@@ -825,8 +846,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ supplyHeaterSetpoint, label });
           }}
         />
@@ -872,8 +894,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ outsideAirDamperPosition, label });
           }}
         />
@@ -919,8 +942,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ returnAirDamperPosition, label });
           }}
         />
@@ -966,8 +990,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ zoneDamperPosition, label });
           }}
         />
@@ -1013,8 +1038,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ zoneReheatControl, label });
           }}
         />
@@ -1063,8 +1089,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ zoneAirHeatingSetpoint, label });
           }}
         />
@@ -1099,8 +1126,9 @@ export function Setpoint(props: {
             const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
             
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ zoneAirCoolingSetpoint, label });
           }}
         />
@@ -1149,7 +1177,8 @@ export function Setpoint(props: {
               (Math.round(clamp(v, HEATING_MIN, setpoint - padding) * 10) / 10).toFixed(1)
             );
             const controlStagePump = getValue(`${path}.controlStagePump`);
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const hvacMode = getValue(`${path}.hvacMode`);
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ zoneOperativeHeatingSetpoint, label });
           }}
         />
@@ -1184,8 +1213,9 @@ export function Setpoint(props: {
             );
             const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
             const controlStagePump = getValue(`${path}.controlStagePump`);
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ zoneOperativeCoolingSetpoint, label });
           }}
         />
@@ -1232,8 +1262,9 @@ export function Setpoint(props: {
             const controlStagePump = parseFloat(
               (Math.round(clamp(v, CONTROLSTAGEPUMP_MIN, CONTROLSTAGEPUMP_MAX) * 10) / 10).toFixed(1)
             );
+            const hvacMode = getValue(`${path}.hvacMode`);
 
-            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump });
+            const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
             handleChange(`${path}`, editing)({ controlStagePump, label });
           }}
         />
@@ -1241,6 +1272,62 @@ export function Setpoint(props: {
     </Label>
   );
 
+
+  type HvacMode = "auto" | "cooling" | "heating";
+
+  const HVAC_MODES: { key: HvacMode; label: string; icon: IconName }[] = [
+    { key: "auto",    label: "Auto",    icon: IconNames.AUTOMATIC_UPDATES },
+    { key: "cooling", label: "Cooling", icon: IconNames.SNOWFLAKE },
+    { key: "heating", label: "Heating", icon: IconNames.FLAME },
+  ];
+
+  const renderHvacMode  = () => {
+    const mode = (getValue(`${path}.hvacMode`) ?? "auto") as HvacMode;
+
+    return (
+      <Label>
+        <b>HVAC Mode</b>
+        <ButtonGroup>
+          {HVAC_MODES.map(({ key, label, icon }) => (
+            <Button
+              key={key}
+              icon={icon}
+              text={label}
+              active={mode === key}          // <-- highlights selected button
+              intent={mode === key ? "primary" : "none"}
+              onClick={() => {
+              const setpoint = getValue(`${path}.setpoint`);
+              const deadband = getValue(`${path}.deadband`);
+              const heating = getValue(`${path}.heating`);
+              const cooling = getValue(`${path}.cooling`);
+              const supplyDuctPressure = getValue(`${path}.supplyDuctPressure`);
+              const coolingCoilValve = getValue(`${path}.coolingCoilValve`);
+              const heatingCoilValve = getValue(`${path}.heatingCoilValve`);
+              const coolingCoilPump = getValue(`${path}.coolingCoilPump`);
+              const heatingCoilPump = getValue(`${path}.heatingCoilPump`);
+              const supplyFanSpeed = getValue(`${path}.supplyFanSpeed`);          
+              const supplyAirSetpoint = getValue(`${path}.supplyAirSetpoint`);
+              const supplyHeaterSetpoint = getValue(`${path}.supplyHeaterSetpoint`);
+              const outsideAirDamperPosition = getValue(`${path}.outsideAirDamperPosition`);
+              const returnAirDamperPosition = getValue(`${path}.returnAirDamperPosition`);
+              const zoneDamperPosition = getValue(`${path}.zoneDamperPosition`);
+              const zoneReheatControl = getValue(`${path}.zoneReheatControl`);
+              const zoneAirCoolingSetpoint = getValue(`${path}.zoneAirCoolingSetpoint`);
+              const zoneAirHeatingSetpoint = getValue(`${path}.zoneAirHeatingSetpoint`);
+              const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
+              const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
+              const controlStagePump = getValue(`${path}.controlStagePump`);
+              const hvacMode: HvacMode = key;
+
+              const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
+              handleChange(`${path}`, editing)({ hvacMode, label });
+              }}
+            />
+          ))}
+        </ButtonGroup>
+      </Label>
+    );
+  };
 
   const renderSliders = () => {
     switch (type) {
@@ -1349,7 +1436,8 @@ export function Setpoint(props: {
                 const zoneOperativeCoolingSetpoint = getValue(`${path}.zoneOperativeCoolingSetpoint`);
                 const zoneOperativeHeatingSetpoint = getValue(`${path}.zoneOperativeHeatingSetpoint`);
                 const controlStagePump = getValue(`${path}.controlStagePump`);
-                const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump  });
+                const hvacMode = getValue(`${path}.hvacMode`);
+                const label = createSetpointLabel("all", { setpoint, deadband, heating, cooling, supplyDuctPressure, coolingCoilValve, heatingCoilValve, coolingCoilPump, heatingCoilPump, supplyFanSpeed, supplyAirSetpoint, supplyHeaterSetpoint, outsideAirDamperPosition, returnAirDamperPosition, zoneDamperPosition, zoneReheatControl, zoneAirCoolingSetpoint, zoneAirHeatingSetpoint, zoneOperativeCoolingSetpoint, zoneOperativeHeatingSetpoint, controlStagePump, hvacMode });
                 handleChange(`${path}`, editing)({ deadband, label });
               }}
             />

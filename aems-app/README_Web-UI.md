@@ -60,6 +60,7 @@ The diagram below illustrates the overall system architecture and highlights the
 - zoneOperativeCoolingSetpoint: Zone operative temperature setpoint for cooling
 - zoneOperativeHeatingSetpoint: Zone operative temperature setpoint for heating
 - controlStagePump: Integer signal to control the stage of the pump either on or off
+- hvacMode: Operating mode selection for HVAC systems, specifying 'auto', 'cooling', or 'heating' to control overall system behavior
 
 
 ## Quick Guide: Server Installation 

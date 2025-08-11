@@ -62,8 +62,9 @@ const ZONEOPERATIVEHEATINGSETPOINT_DEFAULT = (ValidateType.ZoneOperativeHeatingS
 const CONTROLSTAGEPUMP_MAX = (ValidateType.ControlStagePumpType.options?.max as number) || 1;
 const CONTROLSTAGEPUMP_MIN = (ValidateType.ControlStagePumpType.options?.min as number) || 0;
 const CONTROLSTAGEPUMP_DEFAULT = (ValidateType.ControlStagePumpType.options?.default as number) || 1;
+const HVACMODE_DEFAULT = (ValidateType.HVACMode.options?.default as string) || "auto";
 
-type Required = "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump" ;
+type Required = "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump" | "hvacMode" ;
 
 const createSetpointLabel = (
   type: "all" | Required,
@@ -99,6 +100,7 @@ const createSetpointLabel = (
     case "zoneOperativeCoolingSetpoint":
     case "zoneOperativeHeatingSetpoint":
     case "controlStagePump":
+    case "hvacMode":
     default:
       return `${setpoint[type]}º\xa0F`;
   }
@@ -203,6 +205,7 @@ export {
   CONTROLSTAGEPUMP_MAX,
   CONTROLSTAGEPUMP_MIN,
   CONTROLSTAGEPUMP_DEFAULT,
+  HVACMODE_DEFAULT,
   createSetpointLabel,
   getSetpointMessage,
   isSetpointValid,

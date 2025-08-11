@@ -134,6 +134,7 @@ CREATE TABLE "Setpoints" (
     "zoneOperativeCoolingSetpoint" DOUBLE PRECISION NOT NULL DEFAULT 80,
     "zoneOperativeHeatingSetpoint" DOUBLE PRECISION NOT NULL DEFAULT 60, 
     "controlStagePump" DOUBLE PRECISION NOT NULL DEFAULT 1,
+    "hvacMode" VARCHAR(1024),
 
     CONSTRAINT "Setpoints_pkey" PRIMARY KEY ("id")
 );

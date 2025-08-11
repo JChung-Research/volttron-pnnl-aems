@@ -402,6 +402,7 @@ model Setpoints {
   zoneOperativeCoolingSetpoint   Float            @default(80)
   zoneOperativeHeatingSetpoint   Float            @default(60)
   controlStagePump   Float            @default(1)
+  hvacMode    String?          @db.VarChar(1024)
 
   
   // indirect relations

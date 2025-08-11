@@ -25,6 +25,7 @@ export interface ISetpoint {
   zoneOperativeCoolingSetpoint: number;
   zoneOperativeHeatingSetpoint: number;
   controlStagePump: number;
+  hvacMode: string;
 
   createdAt: string;
   updatedAt: string;
@@ -34,7 +35,7 @@ export interface ISetpoint {
 }
 
 export interface IFilter {
-  field?: "id" | "label" | "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump" | "createdAt" | "updatedAt";
+  field?: "id" | "label" | "setpoint" | "deadband" | "heating" | "cooling" | "supplyDuctPressure" | "coolingCoilValve" | "heatingCoilValve" | "coolingCoilPump" | "heatingCoilPump" | "supplyFanSpeed" | "supplyAirSetpoint" | "supplyHeaterSetpoint" | "outsideAirDamperPosition" | "returnAirDamperPosition" | "zoneDamperPosition" | "zoneReheatControl" | "zoneAirCoolingSetpoint" | "zoneAirHeatingSetpoint" | "zoneOperativeCoolingSetpoint" | "zoneOperativeHeatingSetpoint" | "controlStagePump" | "hvacMode" | "createdAt" | "updatedAt";
   direction?: "asc" | "dsc";
   search?: string;
   auto?: boolean;
