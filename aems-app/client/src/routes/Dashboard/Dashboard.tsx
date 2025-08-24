@@ -1,6 +1,6 @@
 import "./style.scss";
 
-import { Alert, Button, Card, Collapse, InputGroup, TextArea, Intent, Label, Position, Tree, Menu, MenuItem } from "@blueprintjs/core";
+import { Alert, Button, Card, Collapse, InputGroup, TextArea, Intent, Label, Position, Tree, Menu, MenuItem, Tabs, Tab, Tag, Classes, Icon } from "@blueprintjs/core";
 import { Header, Prompt } from "components";
 import {
   IConfiguration,
@@ -142,13 +142,15 @@ interface UnitsState {
       building: string;
       system: string;
       varList: string[];
-      ctrlValues: Record<string, number>;
+      ctrlValues: Record<string, number | string>;
       lineChartData: { index: number; time: string; values: {[key:string]: number; }}[];
       chartConfigs: { id: number; type: string; selectedVariables: string[]; vizSettings?: Record<string, VizSetting>; }[];
     };
   };
   startCollect: boolean | null;
   sensorMetadata: MetadataItem[];
+  openBuildings?: Record<string, boolean>;
+  activeCampus?: string;
 }
 
 type AxisInfo = {
@@ -186,7 +188,9 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       confirm: null,
       unitManagerData: {},
       startCollect: true,
-      sensorMetadata: []
+      sensorMetadata: [],
+      openBuildings: {},
+      activeCampus: undefined
     };      
   }
 
@@ -212,30 +216,45 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
   }
 
   // Scroll to selected unit and reinitialize unit data on props update
-  componentDidUpdate(prevProps: UnitsProps) {
-    const selectedUnitId = this.props.location?.state?.selectedUnitId;
-    if (
-      selectedUnitId !== undefined &&
-      String(selectedUnitId) in this.unitRefs &&
-      !this.hasScrolledToUnit
-    ) {
+componentDidUpdate(prevProps: UnitsProps) {
+  const selectedUnitId = this.props.location?.state?.selectedUnitId;
+
+  // If units changed, reinit data (kept)
+  if (prevProps.units !== this.props.units && this.props.units && this.props.units.length > 0) {
+    this.initializeUnitData();
+  }
+
+  // Auto-open building & scroll to the selected unit
+  if (
+    selectedUnitId !== undefined &&
+    String(selectedUnitId) in this.unitRefs &&
+    !this.hasScrolledToUnit
+  ) {
+    const unit = this.props.units?.find(u => u.id === Number(selectedUnitId));
+    const bldgKey = unit?.building || "Unknown";
+    const doScroll = () => {
       const ref = this.unitRefs[String(selectedUnitId)];
-  
       if (ref?.current) {
         this.hasScrolledToUnit = true;
-  
         requestAnimationFrame(() => {
-          const element = this.unitRefs[String(selectedUnitId)]!.current!;
+          const element = ref.current!;
           const offset = element.getBoundingClientRect().top + window.pageYOffset - 60;
           window.scrollTo({ top: offset, behavior: "smooth" });
         });
       }
-    }
-  
-    if (prevProps.units !== this.props.units && this.props.units && this.props.units.length > 0) {
-      this.initializeUnitData();
+    };
+
+    // Open the containing building if it's closed, then scroll
+    if (unit && !this.state.openBuildings?.[bldgKey]) {
+      this.setState(
+        prev => ({ openBuildings: { ...(prev.openBuildings || {}), [bldgKey]: true } }),
+        doScroll
+      );
+    } else {
+      doScroll();
     }
   }
+}
 
   // Clean up polling and intervals
   componentWillUnmount() {
@@ -254,7 +273,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
   };
 
   // Update control values for a unit
-  handleSetpointValueChange = (unitId: number, name: string, value: number) => {
+  handleSetpointValueChange = (unitId: number, name: string, value: number | string) => {
 
     this.setState(prevState => {
       const unitData = prevState.unitManagerData[unitId] || {
@@ -815,8 +834,8 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
         <Plot
           key={`${unitId}-${chartIndex}`}
           data={yAxisInfo.map((info, idx) => ({
-            x: unitData.lineChartData.slice(-100).map((d) => d.time.split(" ")[1]),
-            y: info.values.slice(-100),
+            x: unitData.lineChartData.slice(-50).map((d) => d.time.split(" ")[1]),
+            y: info.values.slice(-50),
             type: 'scatter',
             mode: 'lines',
             name: `${info.label} (${info.unit})`,
@@ -1115,7 +1134,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
           const unitData = this.state.unitManagerData[unitId];
           const unitSystem = unitData.system;
           const resSensorData = Object.values(res.sensorData).find((entry: any) => entry.system === unitSystem) as {
-                ctrlValues: Record<string, number>;
+                ctrlValues: Record<string, number | string>;
                 lineChartData: { index: number; time: string; values: { [key: string]: number }; };
               };
 
@@ -1239,6 +1258,17 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       },
     };
 
+    const campusGroups = (filtered ?? []).reduce((acc: Record<string, Record<string, IUnit[]>>, u) => {
+      const campus = u.campus || "Unknown";
+      const bldg   = u.building || "Unknown";
+      (acc[campus] ??= {});
+      (acc[campus][bldg] ??= []).push(u);
+      return acc;
+    }, {});
+
+    const campusIds = Object.keys(campusGroups).sort();
+    const activeCampus = this.state.activeCampus ?? campusIds[0]; // default once we have data
+
     return (
       <div className={"dashboard"}>
         {this.renderPrompt()}
@@ -1315,302 +1345,372 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
           </div>
         )}
 
-        <h1>Building Units</h1>
-        <div className="list">
-          {filtered?.map((unit, i) => {
-            unitData = this.state.unitManagerData[unit.id!];
-            
-            return unit.id === editing?.id ? (
-              <div key={unit.id ?? i} ref={this.unitRefs[unit.id!]}>
-              <Card interactive style={{ marginBottom: "2rem" }}>
-                <div className="row">
-                  <div className="col-md-10">
-                    <Label>
-                      <h2>{unit.label}</h2>
-                    </Label>
-                  </div>
-                  <div className="col-md-2" style={{textAlign: "right", marginTop: "20px"}}>
-                    {this.renderStatus(unit)}
-                    <Tooltip2 content="Save" placement={Position.TOP} disabled={!this.isSave(unit)}>
-                      <Button
-                        icon={IconNames.FLOPPY_DISK}
-                        intent={Intent.PRIMARY}
-                        minimal
-                        onClick={() => this.handleSave()}
-                        disabled={!this.isSave(unit)}
-                      />
-                    </Tooltip2>
-                    <Tooltip2 content="Exit" placement={Position.TOP}>
-                      <Button
-                        icon={IconNames.CROSS}
-                        intent={Intent.PRIMARY}
-                        minimal
-                        onClick={() => this.handleCancel()}
-                      />
-                    </Tooltip2>
-                  </div>
-                </div>
-                <div className="row"  style={{marginBottom: "20px"}}>
-                  <div className="col-md-6">
-                    <div className="row">
-                      <div className="col-md-6">
-                        <Label>
-                          <b>Campus</b>
-                          <InputGroup type="text" value={unit.campus} readOnly />
-                        </Label>
-                      </div>
-                      <div className="col-md-6">
-                        <Label>
-                          <b>Building</b>
-                          <InputGroup type="text" value={unit.building} readOnly />
-                        </Label>
-                      </div>
-                      <div className="col-md-6">
-                        <Label>
-                          <b>Building Type</b>
-                          <InputGroup type="text" value={unit.bldgType} readOnly />
-                        </Label>
-                      </div>
-                      <div className="col-md-6">
-                        <Label>
-                          <b>System</b>
-                          <InputGroup type="text" value={unit.system} readOnly />
-                        </Label>
-                      </div>
-                      <div className="col-md-6">
-                        <Label>
-                          <b>Operator</b>
-                          <InputGroup type="text" value={`${unit.operator}`} readOnly />
-                        </Label>
-                      </div>
-                      <div className="col-md-6">
-                        <Label>
-                          <b>Timezone</b>
-                          <InputGroup type="text" value={unit.timezone} readOnly />
-                        </Label>
-                      </div>
-                      <div />
-                    </div>
-                    <div className="row">
-                      <h3>Building Description</h3>                
-                      <div className="placeholder-container">
-                        <img src={unit.image} alt={`Image for ${unit.label}`}/>
-                        <div className="placeholder-overlay">
-                          <div className="placeholder-text">Image Placeholder<br/>{unit.building} {unit.system}</div>
-                        </div>
-                      </div>
-                      <TextArea value={unit.description} 
-                        readOnly
-                        fill
-                        growVertically
-                        large
-                      />
-                    </div>
-                    <Collapse isOpen={true}>
-                      {!this.configRouteIsHidden && (
-                        <>
-                          <Tree
-                            contents={[
-                              {
-                                id: "configuration",
-                                label: "Configuration",
-                                icon: IconNames.SERIES_CONFIGURATION,
-                                hasCaret: true,
-                                isExpanded: expanded === "configuration",
-                              },
-                            ]}
-                            onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
-                            onNodeCollapse={() => this.setState({ expanded: null })}
-                            onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
-                          />
-                          <Collapse isOpen={expanded === "configuration"}>
-                            <Configuration
-                              unit={unit}
-                              editing={editing}
-                              configurations={configurations}
-                              handleChange={this.handleChange}
-                              handleCreate={this.handleCreate}
-                              readOnly={!this.isAdmin()}
-                            />
-                          </Collapse>
-                        </>
-                      )}
-                      <div className="row" style={{  marginTop: "1.5rem", marginBottom: "1rem" }}>
-                        <h2>Controllers</h2>
-                      </div>
-                      <Tree
-                        contents={[
-                          {
-                            id: "setpoints",
-                            label: "Setpoints",
-                            icon: IconNames.TEMPERATURE,
-                            hasCaret: true,
-                            isExpanded: expanded === "setpoints",
-                          },
-                        ]}
-                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
-                        onNodeCollapse={() => this.setState({ expanded: null })}
-                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
-                      />
-                      <Collapse isOpen={expanded === "setpoints"}>
-                      <div style={{ marginTop: "20px" }}>
-                        <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number) => this.handleSetpointValueChange(unit.id!, name, value)}/> 
-                      </div>
-                      </Collapse>
-                      <Tree
-                        contents={[
-                          {
-                            id: "schedules",
-                            label: "Occupancy Schedules",
-                            icon: IconNames.TIME,
-                            hasCaret: true,
-                            isExpanded: expanded === "schedules",
-                          },
-                        ]}
-                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
-                        onNodeCollapse={() => this.setState({ expanded: null })}
-                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
-                      />
-                      <Collapse isOpen={expanded === "schedules"}>
-                      <div style={{ marginTop: "20px" }}>
-                        <Schedules
-                          unit={unit}
-                          editing={editing}
-                          handleChange={this.handleChange}
-                          readOnly={!this.isAdmin()}                          
-                        />
-                      </div>
-                      </Collapse>
-                      <Tree
-                        contents={[
-                          {
-                            id: "holidays",
-                            label: "Holidays",
-                            icon: IconNames.TIMELINE_EVENTS,
-                            hasCaret: true,
-                            isExpanded: expanded === "holidays",
-                          },
-                        ]}
-                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
-                        onNodeCollapse={() => this.setState({ expanded: null })}
-                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
-                      />
-                      <Collapse isOpen={expanded === "holidays"}>
-                        <Holidays
-                          unit={unit}
-                          editing={editing}
-                          handleChange={this.handleChange}
-                          readOnly={!this.isAdmin()}
-                        />
-                      </Collapse>
-                      <Tree
-                        contents={[
-                          {
-                            id: "occupancies",
-                            label: "Temporary Occupancy",
-                            icon: IconNames.HOME,
-                            hasCaret: true,
-                            isExpanded: expanded === "occupancies",
-                          },
-                        ]}
-                        onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
-                        onNodeCollapse={() => this.setState({ expanded: null })}
-                        onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
-                      />
-                      <Collapse isOpen={expanded === "occupancies"}>
-                        <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} />
-                      </Collapse>
-                    </Collapse>
-                  </div>
-                  <div className="col-md-6">
-                    <h2>Data Monitoring</h2>
+        <h1>Units</h1>
+        <Card className="campus-tabs" elevation={1}>
+          <Tabs
+            id="campus-tabs"
+            className={Classes.LARGE}
+            renderActiveTabPanelOnly
+            selectedTabId={activeCampus}
+            onChange={(id) => this.setState({ activeCampus: String(id), openBuildings: {} })}
+          >
+            {campusIds.map((campusId) => {
+              const bldgCount = Object.keys(campusGroups[campusId]).length;
 
-                    <div style={{display:"flex"}}>
-                      <h3>Add/Remove a chart: </h3>
-                      <div style={{marginTop:"2.9%", marginLeft: "1%"}}>
-                        <Tooltip2 content="Add" placement={Position.BOTTOM}>
-                                <Button
-                                  icon={IconNames.PLUS}
-                                  intent={Intent.PRIMARY}
-                                  small
-                                  className="custom-button"
-                                  onClick={() => this.addChart(unit.id!)}                          
-                                />
-                        </Tooltip2>
-                        <Tooltip2 content="Remove" placement={Position.BOTTOM}>
-                                <Button
-                                  icon={IconNames.MINUS}
-                                  intent={Intent.PRIMARY}
-                                  small
-                                  className="custom-button"
-                                  onClick={() => this.removeChart(unit.id!)}           
-                                />
-                        </Tooltip2>
-                      </div>
-                    </div>
+              return (
+                <Tab
+                  id={campusId}
+                  key={campusId}
+                  title={
+                    // Campus tabs
+                    <span className="campus-tab-title">
+                      <Icon icon={IconNames.MAP_MARKER} />
+                      <span className="campus-tab-text">{campusId}</span>
+                      {/* Tags counting the number of buildings on the campus */}
+                      <Tag minimal round>{bldgCount} bldg{bldgCount > 1 ? "s" : ""}</Tag>
+                    </span>
+                  }
+                  panel={
+                    <div className="list campus-panel">
+                      {Object.keys(campusGroups[campusId]).sort().map((bldgId) => {
+                        const unitsInBldg = campusGroups[campusId][bldgId];
+                        const isOpen = !!this.state.openBuildings?.[bldgId];
+                        const zoneCount = unitsInBldg.length;
 
-                    <div className="row">
-                      {unitData?.chartConfigs?.map((chart) => { 
-                        const chartType = chart.type;
-                        
                         return (
-                          <div key={`${unit.id}-${chart.id}`} style={{ marginBottom: "10px" }}>
-                            <div className="select">
-                              {this.renderChartSelect(
-                                unit.id!,
-                                chart.id,
-                                `Chart ${chart.id + 1}`,
-                                this.state.unitManagerData[unit.id!].lineChartData[0],
-                                chart.selectedVariables,
-                                (newSelection) => this.handleChartSelect(unit.id!, chart.id, newSelection)
-                              )}
+                          // Building lists
+                          <Card key={`bldg-${campusId}-${bldgId}`} interactive style={{ marginBottom: "2rem" }}>
+                            <div className="row" style={{ alignItems: "center" }}>
+                              <div className="col-md-10" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <Icon icon={IconNames.OFFICE} />
+                                <h3 style={{ margin: 0 }}>{bldgId}</h3>
+                                {/* Tags counting the number of zones in the building */}
+                                <Tag minimal round>{zoneCount} zone{zoneCount !== 1 ? "s" : ""}</Tag>
+                              </div>
+                              <div className="col-md-2" style={{ textAlign: "right" }}>
+                                <Button
+                                  minimal
+                                  icon={isOpen ? IconNames.CARET_DOWN : IconNames.CARET_RIGHT}
+                                  onClick={() =>
+                                    this.setState(prev => ({
+                                      openBuildings: isOpen ? {} : { [bldgId]: true },
+                                    }))
+                                  }
+                                />
+                              </div>
                             </div>
-                            {chartType === "line" 
-                              ? this.renderLineChart(unit.id!, chart.id)
-                              : chartType === "scatter" 
-                              ? this.renderScatterPlot(unit.id!, chart.id)
-                              : chartType === "box"
-                              ? this.renderBoxPlot(unit.id!, chart.id)
-                              : null}
-                          </div>
+                            {/* Zone lists */}
+                            <Collapse isOpen={isOpen}>
+                            <div style={{marginTop: "15px"}}>
+                              {unitsInBldg.map((unit, i) => {
+                                const selectedUnitId = Number(this.props.location?.state?.selectedUnitId);
+                                var unitData = !isNaN(selectedUnitId) ? this.state.unitManagerData[selectedUnitId] : undefined;
+                                unitData = this.state.unitManagerData[unit.id!];
+
+                                return unit.id === this.state.editing?.id ? (
+                                  // Selected zones
+                                  <div key={unit.id ?? i} ref={this.unitRefs[unit.id!]}>
+                                <Card interactive style={{ marginBottom: "2rem" }}>
+                                  <div className="row" style={{ marginBottom: 20 }}>
+                                    <div className="col-md-10">
+                                      <Label>
+                                        <h2>{unit.system}</h2>
+                                      </Label>
+                                    </div>
+                                    <div className="col-md-2" style={{textAlign: "right", marginTop: "20px"}}>
+                                      {this.renderStatus(unit)}
+                                      <Tooltip2 content="Save" placement={Position.TOP} disabled={!this.isSave(unit)}>
+                                        <Button
+                                          icon={IconNames.FLOPPY_DISK}
+                                          intent={Intent.PRIMARY}
+                                          minimal
+                                          onClick={() => this.handleSave()}
+                                          disabled={!this.isSave(unit)}
+                                        />
+                                      </Tooltip2>
+                                      <Tooltip2 content="Exit" placement={Position.TOP}>
+                                        <Button
+                                          icon={IconNames.CROSS}
+                                          intent={Intent.PRIMARY}
+                                          minimal
+                                          onClick={() => this.handleCancel()}
+                                        />
+                                      </Tooltip2>
+                                    </div>
+                                  </div>
+                                  <div className="row"  style={{marginBottom: "20px"}}>
+                                    <div className="col-md-6">
+                                      <div className="row">
+                                        <div className="col-md-6">
+                                          <Label>
+                                            <b>Campus</b>
+                                            <InputGroup type="text" value={unit.campus} readOnly />
+                                          </Label>
+                                        </div>
+                                        <div className="col-md-6">
+                                          <Label>
+                                            <b>Building</b>
+                                            <InputGroup type="text" value={unit.building} readOnly />
+                                          </Label>
+                                        </div>
+                                        <div className="col-md-6">
+                                          <Label>
+                                            <b>Building Type</b>
+                                            <InputGroup type="text" value={unit.bldgType} readOnly />
+                                          </Label>
+                                        </div>
+                                        <div className="col-md-6">
+                                          <Label>
+                                            <b>System</b>
+                                            <InputGroup type="text" value={unit.system} readOnly />
+                                          </Label>
+                                        </div>
+                                        <div className="col-md-6">
+                                          <Label>
+                                            <b>Operator</b>
+                                            <InputGroup type="text" value={`${unit.operator}`} readOnly />
+                                          </Label>
+                                        </div>
+                                        <div className="col-md-6">
+                                          <Label>
+                                            <b>Timezone</b>
+                                            <InputGroup type="text" value={unit.timezone} readOnly />
+                                          </Label>
+                                        </div>
+                                        <div />
+                                      </div>
+                                      <div className="row">
+                                        <h3>Building Description</h3>                
+                                        <div className="placeholder-container">
+                                          <img src={unit.image} alt={`Image for ${unit.label}`}/>
+                                          <div className="placeholder-overlay">
+                                            <div className="placeholder-text">Image Placeholder<br/>{unit.building} {unit.system}</div>
+                                          </div>
+                                        </div>
+                                        <TextArea value={unit.description} 
+                                          readOnly
+                                          fill
+                                          growVertically
+                                          large
+                                        />
+                                      </div>
+                                      <Collapse isOpen={true}>
+                                        {!this.configRouteIsHidden && (
+                                          <>
+                                            <Tree
+                                              contents={[
+                                                {
+                                                  id: "configuration",
+                                                  label: "Configuration",
+                                                  icon: IconNames.SERIES_CONFIGURATION,
+                                                  hasCaret: true,
+                                                  isExpanded: expanded === "configuration",
+                                                },
+                                              ]}
+                                              onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                                              onNodeCollapse={() => this.setState({ expanded: null })}
+                                              onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                                            />
+                                            <Collapse isOpen={expanded === "configuration"}>
+                                              <Configuration
+                                                unit={unit}
+                                                editing={editing}
+                                                configurations={configurations}
+                                                handleChange={this.handleChange}
+                                                handleCreate={this.handleCreate}
+                                                readOnly={!this.isAdmin()}
+                                              />
+                                            </Collapse>
+                                          </>
+                                        )}
+                                        <div className="row" style={{  marginTop: "1.5rem", marginBottom: "1rem" }}>
+                                          <h2>Controllers</h2>
+                                        </div>
+                                        <Tree
+                                          contents={[
+                                            {
+                                              id: "setpoints",
+                                              label: "Setpoints",
+                                              icon: IconNames.TEMPERATURE,
+                                              hasCaret: true,
+                                              isExpanded: expanded === "setpoints",
+                                            },
+                                          ]}
+                                          onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                                          onNodeCollapse={() => this.setState({ expanded: null })}
+                                          onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                                        />
+                                        <Collapse isOpen={expanded === "setpoints"}>
+                                        <div style={{ marginTop: "20px" }}>
+                                          <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number | string) => this.handleSetpointValueChange(unit.id!, name, value)}/> 
+                                        </div>
+                                        </Collapse>
+                                        <Tree
+                                          contents={[
+                                            {
+                                              id: "schedules",
+                                              label: "Occupancy Schedules",
+                                              icon: IconNames.TIME,
+                                              hasCaret: true,
+                                              isExpanded: expanded === "schedules",
+                                            },
+                                          ]}
+                                          onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                                          onNodeCollapse={() => this.setState({ expanded: null })}
+                                          onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                                        />
+                                        <Collapse isOpen={expanded === "schedules"}>
+                                        <div style={{ marginTop: "20px" }}>
+                                          <Schedules
+                                            unit={unit}
+                                            editing={editing}
+                                            handleChange={this.handleChange}
+                                            readOnly={!this.isAdmin()}                          
+                                          />
+                                        </div>
+                                        </Collapse>
+                                        <Tree
+                                          contents={[
+                                            {
+                                              id: "holidays",
+                                              label: "Holidays",
+                                              icon: IconNames.TIMELINE_EVENTS,
+                                              hasCaret: true,
+                                              isExpanded: expanded === "holidays",
+                                            },
+                                          ]}
+                                          onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                                          onNodeCollapse={() => this.setState({ expanded: null })}
+                                          onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                                        />
+                                        <Collapse isOpen={expanded === "holidays"}>
+                                          <Holidays
+                                            unit={unit}
+                                            editing={editing}
+                                            handleChange={this.handleChange}
+                                            readOnly={!this.isAdmin()}
+                                          />
+                                        </Collapse>
+                                        <Tree
+                                          contents={[
+                                            {
+                                              id: "occupancies",
+                                              label: "Temporary Occupancy",
+                                              icon: IconNames.HOME,
+                                              hasCaret: true,
+                                              isExpanded: expanded === "occupancies",
+                                            },
+                                          ]}
+                                          onNodeExpand={(e) => this.setState({ expanded: e.id as string })}
+                                          onNodeCollapse={() => this.setState({ expanded: null })}
+                                          onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
+                                        />
+                                        <Collapse isOpen={expanded === "occupancies"}>
+                                          <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} />
+                                        </Collapse>
+                                      </Collapse>
+                                    </div>
+                                    <div className="col-md-6">
+                                      <h2>Data Monitoring</h2>
+
+                                      <div style={{display:"flex"}}>
+                                        <h3>Add/Remove a chart: </h3>
+                                        <div style={{marginTop:"2.9%", marginLeft: "1%"}}>
+                                          <Tooltip2 content="Add" placement={Position.BOTTOM}>
+                                                  <Button
+                                                    icon={IconNames.PLUS}
+                                                    intent={Intent.PRIMARY}
+                                                    small
+                                                    className="custom-button"
+                                                    onClick={() => this.addChart(unit.id!)}                          
+                                                  />
+                                          </Tooltip2>
+                                          <Tooltip2 content="Remove" placement={Position.BOTTOM}>
+                                                  <Button
+                                                    icon={IconNames.MINUS}
+                                                    intent={Intent.PRIMARY}
+                                                    small
+                                                    className="custom-button"
+                                                    onClick={() => this.removeChart(unit.id!)}           
+                                                  />
+                                          </Tooltip2>
+                                        </div>
+                                      </div>
+
+                                      <div className="row">
+                                        {unitData?.chartConfigs?.map((chart) => { 
+                                          const chartType = chart.type;
+                                          
+                                          return (
+                                            <div key={`${unit.id}-${chart.id}`} style={{ marginBottom: "10px" }}>
+                                              <div className="select">
+                                                {this.renderChartSelect(
+                                                  unit.id!,
+                                                  chart.id,
+                                                  `Chart ${chart.id + 1}`,
+                                                  this.state.unitManagerData[unit.id!].lineChartData[0],
+                                                  chart.selectedVariables,
+                                                  (newSelection) => this.handleChartSelect(unit.id!, chart.id, newSelection)
+                                                )}
+                                              </div>
+                                              {chartType === "line" 
+                                                ? this.renderLineChart(unit.id!, chart.id)
+                                                : chartType === "scatter" 
+                                                ? this.renderScatterPlot(unit.id!, chart.id)
+                                                : chartType === "box"
+                                                ? this.renderBoxPlot(unit.id!, chart.id)
+                                                : null}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>      
+                                      <div className="row">
+                                      </div>                  
+                                    </div>
+                                  </div>
+
+                                </Card>
+                                </div>
+                                ) : (
+                                  // Rest of the zones
+                                  <div key={unit.id ?? i} ref={this.unitRefs[unit.id!]}>
+                                    <Card interactive style={{ marginBottom: "2rem" }}>
+                                      <div className="row">
+                                        <div className="col-md-10" style={{ display: "flex", alignItems: "center", gap: "0px" }}>
+                                          <Icon icon={IconNames.COG} />
+                                          <h3 style={{ margin: 10 }}>{unit.system}</h3>
+                                        </div>
+                                        <div className="col-md-2" style={{ textAlign: "right", marginTop: 0 }}>
+                                          {this.renderStatus(unit)}
+                                          <Tooltip2 content="Edit" placement={Position.TOP}>
+                                            <Button
+                                              icon={IconNames.EDIT}
+                                              intent={Intent.PRIMARY}
+                                              minimal
+                                              onClick={() => this.handleEdit(unit)}
+                                            />
+                                          </Tooltip2>
+                                        </div>
+                                      </div>
+                                    </Card>
+                                  </div>
+                                );
+                              })}
+                              </div>
+                            </Collapse>
+                          </Card>
                         );
                       })}
-                    </div>      
-                    <div className="row">
-                    </div>                  
-                  </div>
-                </div>
-
-              </Card>
-              </div>
-            ) : (
-              <div key={unit.id ?? i} ref={this.unitRefs[unit.id!]}>
-              <Card interactive style={{ marginBottom: "2rem" }}>
-                <div className="row">
-                  <div className="col-md-10">
-                    <Label>
-                      <h3>{unit.label}</h3>
-                    </Label>
-                  </div>
-                  <div className="col-md-2" style={{textAlign: "right", marginTop: "20px"}}>
-                    {this.renderStatus(unit)}
-                    <Tooltip2 content="Edit" placement={Position.TOP}>
-                        <Button
-                          icon={IconNames.EDIT}
-                          intent={Intent.PRIMARY}
-                          minimal
-                          onClick={() => this.handleEdit(unit)}
-                        />
-                    </Tooltip2>
-                  </div>
-                </div>
-              </Card>
-              </div>
-            );
-          })}
-          {this.renderConfirm()}
-        </div>
+                    </div>
+                  }
+                />
+              );
+            })}
+          </Tabs>
+        </Card>
       </div>
+
+
     );
   }
 }
