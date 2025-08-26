@@ -1,0 +1,52 @@
+{
+    "url": "http://api.boptest.net",
+    "module": "app_agents.client",
+    "class": "control_init",
+    "topic": "devices/Campus01/Building6000/all",
+    "heartbeat_period": 5,
+    "inputs": {
+        "topic": "devices/Campus01/Building6000/control"
+    },
+    "data_point": {
+        "oveTSetSup_u": {
+            "type": "float",
+            "units": "K",
+            "tz": "UTC"
+        },
+        "ovePum_u": {
+            "type": "bool",
+            "units": "None",
+            "tz": "UTC"
+        },
+        "oveTSetCoo_u": {
+            "type": "float",
+            "units": "K",
+            "tz": "UTC"
+        },
+        "oveTSetHea_u": {
+            "type": "float",
+            "units": "K",
+            "tz": "UTC"
+        },
+        "reaCO2RooAir_y": {
+            "type": "float",
+            "units": "ppm",
+            "tz": "UTC"
+        },
+        "reaTRoo_y": {
+            "type": "float",
+            "units": "K",
+            "tz": "UTC"
+        },
+        "reaPPum_y": {
+            "type": "float",
+            "units": "W",
+            "tz": "UTC"
+        },
+        "reaQHea_y": {
+            "type": "float",
+            "units": "W",
+            "tz": "UTC"
+        }
+    }
+}

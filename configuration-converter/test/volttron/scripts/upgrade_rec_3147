@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+python ./scripts/install-agent.py \
+    -s app_agents/RecvAgent \
+    -i rec_3147 \
+    --tag rec_3147 \
+    --config config/recv_config_3147 \
+    --start \
+    --force

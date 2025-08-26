@@ -1,0 +1,146 @@
+building unit:
+  config directory path: "./unit"
+  brick schema file path: "test/example_brick.ttl"
+
+web server:  
+  config directory path: "./app"
+  project name: skeleton
+  hostname: localhost
+  port*: 3000
+
+  database host (optinoal): localhost
+  database url: "postgresql://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=${DATABASE_SCHEMA}"
+  database port: 6543
+  database name: skeleton
+  database schema: public
+  database username: skeleton
+  database password: SeT_tHiS_iN_0x3A-.env.secrets-
+
+  config auth url: https://host.docker.internal:8443/auth
+  config api url: https://host.docker.internal:8443/gs
+  config username: admin
+  config password: admin
+
+  system users*:
+    user 1:
+      name: Test User
+      email: test-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+    user 2:
+      name: Test Admin
+      email: test-admin@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: admin
+    user 3:
+      name: System User
+      email: system-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+    user 4:
+      name: Personal User
+      email: system-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+
+web client:
+  config directory path: "./client"
+  application title: AEMS
+  application description: 
+  application api url: /api
+  port: 2000
+  application login: true
+
+volttron:
+  config directory path: "./"
+  vip address: tcp://127.0.0.1:23921
+  instance name: "central_frp"
+  message bus: zmq
+
+  agent info*: 
+    agent 1:
+      campus: Campus01
+      id: Building5000
+      class: control_init
+      url: http://api.boptest.net
+      heartbeat period: 5
+      data point:
+        fcu_oveTSup_u:
+          type: float
+          units: K
+          timezone: UTC
+        fcu_oveFan_u:
+          type: bool
+          units: None
+          timezone: UTC
+        con_oveTSetCoo_u:
+          type: float
+          units: K
+          timezone: UTC
+        con_oveTSetHea_u:
+          type: float
+          units: K
+          timezone: UTC
+        fcu_reaFloSup_y:
+          type: float
+          units: kg/s
+          timezone: UTC
+        zon_reaCO2RooAir_y:
+          type: float
+          units: ppm
+          timezone: UTC
+        zon_reaTRooAir_y:
+          type: float
+          units: K
+          timezone: UTC
+        fcu_reaPFan_y:
+          type: float
+          units: W
+          timezone: UTC
+        fcu_reaPCoo_y:
+          type: float
+          units: W
+          timezone: UTC
+        fcu_reaPHea_y:
+          type: float
+          units: W
+          timezone: UTC
+    agent 2:
+      campus: Campus01
+      id: Building6000 
+      class: control_init
+      url: http://api.boptest.net
+      heartbeat period: 5
+      data point:
+        oveTSetSup_u:
+          type: float
+          units: K
+          timezone: UTC
+        ovePum_u:
+          type: bool
+          units: None
+          timezone: UTC
+        oveTSetCoo_u:
+          type: float
+          units: K
+          timezone: UTC
+        oveTSetHea_u:
+          type: float
+          units: K
+          timezone: UTC
+        reaCO2RooAir_y:
+          type: float
+          units: ppm
+          timezone: UTC
+        reaTRoo_y:
+          type: float
+          units: K
+          timezone: UTC
+        reaPPum_y:
+          type: float
+          units: W
+          timezone: UTC
+        reaQHea_y:
+          type: float
+          units: W
+          timezone: UTC

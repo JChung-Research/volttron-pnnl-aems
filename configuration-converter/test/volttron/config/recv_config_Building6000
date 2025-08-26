@@ -1,0 +1,8 @@
+{
+    "inputs": {
+        "topic": "devices/Campus01/Building6000/all"
+    },
+    "module": "app_agents.client",
+    "topic": "devices/Campus01/Building6000/control",
+    "class": "UI"
+}

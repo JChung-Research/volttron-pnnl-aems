@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+python ./scripts/install-agent.py \
+    -s app_agents/RecvAgent \
+    -i rec_Building6000 \
+    --tag rec_Building6000 \
+    --config config/recv_config_Building6000 \
+    --start \
+    --force

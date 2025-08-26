@@ -1,0 +1,32 @@
+{
+    "url": "http://host.docker.internal:5005",
+    "module": "app_agents.client",
+    "class": "ecobee_init",
+    "topic": "devices/ORNL/3147/all",
+    "heartbeat_period": 30,
+    "inputs": {
+        "topic": "devices/ORNL/3147/control"
+    },
+    "data_point": {
+        "ZoneTemperature": {
+            "type": "float",
+            "units": "F",
+            "tz": "UTC"
+        },
+        "desiredHeat": {
+            "type": "float",
+            "units": "F",
+            "tz": "UTC"
+        },
+        "desiredCool": {
+            "type": "float",
+            "units": "F",
+            "tz": "UTC"
+        },
+        "HVACMode": {
+            "type": "bool",
+            "units": "None",
+            "tz": "UTC"
+        }
+    }
+}
