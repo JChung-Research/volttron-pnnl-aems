@@ -254,6 +254,13 @@ class Units extends React.Component<UnitsProps, UnitsState> {
     return RoleType.Admin.granted(...(user?.role.split(" ") ?? [""]));
   }
 
+  userAccessibleBldgs() {
+    const { user } = this.props;
+    const access = (user?.bldgAccess ?? {}) as Record<string, boolean>;
+
+    return Object.keys(access).filter((k) => access[k]);
+  }
+
   renderStatus(unit: IUnit) {
     let icon: IconName = IconNames.ISSUE;
     let intent: Intent = Intent.WARNING;
@@ -475,7 +482,8 @@ class Units extends React.Component<UnitsProps, UnitsState> {
         )}
         <h1>Units</h1>
         <div className="list">
-          {filtered?.map((unit, i) => {
+          {filtered?.filter((unit) => this.isAdmin() || this.userAccessibleBldgs().includes(unit.building))
+          .map((unit, i) => {
             return unit.id === editing?.id ? (
               <Card key={unit.id ?? i} interactive>
                 <div className="row">

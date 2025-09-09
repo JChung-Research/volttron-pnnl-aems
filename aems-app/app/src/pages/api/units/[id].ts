@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json("ID must be specified.");
   }
   if (req.method === "DELETE") {
-    if (!user.roles.admin) {
+    if (!user.roles.user) {
       return res.status(401).json(null);
     }
     return prisma.units
@@ -41,8 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return prisma.units
       .findFirst({
         where: {
-          id: parseInt(id),
-          ...(!user.roles.admin && { users: { some: { id: user.id } } }),
+          id: parseInt(id, 10),
+          ...(user?.roles?.user ? {} : { users: { some: { id: user.id } } }),
         },
         include: {
           configuration: {
@@ -127,7 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     };
     let unit = await transform(req.body);
-    if (!user.roles.admin) {
+    if (!user.roles.user) {
       unit = pick(unit, [
         "label",
         "configuration.update.setpoint",

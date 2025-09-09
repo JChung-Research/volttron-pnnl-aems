@@ -252,8 +252,9 @@ export function Occupancies(props: {
   unit: IUnit;
   editing: DeepPartial<IUnit> | null;
   handleChange: (field: string, unit?: DeepPartial<IUnit> | null) => (value: any) => void;
+  readOnly?: boolean;
 }) {
-  const { unit, editing, handleChange } = props;
+  const { unit, editing, handleChange, readOnly } = props;
 
   const dispatch = useDispatch();
   const [deleting, setDeleting] = useState(undefined as DeepPartial<IOccupancy> | undefined);
@@ -268,10 +269,12 @@ export function Occupancies(props: {
   occupancies.forEach((h, i) => (h.index = i));
   return (
     <>
-      <Label>
-        <h3>Create Occupancy</h3>
-        <CreateOccupancy unit={unit} editing={editing} handleChange={handleChange} />
-      </Label>
+      {!readOnly && (
+        <Label>
+          <h3>Create Occupancy</h3>
+          <CreateOccupancy unit={unit} editing={editing} handleChange={handleChange} />
+        </Label>
+      )}
       <Label>
         <h3>Temporary Occupancies</h3>
         <ul>
@@ -290,6 +293,7 @@ export function Occupancies(props: {
                     editing={editing}
                     occupancy={occupancy}
                     handleChange={handleChange}
+                    readOnly={readOnly}
                   />
                 </li>
               ))

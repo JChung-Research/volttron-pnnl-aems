@@ -67,10 +67,10 @@ export function Setpoint(props: {
   editing: DeepPartial<IUnit> | null;
   setpoint: DeepPartial<ISetpoint> | undefined;
   handleChange: (field: string, unit?: DeepPartial<IUnit> | null) => (value: any) => void;
-  readOnly?: Array<"title">;
+  readOnly?: boolean;
   handleSetpointValueChange?: (key: string, value: number | string) => void;
 }) {
-  const { type, title, path, unit, editing, setpoint, handleChange, handleSetpointValueChange, readOnly = ["title"] } = props;
+  const { type, title, path, unit, editing, setpoint, handleChange, handleSetpointValueChange, readOnly } = props;
 
   const getValue = useCallback((field: string) => get(editing, field, get(unit, field)), [editing, unit]);
 
@@ -124,6 +124,7 @@ export function Setpoint(props: {
       stepSize={0.5}
       labelStepSize={5}
       labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATING_MIN && v < COOLING_MAX) ? `${v}º\xa0F` : "")}
+      disabled={readOnly}
     >
       <MultiSlider.Handle
         type={HandleType.START}
@@ -273,6 +274,7 @@ export function Setpoint(props: {
         labelStepSize={5}
         intent={Intent.SUCCESS}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATING_MIN && v < COOLING_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.START}
@@ -357,6 +359,7 @@ export function Setpoint(props: {
         stepSize={0.5}
         labelStepSize={5}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATING_MIN && v < COOLING_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.START}
@@ -445,6 +448,7 @@ export function Setpoint(props: {
         stepSize={0.5}
         labelStepSize={5}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATING_MIN && v < COOLING_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.START}
@@ -534,6 +538,7 @@ export function Setpoint(props: {
         stepSize={30}
         labelStepSize={60}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > SUPPLYDUCTPRESSURE_MIN && v < SUPPLYDUCTPRESSURE_MAX) ? `${v}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -584,6 +589,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > COOLINGCOILVALVE_MIN && v < COOLINGCOILVALVE_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -633,6 +639,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATINGCOILVALVE_MIN && v < HEATINGCOILVALVE_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -682,6 +689,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > COOLINGCOILPUMP_MIN && v < COOLINGCOILPUMP_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -731,6 +739,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATINGCOILPUMP_MIN && v < HEATINGCOILPUMP_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -780,6 +789,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > SUPPLYFANSPEED_MIN && v < SUPPLYFANSPEED_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -830,6 +840,7 @@ export function Setpoint(props: {
         stepSize={0.5}
         labelStepSize={5}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > SUPPLYAIRSETPOINT_MIN && v < SUPPLYAIRSETPOINT_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -880,6 +891,7 @@ export function Setpoint(props: {
         stepSize={0.5}
         labelStepSize={5}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > SUPPLYHEATERSETPOINT_MIN && v < SUPPLYHEATERSETPOINT_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -930,6 +942,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > OUTSIDEAIRDAMPERPOSITION_MIN && v < OUTSIDEAIRDAMPERPOSITION_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -980,6 +993,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > RETURNAIRDAMPERPOSITION_MIN && v < RETURNAIRDAMPERPOSITION_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -1030,6 +1044,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > ZONEDAMPERPOSITION_MIN && v < ZONEDAMPERPOSITION_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -1080,6 +1095,7 @@ export function Setpoint(props: {
         stepSize={0.1}
         labelStepSize={0.2}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > ZONEREHEATCONTROL_MIN && v < ZONEREHEATCONTROL_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -1130,6 +1146,7 @@ export function Setpoint(props: {
         stepSize={0.5}
         labelStepSize={5}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATING_MIN && v < COOLING_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.START}
@@ -1222,6 +1239,7 @@ export function Setpoint(props: {
         stepSize={0.5}
         labelStepSize={5}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > HEATING_MIN && v < COOLING_MAX) ? `${v}º\xa0F` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.START}
@@ -1314,6 +1332,7 @@ export function Setpoint(props: {
         stepSize={1}
         labelStepSize={1}
         labelRenderer={(v, o) => (o?.isHandleTooltip || (v > CONTROLSTAGEPUMP_MIN && v < CONTROLSTAGEPUMP_MAX) ? `${v.toFixed(1)}` : "")}
+        disabled={readOnly}
       >
         <MultiSlider.Handle
           type={HandleType.FULL}
@@ -1379,6 +1398,7 @@ export function Setpoint(props: {
                 text={label}
                 active={mode === key}
                 intent={mode === key ? "primary" : "none"}
+                disabled={readOnly}
                 onClick={() => {
                 const setpoint = getValue(`${path}.setpoint`);
                 const deadband = getValue(`${path}.deadband`);

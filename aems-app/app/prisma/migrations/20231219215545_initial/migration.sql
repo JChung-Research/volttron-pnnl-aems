@@ -25,6 +25,7 @@ CREATE TABLE "User" (
     "scope" VARCHAR(512),
     "password" VARCHAR(1024),
     "preferences" JSON,
+    "bldgAccess" JSON,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ(6) NOT NULL,
 

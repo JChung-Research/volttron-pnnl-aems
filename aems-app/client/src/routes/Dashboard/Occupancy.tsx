@@ -12,8 +12,9 @@ export function Occupancy(props: {
   editing: DeepPartial<IUnit> | null;
   occupancy: DeepPartial<IOccupancy>;
   handleChange: (field: string, unit?: DeepPartial<IUnit> | null) => (value: any) => void;
+  readOnly?: boolean;
 }) {
-  const { path, editing, occupancy, handleChange } = props;
+  const { path, editing, occupancy, handleChange, readOnly } = props;
   const { id, label, date, schedule } = occupancy;
 
   const suffix = schedule?.label;
@@ -37,6 +38,7 @@ export function Occupancy(props: {
             onClick={() => {
               handleChange(path, editing)({ id: id, action: "delete" });
             }}
+            disabled={readOnly}
           />
         </div>
       </div>

@@ -326,6 +326,7 @@ input CurrentCreateInput {
   name: String
   password: String
   preferences: Preferences
+  bldgAccess: JSON
 }
 
 input CurrentUpdateInput {
@@ -334,6 +335,7 @@ input CurrentUpdateInput {
   name: String
   password: String
   preferences: Preferences
+  bldgAccess: JSON
 }
 
 """
@@ -943,6 +945,7 @@ type User {
 
   """[Preferences]"""
   preferences: Preferences
+  bldgAccess: JSON
   role: String
   updatedAt: DateTime
 }
@@ -962,6 +965,7 @@ input UserCreateInput {
   name: String
   password: String
   preferences: Preferences
+  bldgAccess: JSON
   role: String
 }
 
@@ -973,6 +977,7 @@ enum UserFields {
   image
   name
   preferences
+  bldgAccess
   role
   updatedAt
 }
@@ -1037,5 +1042,6 @@ input UserUpdateInput {
   name: String
   password: String
   preferences: Preferences
+  bldgAccess: JSON
   role: String
 }

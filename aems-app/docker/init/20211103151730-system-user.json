@@ -9,7 +9,8 @@
       "email": "test-user@aems.com",
       "password": "ChAnGe_ThIs_PaSsWoRd_0x2E",
       "role": "user",
-      "preferences": {}
+      "preferences": {},
+      "bldgAccess": {}
     },
     {
       "id": "2",
@@ -17,7 +18,8 @@
       "email": "test-admin@aems.com",
       "password": "ChAnGe_ThIs_PaSsWoRd_0x2E",
       "role": "admin",
-      "preferences": {}
+      "preferences": {},
+      "bldgAccess": {}
     },
     {
       "id": "3",
@@ -25,7 +27,8 @@
       "email": "system-user@aems.com",
       "password": "ChAnGe_ThIs_PaSsWoRd_0x2E",
       "role": "",
-      "preferences": {}
+      "preferences": {},
+      "bldgAccess": {}
     }
   ]
 }

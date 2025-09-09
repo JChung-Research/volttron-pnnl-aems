@@ -15,6 +15,7 @@ const mock = {
       email: "demo@pnnl.gov",
       scope: "user",
       preferences: {},
+      bldgAccess: {},
     },
   },
   [SERVICE_ENDPOINT_UPDATE_USER]: {
@@ -22,12 +23,14 @@ const mock = {
       email: "demo@pnnl.gov",
       password: "password",
       preferences: {},
+      bldgAccess: {},
     },
     result: {
       id: 1,
       email: "demo@pnnl.gov",
       scope: "user",
       preferences: {},
+      bldgAccess: {},
     },
   },
 };

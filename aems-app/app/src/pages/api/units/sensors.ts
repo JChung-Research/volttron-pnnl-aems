@@ -102,8 +102,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               id: true,
             },
             orderBy: [{ campus: "asc" }, { building: "asc" }, { name: "asc" }, { id: "asc" }],
-            ...(!user.roles.admin && {
-              where: { users: { some: { id: user.id } } },
+            ...(user?.roles?.user ? {} : { 
+              where: { users: { some: { id: user.id } } } 
             }),
           })
 

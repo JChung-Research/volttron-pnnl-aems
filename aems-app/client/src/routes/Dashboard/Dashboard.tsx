@@ -1542,7 +1542,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                         />
                                         <Collapse isOpen={expanded === "setpoints"}>
                                         <div style={{ marginTop: "20px" }}>
-                                          <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number | string) => this.handleSetpointValueChange(unit.id!, name, value)}/> 
+                                          <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number | string) => this.handleSetpointValueChange(unit.id!, name, value)} readOnly={!this.isAdmin()}/> 
                                         </div>
                                         </Collapse>
                                         <Tree
@@ -1606,7 +1606,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                           onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
                                         />
                                         <Collapse isOpen={expanded === "occupancies"}>
-                                          <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} />
+                                          <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} readOnly={!this.isAdmin()} />
                                         </Collapse>
                                       </Collapse>
                                     </div>

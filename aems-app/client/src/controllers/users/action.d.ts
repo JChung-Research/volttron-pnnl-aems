@@ -8,6 +8,7 @@ export interface IUser {
   email: string;
   role: string;
   preferences: string;
+  bldgAccess: JSON;
   createdAt: string;
   updatedAt: string;
   password?: string;

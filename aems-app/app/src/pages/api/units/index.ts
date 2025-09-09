@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json(null);
   }
   if (req.method === "POST") {
-    if (!user.roles.admin) {
+    if (!user.roles.user) {
       return res.status(401).json(null);
     }
     const unit = req.body as Partial<Units>;
@@ -56,8 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           location: true,
         },
         orderBy: [{ campus: "asc" }, { building: "asc" }, { name: "asc" }, { id: "asc" }],
-        ...(!user.roles.admin && {
-          where: { users: { some: { id: user.id } } },
+        ...(user?.roles?.user ? {} : { 
+          where: { users: { some: { id: user.id } } } 
         }),
       })
       .then((units) => {

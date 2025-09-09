@@ -7,9 +7,10 @@ export function Setpoints(props: {
   unit: DeepPartial<IUnit> | IUnit;
   editing: DeepPartial<IUnit> | null;
   handleChange: (field: string, unit?: DeepPartial<IUnit> | null) => (value: any) => void;
-  handleSetpointValueChange: (key: string, value: number) => void;
+  handleSetpointValueChange: (key: string, value: string | number) => void;
+  readOnly?: boolean;
 }) {
-  const { unit, editing, handleChange } = props;
+  const { unit, editing, handleChange, readOnly } = props;
   return (
     <Setpoint
       type="separate"
@@ -20,6 +21,7 @@ export function Setpoints(props: {
       setpoint={get(editing, "configuration.setpoint")}
       handleChange={handleChange}
       handleSetpointValueChange={props.handleSetpointValueChange}
+      readOnly={readOnly}
     />
   );
 }

@@ -98,6 +98,7 @@ model User {
   password          String?    @db.VarChar(1024)
   /// [Preferences]
   preferences       Json?      @db.Json
+  bldgAccess        Json?      @db.Json
   // metadata
   createdAt         DateTime   @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime   @updatedAt @db.Timestamptz(6)

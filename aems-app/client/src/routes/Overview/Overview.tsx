@@ -4,6 +4,7 @@ import Custom from "../../components/Custom";
 import { Header } from "components";
 import React from "react";
 import { RootProps } from "routes";
+import { RoleType } from "common";
 
 import "./style.scss";
 
@@ -185,6 +186,18 @@ class Overview extends React.Component<UnitsProps, UnitsState, any> {
       this.setState({ visibleColumns: [...visibleColumns, key] });
     }
   };
+
+  isAdmin() {
+    const { user } = this.props;
+    return RoleType.Admin.granted(...(user?.role.split(" ") ?? [""]));
+  }
+
+  userAccessibleBldgs() {
+    const { user } = this.props;
+    const access = (user?.bldgAccess ?? {}) as Record<string, boolean>;
+
+    return Object.keys(access).filter((k) => access[k]);
+  }
   
   render() {
     const { filtered } = this.props;
@@ -206,6 +219,10 @@ class Overview extends React.Component<UnitsProps, UnitsState, any> {
       if (a[key]! > b[key]!) return this.state.sortAsc ? 1 : -1;
       return 0;
     });
+  }
+
+  if (!this.isAdmin()) {
+    sortedFiltered = sortedFiltered.filter(u => this.userAccessibleBldgs().includes(u.building));
   }
 
   // Adjust column widths based on visibility and total layout width
@@ -270,8 +287,7 @@ class Overview extends React.Component<UnitsProps, UnitsState, any> {
         );
       }}
     />
-  ];
-  
+  ];  
 
     return (
       <div className={"overview"}>
@@ -308,7 +324,8 @@ class Overview extends React.Component<UnitsProps, UnitsState, any> {
         {/* Grid Tile View */}
         {this.state.selectedLayout === "Grid tile" ? (
           <div className="list container" style={{marginTop:"15px"}}>
-            {filtered?.map((unit, i) => (
+            {filtered?.filter((unit) => this.isAdmin() || this.userAccessibleBldgs().includes(unit.building))
+            .map((unit, i) => (
               <div className="col-md-4 mb-4" key={unit.id ?? i}>
                 <Card className="card shadow-sm" interactive style={{ marginBottom: "2rem", padding: "0px"}}>
                   <div className="placeholder-container">
