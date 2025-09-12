@@ -4,10 +4,13 @@
     "version": "0.1.0",
     "private": true,
     "license": "SEE LICENSE IN ../../LICENSE.txt",
+    "main": "./index.js",
+    "exports": "./index.js",
+    "sideEffects": true,
+    "files": ["index.js", "index.d.ts", "README.md", "LICENSE*"],
     "dependencies": {
         "pg": "^8.12.0",
         "pino-abstract-transport": "^1.1.0"
     },
-    "devDependencies": {},
     "packageManager": "yarn@4.1.1"
 }
