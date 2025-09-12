@@ -23,7 +23,7 @@ import {
   updateUnit
 } from "controllers/units/action";
 import { IconName, IconNames } from "@blueprintjs/icons";
-import { cloneDeep, get, isEqualWith, isNil, isObject, merge, isString, set } from "lodash";
+import { cloneDeep, get, isEqualWith, isNil, isObject, merge, set } from "lodash";
 
 import { Configuration } from "./Configuration";
 import { Holidays } from "./Holidays";
@@ -42,33 +42,19 @@ import { DeepPartial } from "../../utils/types";
 import { ISetpoint, updateSetpoint } from "controllers/setpoints/action";
 import { getCommon } from "utils/util";
 import { Holiday } from "./Holiday";
-import { IEnum } from "common/types";
 import Plot from 'react-plotly.js';
-import axios from "axios";
 
 import { useLocation } from "react-router-dom";
 
 import { readSensors } from "controllers/units/api";
+
+const BLDG_CHART_OFFSET = 10000;
 
 function withLocation(Component: any) {
   return function WrappedComponent(props: any) {
     const location = useLocation();
     return <Component {...props} location={location} />;
   };
-}
-
-function tempFtoK(f: number): number {
-  return ((f - 32) * 5) / 9 + 273.15;
-}
-
-function tempKtoF(k: number): number {
-  return ((k - 273.15) * 9) / 5 + 32;
-}
-
-function getSecondsFromStartOfYear(simDate: Date): number {
-  const startOfYear = new Date(Date.UTC(simDate.getUTCFullYear(), 0, 1)); 
-  const diffMs = simDate.getTime() - startOfYear.getTime(); 
-  return Math.floor(diffMs / 1000) - 18000; 
 }
 
 function convertChartConfigs(input: Record<string, any>) {
@@ -131,6 +117,8 @@ interface VizSetting {
   line_dash?: string;
 }
 
+type lineChartDataType = { index: number; time: string; values: Record<string, any> };
+
 interface UnitsState {
   editing: DeepPartial<IUnit> | null;
   editingAll: DeepPartial<IUnit> | null;
@@ -143,10 +131,14 @@ interface UnitsState {
       system: string;
       varList: string[];
       ctrlValues: Record<string, number | string>;
-      lineChartData: { index: number; time: string; values: {[key:string]: number; }}[];
+      lineChartData: lineChartDataType[];
       chartConfigs: { id: number; type: string; selectedVariables: string[]; vizSettings?: Record<string, VizSetting>; }[];
     };
   };
+  bldgChartConfigs: Record<
+    string,
+    { chartConfigs: { id: number; type: string; selectedVariables: string[]; vizSettings?: Record<string, VizSetting> }[] }
+  >;
   startCollect: boolean | null;
   sensorMetadata: MetadataItem[];
   openBuildings?: Record<string, boolean>;
@@ -187,6 +179,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       expanded: null,
       confirm: null,
       unitManagerData: {},
+      bldgChartConfigs: {},
       startCollect: true,
       sensorMetadata: [],
       openBuildings: {},
@@ -230,7 +223,7 @@ componentDidUpdate(prevProps: UnitsProps) {
     String(selectedUnitId) in this.unitRefs &&
     !this.hasScrolledToUnit
   ) {
-    const unit = this.props.units?.find(u => u.id === Number(selectedUnitId));
+    const unit = this.props.units?.find(unit => unit.id === Number(selectedUnitId));
     const bldgKey = unit?.building || "Unknown";
     const doScroll = () => {
       const ref = this.unitRefs[String(selectedUnitId)];
@@ -365,7 +358,6 @@ componentDidUpdate(prevProps: UnitsProps) {
     const { editing } = this.state;
     if (editing) {
       this.props.updateUnit(editing);
-      // this.setState({ editing: null, expanded: null });
     }
   };
 
@@ -459,6 +451,13 @@ componentDidUpdate(prevProps: UnitsProps) {
     return RoleType.Admin.granted(...(user?.role.split(" ") ?? [""]));
   }
 
+  userAccessibleBldgs() {
+    const { user } = this.props;
+    const access = (user?.bldgAccess ?? {}) as Record<string, boolean>;
+
+    return Object.keys(access).filter((k) => access[k]);
+  }
+
   renderStatus(unit: IUnit) {
     let icon: IconName = IconNames.ISSUE;
     let intent: Intent = Intent.WARNING;
@@ -497,7 +496,7 @@ componentDidUpdate(prevProps: UnitsProps) {
           intent={intent}
           minimal
           onClick={() => this.handlePush(unit)}
-          disabled={!this.isPush(unit)}
+          disabled={!this.isAdmin() || !this.isPush(unit)}
         />
       </Tooltip2>
     );
@@ -572,11 +571,85 @@ componentDidUpdate(prevProps: UnitsProps) {
     });
   };
 
-  renderChartSelect = (
+
+  addBldgChart = (bldgName: string) => {
+    this.setState(prev => {
+      const entry = prev.bldgChartConfigs[bldgName] ?? { chartConfigs: [] as any[] };
+      const nextId = entry.chartConfigs.length + BLDG_CHART_OFFSET;
+      return {
+        bldgChartConfigs: {
+          ...prev.bldgChartConfigs,
+          [bldgName]: { chartConfigs: [...entry.chartConfigs, { id: nextId, type: "line", selectedVariables: [] }] },
+        },
+      };
+    });
+  };
+
+  removeBldgChart = (bldgName: string) => {
+    this.setState(prev => {
+      const entry = prev.bldgChartConfigs[bldgName];
+      if (!entry || entry.chartConfigs.length === 0) return null;
+      return {
+        bldgChartConfigs: {
+          ...prev.bldgChartConfigs,
+          [bldgName]: { chartConfigs: entry.chartConfigs.slice(0, -1) },
+        },
+      };
+    });
+  };
+
+  handleBldgChartSelect = (bldgName: string, chartId: number, newSelection: string[]) => {
+    this.setState(prev => {
+      const entry = prev.bldgChartConfigs[bldgName];
+      if (!entry) return null;
+      const chartConfigs = entry.chartConfigs.map(c => (c.id === chartId ? { ...c, selectedVariables: newSelection } : c));
+      return { bldgChartConfigs: { ...prev.bldgChartConfigs, [bldgName]: { chartConfigs } } };
+    });
+  };
+
+  private toBuildingData = (unitManagerData: any, bldgName?: string) => {
+    const units: any[] = Array.isArray(unitManagerData)
+      ? unitManagerData
+      : Object.values(unitManagerData || {});
+
+    const sameBldg = bldgName ? units.filter(u => u.building === bldgName) : units;
+    if (!sameBldg.length) return null;
+
+    const building = sameBldg[0].building;
+    const varList = sameBldg[0].varList ?? ["index", "values"];
+
+    // Merge control values with system prefix e.g., "201_ZoneAirHeatingSetpoint"
+    const ctrlValues = sameBldg.reduce<Record<string, any>>((acc, u) => {
+      Object.entries(u.ctrlValues || {}).forEach(([k, v]) => {
+        acc[`${u.system}_${k}`] = v;
+      });
+      return acc;
+    }, {});
+
+    // Merge timeseries by time; prefix variable names with system (201_, 202_, ...)
+    const byTime = new Map<string, lineChartDataType>();
+    sameBldg.forEach(u => {
+      (u.lineChartData || []).forEach((s: lineChartDataType) => {
+        const key = s.time;
+        const tgt = byTime.get(key) ?? { index: s.index, time: s.time, values: {} };
+        Object.entries(s.values || {}).forEach(([k, v]) => {
+          tgt.values[`${u.system}_${k}`] = v;
+        });
+        byTime.set(key, tgt);
+      });
+    });
+
+    const lineChartData = Array.from(byTime.values()).sort((a, b) => a.index - b.index);
+    const chartConfigs = this.state.bldgChartConfigs?.[String(bldgName)]?.chartConfigs ?? [];
+
+    return { id: 0, building, varList, ctrlValues, chartConfigs, lineChartData };
+  };
+
+  renderZoneChartSelect = (
     unitId: number,
     chartId: number,
     label: string,
-    chartData: { index: number; time: string; values: {[key:string]: number}; }, //OutputOption[],
+    chartData: lineChartDataType,
     selectedVariables: string[],
     onChange: (selection: string[]) => void
   ) => {
@@ -760,7 +833,215 @@ componentDidUpdate(prevProps: UnitsProps) {
     );
   };
 
-  handleChartSelect = (unitId:number, chartId: number, selectedVariables: string[]) => {
+  renderBldgChartSelect = (
+    bldgName: string,
+    chartId: number,
+    label: string,
+    chartData: lineChartDataType, 
+    selectedVariables: string[],
+    onChange: (selection: string[]) => void
+  ) => {
+
+    Object.fromEntries(
+      Object.keys(chartData.values).map(s => {
+        const m = s.match(/^\s*\[([^\]]+)\]\s*(.*)$/);
+        return [m?.[1].trim() ?? s, (m?.[2] ?? "").trim()];
+      })
+    );
+
+    const usedVariables = Object.keys(chartData.values);
+
+    const selectMetadata = usedVariables.map((fullName) => {
+      // split once: "102_ZoneAirTemperature" -> ["102", "ZoneAirTemperature"]
+      const [zoneName, baseName = fullName] = fullName.split(/_(.+)/);
+      const meta = this.state.sensorMetadata.find((m) => m.name === baseName);
+
+      // copy meta and update only the label (and name -> full key)
+      return meta
+        ? { ...meta, name: fullName, label: `[${zoneName}] ${meta.label}` }
+        : { name: fullName, label: `[${zoneName}] ${baseName}`, unit: "", type: "environment" };
+    });
+
+    const chartConfig = this.state.bldgChartConfigs[bldgName].chartConfigs.find((v) => v.id == chartId);
+    const chartTypes = ['line', 'scatter', 'box'];
+
+    return (
+      <Label>
+        <b>{label}</b>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
+        <Popover2
+          content={
+            <div style={{ display: 'flex', gap: '5px', padding: '10px' }}>
+
+              {/* Control Column */}
+              <Menu style={{ flex: 1, width: '450px' }}>
+                <MenuItem text="Control" disabled />
+                {selectMetadata?.filter((v) => v.type === "control").map((item) => {
+                  const isChecked = selectedVariables.includes(item.name);
+                  return (
+                    <MenuItem
+                      key={item.label}
+                      text={
+                        <Label style={{ margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            const itemName = item.name;                            
+
+                            this.setState(prevState => {
+                              const updatedConfigs = prevState.bldgChartConfigs[bldgName].chartConfigs.map((config, idx) => {
+                                console.log("idx, chartId: ", idx, chartId);
+                                if (idx + BLDG_CHART_OFFSET !== chartId) return config;
+
+                                const updatedSelectedVars = isChecked
+                                  ? [...config.selectedVariables, itemName]
+                                  : config.selectedVariables.filter((v) => v !== itemName);
+                                return {
+                                  ...config,
+                                  selectedVariables: updatedSelectedVars,
+                                };
+                              });
+
+                              return {
+                                bldgChartConfigs: {
+                                  ...prevState.bldgChartConfigs,
+                                  [bldgName]: {
+                                    ...prevState.bldgChartConfigs[bldgName],
+                                    chartConfigs: updatedConfigs,
+                                  }
+                                }
+                              };
+                            });
+                          }}
+                        />
+                          {" " + item.label}
+                        </Label>
+                      }
+                      shouldDismissPopover={false}
+                    />
+                  );
+                })}
+              </Menu>
+
+              {/* Environmental Column */}
+              <Menu style={{ flex: 1 }}>
+                <MenuItem text="Environment" disabled />
+                {selectMetadata?.filter((v) => v.type === "environment").map((item) => {
+                  const isChecked = selectedVariables.includes(item.name);
+                  return (
+                    <MenuItem
+                      key={item.label}
+                      text={
+                        <Label style={{ margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked;
+                              const itemName = item.name;
+
+                              this.setState(prevState => {
+                                const updatedConfigs = prevState.bldgChartConfigs[bldgName].chartConfigs.map((config, idx) => {
+                                  if (idx + BLDG_CHART_OFFSET !== chartId) return config;
+
+                                  const updatedSelectedVars = isChecked
+                                    ? [...config.selectedVariables, itemName]
+                                    : config.selectedVariables.filter((v) => v !== itemName);
+
+                                  return {
+                                    ...config,
+                                    selectedVariables: updatedSelectedVars,
+                                  };
+                                });
+
+                                return {
+                                  bldgChartConfigs: {
+                                    ...prevState.bldgChartConfigs,
+                                    [bldgName]: {
+                                      ...prevState.bldgChartConfigs[bldgName],
+                                      chartConfigs: updatedConfigs,
+                                    }
+                                  }
+                                };
+                              });
+                            }}
+                          />
+                          {" " + item.label}
+                        </Label>
+                      }
+                      shouldDismissPopover={false}
+                    />
+                  );
+                })}
+              </Menu>
+            </div>
+          }
+          placement="bottom-start"
+        >
+        <Button rightIcon={IconNames.CARET_DOWN} minimal>
+          {selectedVariables.length > 0
+            ? `${selectedVariables.length} selected`
+            : "Select variables..."}
+        </Button>
+        </Popover2>
+
+        {/* Chart Type Dropdown */}
+        <Popover2
+          content={
+            <Menu>
+              {chartTypes.map((type) => (
+                <MenuItem
+                  key={type}
+                  text={type === 'line' 
+                          ? 'Line Chart' 
+                          : type === 'scatter' 
+                          ? 'Scatter Plot'
+                          : type === 'box'
+                          ? 'Box Plot'
+                          : 'Unknown Plot Type'}
+                  onClick={() => {
+                    this.setState((prevState) => {
+                      const updatedConfigs = prevState.bldgChartConfigs[bldgName].chartConfigs.map((config) =>
+                        config.id === chartId
+                          ? { ...config, type }
+                          : config
+                      );
+                      return {
+                        bldgChartConfigs: {
+                          ...prevState.bldgChartConfigs,
+                          [bldgName]: {
+                            ...prevState.bldgChartConfigs[bldgName],
+                            chartConfigs: updatedConfigs,
+                          },
+                        },
+                      };
+                    });
+                  }}
+                />
+              ))}
+            </Menu>
+          }
+          placement="bottom-start"
+        >
+          <Button rightIcon={IconNames.CARET_DOWN} minimal>
+            {chartConfig?.type === 'scatter'
+              ? 'Scatter Plot'
+              : chartConfig?.type === 'line'
+              ? 'Line Chart'
+              : chartConfig?.type === 'box'
+              ? 'Box Plot'
+              : 'Select Chart Type'}
+          </Button>
+        </Popover2>
+        </div>
+
+      </Label>
+    );
+  };
+
+  handleZoneChartSelect = (unitId:number, chartId: number, selectedVariables: string[]) => {
     this.setState((prevState) => ({
       unitManagerData: {
         ...prevState.unitManagerData,
@@ -774,19 +1055,20 @@ componentDidUpdate(prevProps: UnitsProps) {
     }));
   };
 
-  buildAxisInfo = (unitId: number, chartId: number): AxisInfo[] => {
-    const unitData = this.state.unitManagerData[unitId];
+  buildAxisInfo = (unitData: any, chartId: number, spaceType: string): AxisInfo[] => {
     if (!unitData) return [];
   
-    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartId);
+    const chartConfig = (unitData.chartConfigs as { id: number; selectedVariables: string[] }[])
+      .find((c) => c.id === chartId); 
     if (!chartConfig) return [];
   
     return chartConfig.selectedVariables.map((outputName) => {
-      const values = unitData.lineChartData.map((d) => d.values[outputName]);
+      const values = unitData.lineChartData.map(({ values }: { values: Record<string, number | string | null | undefined> }) => values[outputName])
+          .filter((v: number | string): v is number | string => v != null && (typeof v !== "number" || Number.isFinite(v)));
       const yAxisMin = Math.min(...values);
       const yAxisMax = Math.max(...values);
       const match = this.state.sensorMetadata.find(
-        (o) => o.name === outputName
+        (o) => o.name === outputName.split(/_(.+)/)[1]
       );
       return {
         name: outputName,
@@ -800,14 +1082,12 @@ componentDidUpdate(prevProps: UnitsProps) {
   };  
 
   // Render a Plotly line chart with dual Y-axes for selected outputs
-  renderLineChart = (unitId: number, chartIndex: number) => {
+  renderLineChart = (unitData: any, yAxisInfo: any, chartIndex: number) => {
 
     // Unit setting for line charts
-    const unitData = this.state.unitManagerData[unitId];
-    const yAxisInfo = this.buildAxisInfo(unitId, chartIndex);
     const primaryUnit = yAxisInfo[0]?.unit;
     let secondaryIndex: number | null = null;
-    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartIndex);
+    const chartConfig = unitData.chartConfigs.find((c: { id: number }) => c.id === chartIndex);
 
     for (let i = 1; i < yAxisInfo.length; i++) {
       if (yAxisInfo[i].unit !== primaryUnit) {
@@ -818,8 +1098,8 @@ componentDidUpdate(prevProps: UnitsProps) {
 
     // Separate values based on axis assignment
     const primaryYValues = yAxisInfo
-      .filter((_, idx) => idx !== secondaryIndex)
-      .flatMap((info) => info.values);
+      .filter((_: AxisInfo, idx: number) => idx !== (secondaryIndex ?? -1))
+      .flatMap((info: AxisInfo) => info.values);
 
     const secondaryYValues = secondaryIndex !== null
       ? yAxisInfo[secondaryIndex].values
@@ -832,9 +1112,9 @@ componentDidUpdate(prevProps: UnitsProps) {
 
     return (
         <Plot
-          key={`${unitId}-${chartIndex}`}
-          data={yAxisInfo.map((info, idx) => ({
-            x: unitData.lineChartData.slice(-50).map((d) => d.time.split(" ")[1]),
+          key={`${unitData.building}-${chartIndex}`}
+          data={yAxisInfo.map((info: AxisInfo, idx: number) => ({
+            x: unitData.lineChartData.slice(-50).map((d: { time: string }) => d.time.split(" ")[1]),
             y: info.values.slice(-50),
             type: 'scatter',
             mode: 'lines',
@@ -917,32 +1197,38 @@ componentDidUpdate(prevProps: UnitsProps) {
 
 
   // Render a Plotly scatter plot for selected outputs
-  renderScatterPlot = (unitId: number, chartIndex: number) => {
+  renderScatterPlot = (unitData: any, axisInfo: any, chartIndex: number) => {
 
     // Unit setting for line charts
-    const unitData = this.state.unitManagerData[unitId];
-    const axisInfo = this.buildAxisInfo(unitId, chartIndex);    
     const xVar = axisInfo[0];
     const yVar = axisInfo[1];
-    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartIndex);
+    const chartConfig = unitData.chartConfigs.find((c: { id: number }) => c.id === chartIndex);
 
     return (
         <Plot
-          key={`${unitId}-${chartIndex}`}
-          data={xVar && yVar ? Object.entries(
-                  unitData.lineChartData.reduce((acc, point) => {
-                    const occ = point.values["Occupancy"] ?? "unknown";
-                    const x = parseFloat(String(point.values[xVar.name]));
-                    const y = parseFloat(String(point.values[yVar.name]));
-
-                    if (!isNaN(x) && !isNaN(y)) {
-                      acc[occ] = acc[occ] || { x: [], y: [] };
-                      acc[occ].x.push(x);
-                      acc[occ].y.push(y);
-                    }
-                    return acc;
-                  }, {} as Record<string, { x: number[]; y: number[] }>)
-                ).map(([occ, coords], idx) => ({
+          key={`${unitData.building}-${chartIndex}`}
+          data={
+            xVar && yVar
+              ? (Object.entries(
+                  unitData.lineChartData.reduce(
+                    (
+                      acc: Record<string, { x: number[]; y: number[] }>,
+                      point: { values: Record<string, number | string | null | undefined> }
+                    ) => {
+                      const zoneName = xVar.name.split('_')[0];
+                      const occ = (Object.keys(unitData).includes("system")) ? String(point.values["Occupancy"] ?? "unknown") : String(point.values[`${zoneName}_Occupancy`] ?? "unknown");
+                      const x = parseFloat(String(point.values[xVar.name]));
+                      const y = parseFloat(String(point.values[yVar.name]));
+                      if (!isNaN(x) && !isNaN(y)) {
+                        acc[occ] = acc[occ] || { x: [], y: [] };
+                        acc[occ].x.push(x);
+                        acc[occ].y.push(y);
+                      }
+                      return acc;
+                    },
+                    {} as Record<string, { x: number[]; y: number[] }>
+                  )
+                ) as [string, { x: number[]; y: number[] }][]).map(([occ, coords], idx) => ({
                   x: coords.x,
                   y: coords.y,
                   type: 'scatter',
@@ -957,7 +1243,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                   yaxis: 'y', 
                   hovertemplate: `%{x} ${xVar.unit}, %{y} ${yVar.unit}<br>Occupancy: ${occ}`,
                 }))
-              : []}              
+              : []}
           layout={{
             autosize: true,
             height: 370,
@@ -1011,51 +1297,50 @@ componentDidUpdate(prevProps: UnitsProps) {
     };
 
   // Render a Plotly box plot with a selected outputs
-  renderBoxPlot = (unitId: number, chartIndex: number) => {
-
-    // Unit setting for line charts
-    const unitData = this.state.unitManagerData[unitId];
-    const axisInfo = this.buildAxisInfo(unitId, chartIndex);    
+  renderBoxPlot = (unitData: any, axisInfo: any, chartIndex: number) => {
     const yVar = axisInfo[0];
-    const chartConfig = unitData.chartConfigs.find((c) => c.id === chartIndex);
+    const chartConfig = unitData.chartConfigs.find((c: { id: number }) => c.id === chartIndex);
+    const chartKey = (Object.keys(unitData).includes("system")) ? `${unitData.id}-${chartIndex}` : `${unitData.building}-${chartIndex}`;
     
     return (
         <Plot
-          key={`${unitId}-${chartIndex}`}
+          key={chartKey}
           data={
             yVar
-              ? Object.entries(
-                  unitData.lineChartData.reduce((acc, point) => {
-                    const hour = new Date(point.time).getHours();
-                    const occ = point.values["Occupancy"] ?? "unknown";
-                    const y = parseFloat(String(point.values[yVar.name]));
-
-                    if (hour < 6 || hour > 20 || isNaN(y)) return acc;
-
-                    acc[occ] = acc[occ] || { x: [], y: [] };
-                    acc[occ].x.push(`Hour ${hour}`);
-                    acc[occ].y.push(y);
-
-                    return acc;
-                  }, {} as Record<string, { x: string[]; y: number[] }>)
-                ).map(([occ, coords], occIndex) => ({
-                  x: coords.x,
-                  y: coords.y,
-                  type: 'box',
-                  name: occ,
-                  // width: 0.9,
-                  marker: {
-                    color: chartConfig?.vizSettings?.[occ]?.color ?? `hsl(${(occIndex * 90) % 360}, 70%, 40%)`,
-                    size: chartConfig?.vizSettings?.[occ]?.marker_size ?? 6,
-                  },
-                  line: {
-                    width: chartConfig?.vizSettings?.[occ]?.line_width ?? 2,
-                  },
-                  boxpoints: 'outliers',
-                  hovertemplate: `%{y}<br>Occupancy: ${occ}`,
-                }))
+              ? (Object.entries(
+                  unitData.lineChartData.reduce(
+                    (
+                      acc: Record<string, { x: string[]; y: number[] }>,
+                      point: { time: string; values: Record<string, number | string | null | undefined> }
+                    ) => {
+                      const hour = new Date(point.time).getHours();
+                      const zoneName = yVar.name.split('_')[0];
+                      const occ = (Object.keys(unitData).includes("system")) ? String(point.values["Occupancy"] ?? "unknown") : String(point.values[`${zoneName}_Occupancy`] ?? "unknown");
+                      const y = parseFloat(String(point.values[yVar.name]));
+                      if (hour < 6 || hour > 20 || isNaN(y)) return acc;
+                      acc[occ] ??= { x: [], y: [] };
+                      acc[occ].x.push(`Hour ${hour}`);
+                      acc[occ].y.push(y);
+                      return acc;
+                    },
+                    {} as Record<string, { x: string[]; y: number[] }>
+                  )
+                ) as Array<[string, { x: string[]; y: number[] }]>)
+                  .map(([occ, coords], occIndex) => ({
+                    x: coords.x,
+                    y: coords.y,
+                    type: 'box',
+                    name: occ,
+                    marker: {
+                      color: chartConfig?.vizSettings?.[occ]?.color ?? `hsl(${(occIndex * 90) % 360}, 70%, 40%)`,
+                      size: chartConfig?.vizSettings?.[occ]?.marker_size ?? 6,
+                    },
+                    line: { width: chartConfig?.vizSettings?.[occ]?.line_width ?? 2 },
+                    boxpoints: 'outliers',
+                    hovertemplate: `%{y}<br>Occupancy: ${occ}`,
+                  }))
               : []
-          }         
+          }
           layout={{
             autosize: true,
             height: 390,
@@ -1122,7 +1407,7 @@ componentDidUpdate(prevProps: UnitsProps) {
     getVoltData = async () => {
       readSensors().then((res) => {
 
-        console.log("this.state.unitManagerData: ", this.state.unitManagerData);
+        // console.log("this.state.unitManagerData: ", this.state.unitManagerData);
         console.log("res: ", res);
 
         if (this.state.sensorMetadata.length === 0) {
@@ -1135,7 +1420,7 @@ componentDidUpdate(prevProps: UnitsProps) {
           const unitSystem = unitData.system;
           const resSensorData = Object.values(res.sensorData).find((entry: any) => entry.system === unitSystem) as {
                 ctrlValues: Record<string, number | string>;
-                lineChartData: { index: number; time: string; values: { [key: string]: number }; };
+                lineChartData: lineChartDataType;
               };
 
           this.setState(prevState => {
@@ -1236,9 +1521,6 @@ componentDidUpdate(prevProps: UnitsProps) {
       }
     });    
 
-    const selectedUnitId = Number(this.props.location?.state?.selectedUnitId);
-    var unitData = !isNaN(selectedUnitId) ? this.state.unitManagerData[selectedUnitId] : undefined;  
-
     const defaultUnit = {
       location: filtered
         ? getCommon(
@@ -1258,11 +1540,11 @@ componentDidUpdate(prevProps: UnitsProps) {
       },
     };
 
-    const campusGroups = (filtered ?? []).reduce((acc: Record<string, Record<string, IUnit[]>>, u) => {
-      const campus = u.campus || "Unknown";
-      const bldg   = u.building || "Unknown";
+    const campusGroups = (filtered ?? []).reduce((acc: Record<string, Record<string, IUnit[]>>, unit) => {
+      const campus = unit.campus || "Unknown";
+      const bldg   = unit.building || "Unknown";
       (acc[campus] ??= {});
-      (acc[campus][bldg] ??= []).push(u);
+      (acc[campus][bldg] ??= []).push(unit);
       return acc;
     }, {});
 
@@ -1355,7 +1637,8 @@ componentDidUpdate(prevProps: UnitsProps) {
             onChange={(id) => this.setState({ activeCampus: String(id), openBuildings: {} })}
           >
             {campusIds.map((campusId) => {
-              const bldgCount = Object.keys(campusGroups[campusId]).length;
+              const accessibleBldgs = this.userAccessibleBldgs();
+              const bldgCount = Object.keys(campusGroups[campusId]).filter((bldgName) => accessibleBldgs.includes(bldgName)).length;
 
               return (
                 <Tab
@@ -1372,18 +1655,20 @@ componentDidUpdate(prevProps: UnitsProps) {
                   }
                   panel={
                     <div className="list campus-panel">
-                      {Object.keys(campusGroups[campusId]).sort().map((bldgId) => {
-                        const unitsInBldg = campusGroups[campusId][bldgId];
-                        const isOpen = !!this.state.openBuildings?.[bldgId];
+                      {Object.keys(campusGroups[campusId]).sort()
+                      .filter((bldgName) => this.isAdmin() || accessibleBldgs.includes(bldgName))
+                      .map((bldgName) => {
+                        const unitsInBldg = campusGroups[campusId][bldgName];
+                        const isOpen = !!this.state.openBuildings?.[bldgName];
                         const zoneCount = unitsInBldg.length;
 
                         return (
                           // Building lists
-                          <Card key={`bldg-${campusId}-${bldgId}`} interactive style={{ marginBottom: "2rem" }}>
+                          <Card key={`bldg-${campusId}-${bldgName}`} interactive style={{ marginBottom: "2rem" }}>
                             <div className="row" style={{ alignItems: "center" }}>
                               <div className="col-md-10" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 <Icon icon={IconNames.OFFICE} />
-                                <h3 style={{ margin: 0 }}>{bldgId}</h3>
+                                <h3 style={{ margin: 0 }}>{bldgName}</h3>
                                 {/* Tags counting the number of zones in the building */}
                                 <Tag minimal round>{zoneCount} zone{zoneCount !== 1 ? "s" : ""}</Tag>
                               </div>
@@ -1393,11 +1678,81 @@ componentDidUpdate(prevProps: UnitsProps) {
                                   icon={isOpen ? IconNames.CARET_DOWN : IconNames.CARET_RIGHT}
                                   onClick={() =>
                                     this.setState(prev => ({
-                                      openBuildings: isOpen ? {} : { [bldgId]: true },
+                                      openBuildings: isOpen ? {} : { [bldgName]: true },
                                     }))
                                   }
                                 />
                               </div>
+                              
+                        {isOpen && (
+                          <div style={{ marginTop: "15px" }}>
+                            {/* SINGLE wrapper per building */}
+                            <div className="col-md-12" key={`bldg-chart-wrap-${bldgName}`}>
+                              <h2>Building Monitoring</h2>
+
+                              {/* one set of controls for the building */}
+                              <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                                <h3 style={{ margin: 0 }}>Add/Remove a chart:&nbsp;</h3>
+                                <div style={{ marginTop: "0%", marginLeft: "1%" }}>
+                                  <Tooltip2 content="Add" placement={Position.BOTTOM}>
+                                    <Button
+                                      icon={IconNames.PLUS}
+                                      intent={Intent.PRIMARY}
+                                      small
+                                      className="custom-button"
+                                      onClick={() => this.addBldgChart(bldgName)}
+                                    />
+                                  </Tooltip2>
+                                  <Tooltip2 content="Remove" placement={Position.BOTTOM}>
+                                    <Button
+                                      icon={IconNames.MINUS}
+                                      intent={Intent.PRIMARY}
+                                      small
+                                      className="custom-button"
+                                      onClick={() => this.removeBldgChart(bldgName)}
+                                    />
+                                  </Tooltip2>
+                                </div>
+                              </div>
+
+                              {/* 2-column grid of building-level charts */}
+                              <div
+                                style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}
+                              >
+                                {(this.state.bldgChartConfigs[bldgName]?.chartConfigs ?? []).map((chart) => {
+                                  const chartType = chart.type;
+                                  var unitData = this.toBuildingData(this.state.unitManagerData, bldgName);
+                                  const lineChartData = unitData?.lineChartData?.[0] ?? { index: 0, time: "", values: {} };
+                                  const axisInfo = this.buildAxisInfo(unitData, chart.id, "building");
+                                  const buildingName = unitsInBldg[0]?.building!;
+
+                                  return (
+                                    <div key={`bldg-${bldgName}-chart-${chart.id}`} style={{ marginBottom: 10 }}>
+                                      <div className="select">
+                                        {this.renderBldgChartSelect(
+                                          buildingName,
+                                          chart.id,
+                                          `Building-Level Chart ${chart.id + 1 - BLDG_CHART_OFFSET}`,
+                                          lineChartData, 
+                                          chart.selectedVariables,
+                                          (newSelection) => this.handleBldgChartSelect(bldgName, chart.id, newSelection)
+                                        )}
+                                      </div>
+                                      {chartType === "line"
+                                        ? this.renderLineChart(unitData, axisInfo, chart.id)
+                                        : chartType === "scatter"
+                                        ? this.renderScatterPlot(unitData, axisInfo, chart.id)
+                                        : chartType === "box"
+                                        ? this.renderBoxPlot(unitData, axisInfo, chart.id)
+                                        : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                             </div>
                             {/* Zone lists */}
                             <Collapse isOpen={isOpen}>
@@ -1640,25 +1995,29 @@ componentDidUpdate(prevProps: UnitsProps) {
                                       <div className="row">
                                         {unitData?.chartConfigs?.map((chart) => { 
                                           const chartType = chart.type;
-                                          
+                                          const unitData = this.state.unitManagerData[unit.id!];
+                                          const lineChartData = unitData?.lineChartData?.[0] ?? { index: 0, time: "", values: {} };
+                                          const axisInfo = this.buildAxisInfo(unitData, chart.id, "zone");
+                                          console.log("axisInfo: ", axisInfo);
+
                                           return (
                                             <div key={`${unit.id}-${chart.id}`} style={{ marginBottom: "10px" }}>
                                               <div className="select">
-                                                {this.renderChartSelect(
+                                                {this.renderZoneChartSelect(
                                                   unit.id!,
                                                   chart.id,
-                                                  `Chart ${chart.id + 1}`,
-                                                  this.state.unitManagerData[unit.id!].lineChartData[0],
+                                                  `Zone-Level Chart ${chart.id + 1}`,
+                                                  lineChartData,
                                                   chart.selectedVariables,
-                                                  (newSelection) => this.handleChartSelect(unit.id!, chart.id, newSelection)
+                                                  (newSelection) => this.handleZoneChartSelect(unit.id!, chart.id, newSelection)
                                                 )}
                                               </div>
                                               {chartType === "line" 
-                                                ? this.renderLineChart(unit.id!, chart.id)
-                                                : chartType === "scatter" 
-                                                ? this.renderScatterPlot(unit.id!, chart.id)
+                                                ? this.renderLineChart(unitData, axisInfo, chart.id)
+                                                : chartType === "scatter"
+                                                ? this.renderScatterPlot(unitData, axisInfo, chart.id)
                                                 : chartType === "box"
-                                                ? this.renderBoxPlot(unit.id!, chart.id)
+                                                ? this.renderBoxPlot(unitData, axisInfo, chart.id)
                                                 : null}
                                             </div>
                                           );
