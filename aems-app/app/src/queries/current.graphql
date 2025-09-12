@@ -7,6 +7,7 @@ fragment CurrentFragment on User {
   emailVerified
   preferences
   bldgAccess
+  readOnly
   createdAt
   updatedAt
 }
@@ -21,6 +22,7 @@ query ReadCurrent {
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }
@@ -36,6 +38,7 @@ mutation CreateCurrent($create: CurrentCreateInput!) {
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }
@@ -51,6 +54,7 @@ mutation UpdateCurrent($update: CurrentUpdateInput!) {
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }

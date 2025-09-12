@@ -261,6 +261,12 @@ class Units extends React.Component<UnitsProps, UnitsState> {
     return Object.keys(access).filter((k) => access[k]);
   }
 
+  isReadOnlyUser() {
+    const { user } = this.props;
+
+    return user?.readOnly;
+  }
+
   renderStatus(unit: IUnit) {
     let icon: IconName = IconNames.ISSUE;
     let intent: Intent = Intent.WARNING;
@@ -426,7 +432,7 @@ class Units extends React.Component<UnitsProps, UnitsState> {
                             editing={editingAll}
                             holiday={holiday!}
                             handleChange={this.handleChange}
-                            readOnly={!this.isAdmin()}
+                            readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                           />
                         </li>
                       ))}
@@ -564,7 +570,7 @@ class Units extends React.Component<UnitsProps, UnitsState> {
                           configurations={configurations}
                           handleChange={this.handleChange}
                           handleCreate={this.handleCreate}
-                          readOnly={!this.isAdmin()}
+                          readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                         />
                       </Collapse>
                     </>
@@ -605,7 +611,7 @@ class Units extends React.Component<UnitsProps, UnitsState> {
                       unit={unit}
                       editing={editing}
                       handleChange={this.handleChange}
-                      readOnly={!this.isAdmin()}
+                      readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                     />
                   </Collapse>
                   <Tree
@@ -627,7 +633,7 @@ class Units extends React.Component<UnitsProps, UnitsState> {
                       unit={unit}
                       editing={editing}
                       handleChange={this.handleChange}
-                      readOnly={!this.isAdmin()}
+                      readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                     />
                   </Collapse>
                   <Tree

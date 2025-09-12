@@ -7,6 +7,7 @@ fragment UserFields on User {
   emailVerified
   preferences
   bldgAccess
+  readOnly
   createdAt
   updatedAt
 }
@@ -21,6 +22,7 @@ query ReadUser($where: UserUniqueFilter!) {
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }
@@ -36,6 +38,7 @@ query ReadUsers($where: UserFilter, $paging: PagingInput, $orderBy: [UserOrderBy
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }
@@ -53,6 +56,7 @@ mutation CreateUser($create: UserCreateInput!) {
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }
@@ -68,6 +72,7 @@ mutation UpdateUser($where: UserUniqueFilter!, $update: UserUpdateInput!) {
     emailVerified
     preferences
     bldgAccess
+    readOnly
     createdAt
     updatedAt
   }

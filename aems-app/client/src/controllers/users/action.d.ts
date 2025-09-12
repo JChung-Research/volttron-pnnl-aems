@@ -9,6 +9,7 @@ export interface IUser {
   role: string;
   preferences: string;
   bldgAccess: JSON;
+  readOnly: boolean;
   createdAt: string;
   updatedAt: string;
   password?: string;

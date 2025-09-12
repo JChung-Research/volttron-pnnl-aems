@@ -99,6 +99,7 @@ model User {
   /// [Preferences]
   preferences       Json?      @db.Json
   bldgAccess        Json?      @db.Json
+  readOnly          Boolean?   @default(false)
   // metadata
   createdAt         DateTime   @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime   @updatedAt @db.Timestamptz(6)

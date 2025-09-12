@@ -26,6 +26,7 @@ CREATE TABLE "User" (
     "password" VARCHAR(1024),
     "preferences" JSON,
     "bldgAccess" JSON,
+    "readOnly" BOOLEAN,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ(6) NOT NULL,
 

@@ -458,6 +458,12 @@ componentDidUpdate(prevProps: UnitsProps) {
     return Object.keys(access).filter((k) => access[k]);
   }
 
+  isReadOnlyUser() {
+    const { user } = this.props;
+
+    return user?.readOnly;
+  }
+
   renderStatus(unit: IUnit) {
     let icon: IconName = IconNames.ISSUE;
     let intent: Intent = Intent.WARNING;
@@ -1615,7 +1621,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                             editing={editingAll}
                             holiday={holiday!}
                             handleChange={this.handleChange}
-                            readOnly={!this.isAdmin()}
+                            readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                           />
                         </li>
                       ))}
@@ -1873,7 +1879,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                                 configurations={configurations}
                                                 handleChange={this.handleChange}
                                                 handleCreate={this.handleCreate}
-                                                readOnly={!this.isAdmin()}
+                                                readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                                               />
                                             </Collapse>
                                           </>
@@ -1897,7 +1903,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                         />
                                         <Collapse isOpen={expanded === "setpoints"}>
                                         <div style={{ marginTop: "20px" }}>
-                                          <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number | string) => this.handleSetpointValueChange(unit.id!, name, value)} readOnly={!this.isAdmin()}/> 
+                                          <Setpoints unit={unit} editing={editing} handleChange={this.handleChange} handleSetpointValueChange={(name: string, value: number | string) => this.handleSetpointValueChange(unit.id!, name, value)} readOnly={!this.isAdmin() && this.isReadOnlyUser()}/> 
                                         </div>
                                         </Collapse>
                                         <Tree
@@ -1920,7 +1926,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                             unit={unit}
                                             editing={editing}
                                             handleChange={this.handleChange}
-                                            readOnly={!this.isAdmin()}                          
+                                            readOnly={!this.isAdmin() && this.isReadOnlyUser()}                          
                                           />
                                         </div>
                                         </Collapse>
@@ -1943,7 +1949,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                             unit={unit}
                                             editing={editing}
                                             handleChange={this.handleChange}
-                                            readOnly={!this.isAdmin()}
+                                            readOnly={!this.isAdmin() && this.isReadOnlyUser()}
                                           />
                                         </Collapse>
                                         <Tree
@@ -1961,7 +1967,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                           onNodeClick={(e) => this.setState({ expanded: e.id === expanded ? null : (e.id as string) })}
                                         />
                                         <Collapse isOpen={expanded === "occupancies"}>
-                                          <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} readOnly={!this.isAdmin()} />
+                                          <Occupancies unit={unit} editing={editing} handleChange={this.handleChange} readOnly={!this.isAdmin() && this.isReadOnlyUser()} />
                                         </Collapse>
                                       </Collapse>
                                     </div>

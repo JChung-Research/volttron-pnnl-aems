@@ -16,6 +16,7 @@ const mock = {
       scope: "user",
       preferences: {},
       bldgAccess: {},
+      readOnly: false,
     },
   },
   [SERVICE_ENDPOINT_UPDATE_USER]: {
@@ -24,6 +25,7 @@ const mock = {
       password: "password",
       preferences: {},
       bldgAccess: {},
+      readOnly: false,
     },
     result: {
       id: 1,
@@ -31,6 +33,7 @@ const mock = {
       scope: "user",
       preferences: {},
       bldgAccess: {},
+      readOnly: false,
     },
   },
 };

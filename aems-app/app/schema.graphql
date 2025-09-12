@@ -327,6 +327,7 @@ input CurrentCreateInput {
   password: String
   preferences: Preferences
   bldgAccess: JSON
+  readOnly: Boolean
 }
 
 input CurrentUpdateInput {
@@ -336,6 +337,7 @@ input CurrentUpdateInput {
   password: String
   preferences: Preferences
   bldgAccess: JSON
+  readOnly: Boolean
 }
 
 """
@@ -946,6 +948,7 @@ type User {
   """[Preferences]"""
   preferences: Preferences
   bldgAccess: JSON
+  readOnly: Boolean
   role: String
   updatedAt: DateTime
 }
@@ -966,6 +969,7 @@ input UserCreateInput {
   password: String
   preferences: Preferences
   bldgAccess: JSON
+  readOnly: Boolean
   role: String
 }
 
@@ -978,6 +982,7 @@ enum UserFields {
   name
   preferences
   bldgAccess
+  readOnly
   role
   updatedAt
 }
@@ -1043,5 +1048,6 @@ input UserUpdateInput {
   password: String
   preferences: Preferences
   bldgAccess: JSON
+  readOnly: Boolean
   role: String
 }
