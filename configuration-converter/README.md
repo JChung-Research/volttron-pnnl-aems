@@ -60,7 +60,8 @@ Each section below is optional, but include the ones you need.
   - `volttron/scripts/upgrade_interface_<agent_id>`
   - `volttron/scripts/upgrade_rec_<agent_id>`
 
-## Example YAML
+## Example YAML Config File
+The following example represents the designed structure of the unified YAML configuration file:
 ```
 building unit:
     config directory path: ./config
@@ -134,9 +135,16 @@ volttron:
         ...
     ...
 ```
+For a complete exampl of both configuration modes (manual configs and brick import), see the provided examples:
+- `example_YAML-config.yml` — Manual definition of building units, web client/server, and VOLTTRON configs.
+- `example_YAML-brick-config.yml` — Semantic model–based definition, where building units are auto-generated from a Brick Schema model (TTL).
+- `example_brick.ttl` — A Brick Schema model to generate building unit configuration for demonstration.
+
+Example output configuration files are available in the `test` folder. Additionally, translated building configuration files from an [industrial Brick Schema model](https://brickschema.org/ttl/mortar/bldg27.ttl) can be found in `test/brick_output_bldg27`.
+
 
 ## YAML Template for Quick Start
-A ready-to-use YAML template is provided for beginners. This template gives you a starting point to quickly set up each section (`building unit`, `web client`, `web server`, `volttron`) without worrying about syntax, schema, or required keys. Users can easily copy this template , fill in only the values relevant to the deployment, and run the converter. The tool will handle defaults and validate required fields automatically.
+A ready-to-use YAML template (`template_YAML-config.yml`) is provided for beginners. This template gives you a starting point to quickly set up each section (`building unit`, `web client`, `web server`, `volttron`) without worrying about syntax, schema, or required keys. Users can easily copy this template , fill in only the values relevant to the deployment, and run the converter. The tool will handle defaults and validate required fields automatically.
 
 The template covers all sections:
 - `building unit` (manual and Brick-based system configuration)

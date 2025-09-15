@@ -48,7 +48,7 @@ def update_system_users_json(ws: dict, yaml_dir: str) -> str | None:
     server output directory. Entries are replaced, not merged.
     """
 
-    if "system users" not in (ws or {}):
+    if "system users*" not in (ws or {}):
         return None
     out_dir = section_outdir(yaml_dir, ws, default="./")
     json_abs = os.path.join(out_dir, "20211103151730-system-user.json")
@@ -57,15 +57,18 @@ def update_system_users_json(ws: dict, yaml_dir: str) -> str | None:
     with open(json_abs, "r", encoding="utf-8") as f:
         data = json.load(f)
     data["data"] = []
-    for _, u in (ws.get("system users") or {}).items():
+    for _, u in (ws.get("system users*") or {}).items():
         data["data"].append({
             "id": str(len(data["data"]) + 1),
             "name": u.get("name", ""),
             "email": u.get("email", ""),
             "password": u.get("password", ""),
             "role": u.get("role", ""),
-            "preferences": {}
+            "preferences": {},
+            "bldgAccess": u.get("building access", {}),
+            "readOnly": u.get("read only", False) if u.get("role", "") == "admin" else u.get("read only", True) 
         })
+
     with open(json_abs, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
     return json_abs

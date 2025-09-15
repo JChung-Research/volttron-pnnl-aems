@@ -27,6 +27,10 @@ web server:
       email: test-user@aems.com
       password: ChAnGe_ThIs_PaSsWoRd_0x2E
       role: user
+      building access: 
+        BESTEST-Air: True
+        BESTEST-Hydronic: True
+      read only: True
     user 2:
       name: Test Admin
       email: test-admin@aems.com
@@ -37,11 +41,19 @@ web server:
       email: system-user@aems.com
       password: ChAnGe_ThIs_PaSsWoRd_0x2E
       role: user
+      building access: 
+        BESTEST-Air: True
+        BESTEST-Hydronic: False
+      read only: False
     user 4:
       name: Personal User
       email: system-user@aems.com
       password: ChAnGe_ThIs_PaSsWoRd_0x2E
       role: user
+      building access: 
+        BESTEST-Air: False
+        BESTEST-Hydronic: True
+      read only: False
 
 web client:
   config directory path: "./client"

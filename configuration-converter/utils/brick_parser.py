@@ -15,6 +15,7 @@ BRICK = Namespace("https://brickschema.org/schema/Brick#")
 
 def _label_or_local(g: Graph, node: URIRef) -> str:
     """Prefer rdfs:label; otherwise use the trailing URI segment."""
+
     for lbl in g.objects(node, RDFS.label):
         s = str(lbl).strip()
         if s:
@@ -34,16 +35,24 @@ POINT_CLASS_TO_CANON = {
     str(BRICK.Fan_Speed_Command): "SupplyFanSpeed",
     str(BRICK.Cooling_Zone_Air_Temperature_Setpoint): "ZoneAirCoolingSetpoint",
     str(BRICK.Heating_Zone_Air_Temperature_Setpoint): "ZoneAirHeatingSetpoint",
+    str(BRICK.Damper_Position_Setpoint): "ZoneDamperPosition",
+    str(BRICK.Pump_Command): "ControlStagePump",
+    str(BRICK.Heating_Command): "HvacMode",
 }
 
-def _canon_for_point(g: Graph, point: URIRef) -> str:
-    """Return a canonical point name from class or fall back to label/local."""
+_GENERIC_ZONE_TEMP = str(BRICK.Zone_Air_Temperature_Setpoint)
+_GENERIC_ZONE_TEMP_EXPANSION = ("ZoneAirCoolingSetpoint", "ZoneAirHeatingSetpoint")
 
+def _canon_for_point(g: Graph, point: URIRef):
+    """Return canonical name(s) for a point. May return a str or a tuple[str, ...]."""
     types = [str(t) for t in g.objects(point, RDF.type)]
     for t in types:
+        if t == _GENERIC_ZONE_TEMP:
+            return _GENERIC_ZONE_TEMP_EXPANSION
         if t in POINT_CLASS_TO_CANON:
             return POINT_CLASS_TO_CANON[t]
-    return _label_or_local(g, point)
+    # return _label_or_local(g, point)
+
 
 def _collect_feeders(g: Graph, zone: URIRef) -> Set[URIRef]:
     """Collect all equipment that feeds the given zone."""
@@ -85,10 +94,23 @@ def generate_configs_from_brick(brick_path: str, out_dir: str) -> List[str]:
             zone_name = _label_or_local(g, z)
             equip = _collect_feeders(g, z)
             points = {p for e in equip for p in g.objects(e, BRICK.hasPoint)}
-            zpn = {}
+
+            zpn: Dict[str, str] = {}
             for p in points:
                 canon = _canon_for_point(g, p)
-                zpn[_alnum_lower(canon)] = canon
+                if not canon:
+                    continue
+                if isinstance(canon, (tuple, list, set)):
+                    for name in canon:
+                        if not name:
+                            continue
+                        key = _alnum_lower(name)
+                        if key:
+                            zpn[key] = name
+                else:
+                    key = _alnum_lower(canon)
+                    if key:
+                        zpn[key] = canon
 
             sys_machine = {
                 "campus": campus_name,
