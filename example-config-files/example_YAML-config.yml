@@ -1,0 +1,468 @@
+building unit:
+  config directory path: ./unit
+  system 1:
+    campus*: ORNL
+    building*: "3147"
+    system*: "102"
+    local timezone: US/Eastern
+    building type: Medium office
+    operator: Mike
+    image: https://digipedia.tudelft.nl/app/uploads/2024/06/HBRoomSetup_Image_00.jpg
+    description: Building 3147 is a two-story office building with approximately 50 rooms located on the ORNL main campus.
+    zone point names*:
+        zoneairheatingsetpoint: ZoneAirHeatingSetpoint
+        zoneaircoolingsetpoint: ZoneAirCoolingSetpoint
+        hvacmode: HVACMode
+    default setpoints:
+        UnoccupiedHeatingSetPoint: 63
+        UnoccupiedCoolingSetPoint: 80
+        ZoneAirHeatingSetpoint: 65
+        ZoneAirCoolingSetpoint: 78
+        HVACMode: auto
+    schedule:
+      monday:
+        start: 8:00
+        end: 18:00
+      tuesday:
+        start: 8:00
+        end: 18:00
+      wednesday:
+        start: 8:00
+        end: 18:00
+      thursday:
+        start: 8:00
+        end: 18:00
+      friday:
+        start: 8:00
+        end: 18:00
+      saturday: always_off
+      sunday: always_off
+    chart configs:
+      chart 1:
+        chart type: line
+        selected variables:
+          variable 1: ZoneAirHeatingSetpoint
+          variable 2: ZoneAirCoolingSetpoint
+          variable 3: ZoneAirTemperature
+        visualization setting:
+          variable 1:
+            color: red
+            line width: 2
+            line dash: dashdot
+          variable 2:
+            color: blue
+            line width: 4
+            line dash: dot
+          variable 3:
+            color: olive
+            line width: 4
+            line dash: solid
+  system 2:
+    campus*: ORNL
+    building*: "3147"
+    system*: "103"
+    local timezone: US/Eastern
+    building type: Medium office
+    operator: Mike
+    image: https://digipedia.tudelft.nl/app/uploads/2024/06/HBRoomSetup_Image_00.jpg
+    description: Building 3147 is a two-story office building with approximately 50 rooms located on the ORNL main campus.
+    zone point names*:
+        zoneairheatingsetpoint: ZoneAirHeatingSetpoint
+        zoneaircoolingsetpoint: ZoneAirCoolingSetpoint
+        hvacmode: HVACMode
+    default setpoints:
+        UnoccupiedHeatingSetPoint: 63
+        UnoccupiedCoolingSetPoint: 80
+        ZoneAirHeatingSetpoint: 65
+        ZoneAirCoolingSetpoint: 78
+        HVACMode: auto
+    schedule:
+      monday:
+        start: 8:00
+        end: 18:00
+      tuesday:
+        start: 8:00
+        end: 18:00
+      wednesday:
+        start: 8:00
+        end: 18:00
+      thursday:
+        start: 8:00
+        end: 18:00
+      friday:
+        start: 8:00
+        end: 18:00
+      saturday: always_off
+      sunday: always_off
+    chart configs:
+      chart 1:
+        chart type: line
+        selected variables:
+          variable 1: ZoneAirHeatingSetpoint
+          variable 2: ZoneAirCoolingSetpoint
+          variable 3: ZoneAirTemperature
+        visualization setting:
+          variable 1:
+            color: red
+            line width: 2
+            line dash: dashdot
+          variable 2:
+            color: purple
+            line width: 4
+            line dash: dot
+          variable 3:
+            color: green
+            line width: 2
+            line dash: solid
+
+  system 3:
+    campus*: BOPTEST
+    building*: BESTEST-Air
+    system*: bestest_air
+    local timezone: US/Eastern
+    building type: Small office
+    operator: Mike
+    image: https://digipedia.tudelft.nl/app/uploads/2024/06/HBRoomSetup_Image_00.jpg
+    description: The building is a single room based on the BESTEST Case 900 model definition. The floor dimensions are 6m x 8m and the floor-to-ceiling height is 2.7m. There are four exterior walls facing the cardinal directions and a flat roof. The walls facing east-west have the short dimension. The south wall contains two windows, each 3m wide and 2m tall. The use of the building is assumed to be a two-person office with a light load density.
+    zone point names*:
+        supplyairsetpoint: SupplyAirSetpoint
+        supplyfanspeed: SupplyFanSpeed
+        zoneaircoolingsetpoint: ZoneAirCoolingSetpoint
+        zoneairheatingsetpoint: ZoneAirHeatingSetpoint
+    default setpoints:
+        UnoccupiedHeatingSetPoint: 63
+        UnoccupiedCoolingSetPoint: 80
+        SupplyFanSpeed: 1
+        SupplyAirSetpoint: 71
+        ZoneAirCoolingSetpoint: 78
+        ZoneAirHeatingSetpoint: 65
+    schedule:
+      monday:
+        start: 8:00
+        end: 18:00
+      tuesday:
+        start: 8:00
+        end: 18:00
+      wednesday:
+        start: 8:00
+        end: 18:00
+      thursday:
+        start: 8:00
+        end: 18:00
+      friday:
+        start: 8:00
+        end: 18:00
+      saturday: always_off
+      sunday: always_off
+    chart configs:
+      chart 1:
+        chart type: line
+        selected variables:
+          variable 1: ZoneAirHeatingSetpoint
+          variable 2: ZoneAirCoolingSetpoint
+          variable 3: ZoneAirTemperature
+        visualization setting:
+          variable 1:
+            color: red
+            line width: 2
+            line dash: dashdot
+          variable 2:
+            color: blue
+            line width: 4
+            line dash: dot
+          variable 3:
+            color: olive
+            line width: 2
+            line dash: solid
+      chart 2:
+        chart type: box
+        selected variables:
+          variable: ZoneAirTemperature
+        visualization setting:
+          occupied:
+            color: purple
+            line width: 2
+            marker size: 6
+          unoccupied:
+            color: green
+            line width: 2
+            marker size: 6
+      chart 3:
+        chart type: scatter
+        selected variables:
+          variable x: HeatingPowerConsumption
+          variable y: ZoneAirTemperature
+        visualization setting:
+          occupied:
+            color: red
+            marker size: 8
+            marker symbol: diamond
+          unoccupied:
+            color: orange
+            marker size: 9
+            marker symbol: star
+
+  system 4:
+    campus*: BOPTEST
+    building*: BESTEST-Hydronic
+    system*: bestest_hydronic
+    local timezone: US/Eastern
+    building type: Small office
+    operator: Rick
+    image: https://digipedia.tudelft.nl/app/uploads/2024/06/HBRoomSetup_Image_00.jpg
+    description: The building is a single room based on the BESTEST Case 900 model definition. The floor dimensions are 6m x 8m and the floor-to-ceiling height is 2.7m. There are four exterior walls facing the cardinal directions and a flat roof. The walls facing east-west have the short dimension. The south wall contains two windows, each 3m wide and 2m tall. The use of the building is assumed to be a two-person office with a light load density.
+    zone point names*:
+        supplyheatersetpoint: SupplyHeaterSetpoint
+        controlstagepump: ControlStagePump
+        zoneoperativecoolingsetpoint: ZoneOperativeCoolingSetpoint
+        zoneoperativeheatingsetpoint: ZoneOperativeHeatingSetpoint
+    default setpoints:
+        UnoccupiedHeatingSetPoint: 63
+        UnoccupiedCoolingSetPoint: 80
+        ControlStagePump: 1
+        SupplyHeaterSetpoint: 71
+        ZoneOperativeCoolingSetpoint: 78
+        ZoneOperativeHeatingSetpoint: 65
+    schedule:
+      monday:
+        start: 8:00
+        end: 18:00
+      tuesday:
+        start: 8:00
+        end: 18:00
+      wednesday:
+        start: 8:00
+        end: 18:00
+      thursday:
+        start: 8:00
+        end: 18:00
+      friday:
+        start: 8:00
+        end: 18:00
+      saturday: always_off
+      sunday: always_off
+    chart configs:
+      chart 1:
+        chart type: line
+        selected variables:
+          variable 1: ZoneOperativeHeatingSetpoint
+          variable 2: ZoneOperativeCoolingSetpoint
+          variable 3: HeatingPowerConsumption
+        visualization setting:
+          variable 1:
+            color: red
+            line width: 2
+            line dash: dashdot
+          variable 2:
+            color: purple
+            line width: 4
+            line dash: solid
+          variable 3:
+            color: green
+            line width: 2
+            line dash: solid
+      chart 2:
+        chart type: scatter
+        selected variables:
+          variable x: HeatingPowerConsumption
+          variable y: ZoneOperativeTemperature
+        visualization setting:
+          occupied:
+            color: green
+            marker size: 8
+            marker symbol: cross
+          unoccupied:
+            color: blue
+            marker size: 9
+            marker symbol: hexagram
+      chart 3:
+        chart type: box
+        selected variables:
+          variable: ZoneOperativeTemperature
+        visualization setting:
+          occupied:
+            color: green
+            line width: 2
+            marker size: 6
+          unoccupied:
+            color: purple
+            line width: 2
+            marker size: 6
+
+web server:  
+  config directory path: "./app"
+  project name: skeleton
+  hostname: localhost
+  port*: 3000
+
+  database host (optinoal): localhost
+  database url: "postgresql://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=${DATABASE_SCHEMA}"
+  database port: 6543
+  database name: skeleton
+  database schema: public
+  database username: skeleton
+  database password: SeT_tHiS_iN_0x3A-.env.secrets-
+
+  config auth url: https://host.docker.internal:8443/auth
+  config api url: https://host.docker.internal:8443/gs
+  config username: admin
+  config password: admin
+
+  system users*:
+    user 1:
+      name: Test User
+      email: test-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+      building access: 
+        BESTEST-Air: True
+        BESTEST-Hydronic: True
+      read only: True
+    user 2:
+      name: Test Admin
+      email: test-admin@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: admin
+    user 3:
+      name: System User
+      email: system-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+      building access: 
+        BESTEST-Air: True
+        BESTEST-Hydronic: False
+      read only: False
+    user 4:
+      name: Personal User
+      email: system-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+      building access: 
+        BESTEST-Air: False
+        BESTEST-Hydronic: True
+      read only: False
+
+web client:
+  config directory path: "./client"
+  application title: AEMS
+  application description: 
+  application api url: /api
+  port: 2000
+  application login: true
+
+volttron:
+  config directory path: "./"
+  vip address: tcp://127.0.0.1:23921
+  instance name: "central_frp"
+  message bus: zmq
+
+  agent info*: 
+    agent 1:
+      campus: BOPTEST
+      id: bestest_air
+      class: control_init
+      url: http://api.boptest.net
+      hearbeat period: 5
+      data point:
+        fcu_oveTSup_u:
+          type: float
+          units: K
+          timezone: UTC
+        fcu_oveFan_u:
+          type: bool
+          units: None
+          timezone: UTC
+        con_oveTSetCoo_u:
+          type: float
+          units: K
+          timezone: UTC
+        con_oveTSetHea_u:
+          type: float
+          units: K
+          timezone: UTC
+        fcu_reaFloSup_y:
+          type: float
+          units: kg/s
+          timezone: UTC
+        zon_reaCO2RooAir_y:
+          type: float
+          units: ppm
+          timezone: UTC
+        zon_reaTRooAir_y:
+          type: float
+          units: K
+          timezone: UTC
+        fcu_reaPFan_y:
+          type: float
+          units: W
+          timezone: UTC
+        fcu_reaPCoo_y:
+          type: float
+          units: W
+          timezone: UTC
+        fcu_reaPHea_y:
+          type: float
+          units: W
+          timezone: UTC
+    agent 2:
+      campus: BOPTEST
+      id: bestest_hydronic 
+      class: control_init
+      url: http://api.boptest.net
+      hearbeat period: 5
+      data point:
+        oveTSetSup_u:
+          type: float
+          units: K
+          timezone: UTC
+        ovePum_u:
+          type: bool
+          units: None
+          timezone: UTC
+        oveTSetCoo_u:
+          type: float
+          units: K
+          timezone: UTC
+        oveTSetHea_u:
+          type: float
+          units: K
+          timezone: UTC
+        reaCO2RooAir_y:
+          type: float
+          units: ppm
+          timezone: UTC
+        reaTRoo_y:
+          type: float
+          units: K
+          timezone: UTC
+        reaPPum_y:
+          type: float
+          units: W
+          timezone: UTC
+        reaQHea_y:
+          type: float
+          units: W
+          timezone: UTC
+    agent 3:
+      campus: ORNL
+      id: "3147" 
+      class: ecobee_init
+      url: http://host.docker.internal:5005
+      hearbeat period: 30
+      data point:
+        ZoneTemperature:
+          type: float
+          units: F
+          timezone: UTC
+        desiredHeat:
+          type: float
+          units: F
+          timezone: UTC
+        desiredCool:
+          type: float
+          units: F
+          timezone: UTC
+        HVACMode:
+          type: bool
+          units: None
+          timezone: UTC

@@ -1,0 +1,91 @@
+building unit:
+  config directory path:
+  system 1:
+    campus*:
+    building*:
+    system*:
+    local timezone:
+    building type:
+    operator:
+    image:
+    description:
+    default setpoints:
+        UnoccupiedHeatingSetPoint:
+        UnoccupiedCoolingSetPoint:
+    schedule:
+      monday:
+        start:
+        end:
+      tuesday:
+        start:
+        end:
+      wednesday:
+        start:
+        end:
+      thursday:
+        start:
+        end:
+      friday:
+        start:
+        end:
+      saturday:
+      sunday:
+    chart configs:
+      chart 1:
+        chart type:
+        selected variables:
+          variable 1:
+        visualization setting:
+          variable 1:
+            color:
+            line width:
+            line dash:
+
+web server:  
+  config directory path:
+  project name:
+  hostname:
+  port*:
+
+  database host:
+  database url:
+  database port:
+  database name:
+  database schema:
+  database username:
+  database password:
+
+  config auth url:
+  config api url:
+  config username:
+  config password:
+
+  system users*:
+    user 1:
+      name:
+      email:
+      password:
+      role:
+
+web client:
+  config directory path:
+  application title:
+  application description:
+  application api url:
+  port:
+  application login:
+
+volttron:
+  config directory path:
+  vip address:
+  instance name:
+  message bus:
+
+  agent info*: 
+    agent 1:
+      campus:
+      id:
+      class:
+      url:
+      hearbeat period:
+      data point:

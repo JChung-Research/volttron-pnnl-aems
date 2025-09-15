@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+python ./scripts/install-agent.py \
+    -s app_agents/InterfaceAgent \
+    -i interface_bestest_hydronic \
+    --tag interface_bestest_hydronic \
+    --config config/interface_config_bestest_hydronic \
+    --start \
+    --force

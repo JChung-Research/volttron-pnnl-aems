@@ -1,0 +1,93 @@
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix unit:  <http://qudt.org/vocab/unit/> .
+@prefix ex:    <https://example.org/> .
+
+ex:campus01 a brick:Site ;
+    brick:hasPart ex:building5000,
+                  ex:building6000 ;
+    rdfs:label "Campus01" .
+
+ex:building5000 a brick:Building ;
+    brick:hasPart ex:floor5100 ,
+                  ex:zone5101 ;
+    rdfs:label "Building5000" .
+
+ex:floor5100 a brick:Floor ;
+    brick:hasPart ex:room5101 ;
+    rdfs:label "Floor5100" .
+
+ex:ahu5100 a brick:AHU ;
+    brick:feeds ex:vav5101 ;
+    brick:hasPoint ex:SupplyAirSetpoint ,
+                   ex:SupplyFanSpeed ;
+    rdfs:label "AHU5100" .
+
+ex:vav5101 a brick:VAV ;
+    brick:feeds ex:zone5101 ;
+    brick:hasPoint ex:ZoneAirCoolingSetpoint ,
+                   ex:ZoneAirHeatingSetpoint ;
+    rdfs:label "VAV5101" .
+
+ex:zone5101 a brick:HVAC_Zone ;
+    brick:hasPart ex:room5101 ;
+    rdfs:label "Zone5101" .
+
+ex:room5101 a brick:Room ;
+    rdfs:label "Room5101" .
+
+ex:SupplyAirSetpoint a brick:Supply_Air_Temperature_Setpoint ;
+    rdfs:label "SupplyAirSetpoint5101" .
+
+ex:SupplyFanSpeed a brick:Fan_Speed_Command ;
+    rdfs:label "SupplyFanSpeed5101" .
+
+ex:ZoneAirCoolingSetpoint a brick:Cooling_Zone_Air_Temperature_Setpoint ;
+    rdfs:label "ZoneAirCoolingSetpoint5101" .
+
+ex:ZoneAirHeatingSetpoint a brick:Heating_Zone_Air_Temperature_Setpoint ;
+    rdfs:label "ZoneAirHeatingSetpoint5101" .
+
+ex:building6000 a brick:Building ;
+    brick:hasPart   ex:floor6100 ,
+                    ex:zone6101 ;
+    rdfs:label "Building6000" .
+
+ex:floor6100 a brick:Floor ;
+    brick:hasPart ex:room6101 ;
+    rdfs:label "Floor6100" .
+
+ex:boiler6100 a brick:Boiler ;
+    brick:feeds ex:pump6100 ;
+    brick:hasPoint ex:SupplyHeaterSetpoint ;
+    rdfs:label "Boiler6100" .
+
+ex:pump6100 a brick:Pump ;
+    brick:feeds ex:radiator6101 ;
+    brick:hasPoint ex:ControlStagePump ;
+    rdfs:label "Pump6100" .
+
+ex:radiator6101 a brick:Radiator ;
+    brick:feeds ex:zone6101 ;
+    brick:hasPoint ex:ZoneOperativeCoolingSetpoint ,
+                   ex:ZoneOperativeHeatingSetpoint ;
+    rdfs:label "Radiator6101" .
+
+ex:zone6101 a brick:HVAC_Zone ;
+    brick:hasPart ex:room6101 ;
+    rdfs:label "Zone6101" .
+
+ex:room6101 a brick:Room ;
+    rdfs:label "Room6101" .
+
+ex:SupplyHeaterSetpoint a brick:Entering_Water_Temperature_Setpoint ;
+    rdfs:label "SupplyHeaterSetpoint6101" .
+
+ex:ControlStagePump a brick:Pump_Command ;
+    rdfs:label "ControlStagePump6101" .
+
+ex:ZoneOperativeCoolingSetpoint a brick:Cooling_Temperature_Setpoint ;
+    rdfs:label "ZoneOperativeCoolingSetpoint6101" .
+
+ex:ZoneOperativeHeatingSetpoint a brick:Heating_Temperature_Setpoint ;
+    rdfs:label "ZoneOperativeHeatingSetpoint6101" .

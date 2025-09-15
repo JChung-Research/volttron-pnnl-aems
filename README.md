@@ -98,6 +98,18 @@ poetry run pytest
 
 This will run all test cases defined in `test_server.py`, verifying both authentication and JSON-RPC functionality.
 
+## Advanced Configuration and Interface Features
+Building upon the AEMS system, advanced features have been integrated by ORNL Grid-interactive Controls Group to enhance scalability and configuration automation though a generalizable web user interface, automated configuration conversion, and semantic building model integration. These enhancements enable non-specialized building operators to deploy comprehensive energy management systems without extensive technical expertise, facilitating widespread adoption across small and medium-sized commercial buildings.
+
+1. **Generalizable Web User Interface**: The enhanced web interface provides a scalable, configuration-driven platform that automatically adapts from individual zone monitoring to comprehensive campus-wide management. Key capabilities include adaptive navigation structures based on building configurations, customizable visualization with configurable chart types (line charts, scatter plots, box plots) and user-defined styling parameters, and real-time interactive dashboards for monitoring indoor environment, energy consumption, and equipment status. 
+
+2. **Automated Configuration Conversion**: The deployment process is streamlined through a configuration converter (`configuration-converter`) consolidates system setup into a single, unified YAML configuration file, significantly reducing labor-intensive setup process, technical expertise barriers, and manual configuration errors. The converter transforms human-readable YAML input into multiple system-specific configuration files (JSON, .ENV), provides comprehensive error handling with automatic default value assignment for incomplete configurations, and enables natural language-friendly configuration parameters that automatically translate to machine-readable system requirements.
+
+3. **Semantic Building Model Integration**: The system supports Brick Schema integration for compatibility with standardized building system representation and automated conversion of semantic building descriptions into AEMS configuration files. The converter automatically recognizes hierarchical building elements (campus, building, zone) and control points through semantic relationships, facilitating rapid configuration import from existing building energy management applications. This integration enhances scalability by eliminating manual configuration processes for complex multi-building deployments while maintaining compatibility with established building information standards.
+
+These advanced features maintain full compatibility with the existing AEMS architecture while providing additional capabilities for scalable, automated deployment solutions across multiple campuses. Example YAML, Brick, and output configuration files are available in the `example-config-files` directory.
+
+
 ## Acknowledgements
 
 This project is developed by PNNL with funding from the U.S. Department of Energy Building Technologies Office, aiming to advance energy management solutions for small and medium-sized buildings.

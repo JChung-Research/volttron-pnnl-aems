@@ -1,0 +1,4 @@
+[volttron]
+vip-address=tcp://127.0.0.1:23921
+instance-name="central_frp"
+message-bus=zmq

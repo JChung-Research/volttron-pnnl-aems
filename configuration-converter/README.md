@@ -60,7 +60,7 @@ Each section below is optional, but include the ones you need.
   - `volttron/scripts/upgrade_interface_<agent_id>`
   - `volttron/scripts/upgrade_rec_<agent_id>`
 
-## What the YAML includes
+## Example YAML
 ```
 building unit:
     config directory path: ./config
@@ -134,6 +134,26 @@ volttron:
         ...
     ...
 ```
+
+## YAML Template for Quick Start
+A ready-to-use YAML template is provided for beginners. This template gives you a starting point to quickly set up each section (`building unit`, `web client`, `web server`, `volttron`) without worrying about syntax, schema, or required keys. Users can easily copy this template , fill in only the values relevant to the deployment, and run the converter. The tool will handle defaults and validate required fields automatically.
+
+The template covers all sections:
+- `building unit` (manual and Brick-based system configuration)
+- `web client` (UI application settings)
+- `web server` (server application settings)
+- `volttron` (middleware backend and agents)
+
+
+## About `config directory path`
+The converter is designed to generate each output file in the designated directory within this `volttron-pnnl-aems` GitHub repository. If users prefer, aach YAML section can specify a `config directory path`. This key does not appear in the generated outputs. Instead, it controls where the converter writes the corresponding files. For instance:
+```
+building unit:
+    config directory path: ./outputs/unit
+```
+→ All `config_<campus>-<building>-<system>.config` files are written into `./outputs/unit`.
+This separation lets you organize outputs per component without editing paths manually.
+
 
 ## Repository layout
 ```

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+python ./scripts/install-agent.py \
+    -s app_agents/InterfaceAgent \
+    -i interface_Building5000 \
+    --tag interface_Building5000 \
+    --config config/interface_config_Building5000 \
+    --start \
+    --force
