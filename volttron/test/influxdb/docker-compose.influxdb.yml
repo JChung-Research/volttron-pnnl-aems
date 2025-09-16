@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    container_name: aems_influxdb
+    hostname: localhost # ${INFLUXDB_HOST}
+    ports:
+      - "8086:8086"     # HTTP API
+    environment:
+      # InfluxDB v1.x bootstrap envs
+      - INFLUXDB_HTTP_AUTH_ENABLED=true # ${INFLUXDB_HTTP_AUTH_ENABLED}
+      - INFLUXDB_DB=bems # ${INFLUXDB_DB}
+      - INFLUXDB_ADMIN_USER=admin #${INFLUXDB_ADMIN_USER}
+      - INFLUXDB_ADMIN_PASSWORD=admin #${INFLUXDB_ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8086/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+    networks:
+      - aems-net
+
+volumes:
+  influxdb-data:
+
+networks:
+  aems-net:
+    name: aems-net
