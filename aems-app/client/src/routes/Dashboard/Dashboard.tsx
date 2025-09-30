@@ -80,6 +80,32 @@ function convertChartConfigs(input: Record<string, any>) {
   });
 }
 
+const fmt = (d: Date) => d.toISOString().slice(0, 19).replace("T", " ");
+const parseAbs = (s: string) => new Date(s.replace(" ", "T"));
+const parseRel = (s: string, base = new Date()) => {
+  const m = /^now-(\d+)([hmd])$/.exec(s);
+  if (!m) return null;
+  const n = parseInt(m[1], 10), d = new Date(base);
+  if (m[2] === "h") d.setHours(d.getHours() - n);
+  else if (m[2] === "d") d.setDate(d.getDate() - n);
+  else if (m[2] === "m") d.setMonth(d.getMonth() - n);
+  return d;
+};
+
+// Convert a token like 'now-6h' or '2025-09-01 08:00:00' to a Date (or null)
+const toDateOrNull = (s?: string, base: Date = new Date()): Date | null => {
+  if (typeof s !== "string") return null;
+  if (s === "now") return base;
+  return parseRel(s, base) || parseAbs(s) || null;
+};
+
+// Convert token to 'YYYY-MM-DD HH:MM:SS' (or undefined if invalid)
+const toTimeString = (s?: string, base: Date = new Date()): string | undefined => {
+  const d = toDateOrNull(s, base);
+  return d ? fmt(d) : undefined;
+};
+
+
 interface UnitsProps extends RootProps {
   readUnits: () => void;
   readUnit: () => void;
@@ -118,6 +144,7 @@ interface VizSetting {
 }
 
 type lineChartDataType = { index: number; time: string; values: Record<string, any> };
+type TimeRange = Partial<{ start_time: string; end_time: string }>;
 
 interface UnitsState {
   editing: DeepPartial<IUnit> | null;
@@ -129,15 +156,16 @@ interface UnitsState {
       id: number; 
       building: string;
       system: string;
+      dataTimeRange: TimeRange;
       varList: string[];
       ctrlValues: Record<string, number | string>;
-      lineChartData: lineChartDataType[];
-      chartConfigs: { id: number; type: string; selectedVariables: string[]; vizSettings?: Record<string, VizSetting>; }[];
+      lineChartData: lineChartDataType[];      
+      chartConfigs: { id: number; type: string; selectedVariables: string[]; timeRange?: TimeRange; vizSettings?: Record<string, VizSetting>; }[];
     };
   };
   bldgChartConfigs: Record<
     string,
-    { chartConfigs: { id: number; type: string; selectedVariables: string[]; vizSettings?: Record<string, VizSetting> }[] }
+    { chartConfigs: { id: number; type: string; selectedVariables: string[]; timeRange?: TimeRange; vizSettings?: Record<string, VizSetting> }[] }
   >;
   startCollect: boolean | null;
   sensorMetadata: MetadataItem[];
@@ -152,13 +180,6 @@ type AxisInfo = {
   min: number;
   max: number;
   values: number[];
-};
-
-type OutputOption = {
-  name: string;
-  label: string;
-  unit: string;
-  type: string;
 };
 
 class Dashboard extends React.Component<UnitsProps, UnitsState> {
@@ -205,7 +226,7 @@ class Dashboard extends React.Component<UnitsProps, UnitsState> {
       // console.log(`[${now.toLocaleTimeString()}] The sensor data in the selected unit was retrieved`);
 
       this.getVoltData();      
-      }, 5000);
+      }, 5000 * 6);
   }
 
   // Scroll to selected unit and reinitialize unit data on props update
@@ -273,7 +294,8 @@ componentDidUpdate(prevProps: UnitsProps) {
         id: unitId,
         building: "",
         system: "",
-        varList: [],
+        dataTimeRange: {},
+        varList: [],        
         ctrlValues: {},
         chartConfigs: [],
         lineChartData: []
@@ -577,7 +599,6 @@ componentDidUpdate(prevProps: UnitsProps) {
     });
   };
 
-
   addBldgChart = (bldgName: string) => {
     this.setState(prev => {
       const entry = prev.bldgChartConfigs[bldgName] ?? { chartConfigs: [] as any[] };
@@ -663,6 +684,16 @@ componentDidUpdate(prevProps: UnitsProps) {
     const selectMetadata = this.state.sensorMetadata.filter(item => usedVariables.includes(item.name));
     const chartConfig = this.state.unitManagerData[unitId].chartConfigs[chartId];
     const chartTypes = ['line', 'scatter', 'box'];
+    const nowLocal_mimusHr = (hours: number) => {
+        const d = new Date(Date.now() - hours * 60 * 60 * 1000); // now - hours
+        const shifted = new Date(d.getTime() - d.getTimezoneOffset() * 60000); // make it local
+        return shifted.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+      };
+
+    const toStored = (s: string | undefined) =>
+      s ? s.replace('T', ' ') + (s.length === 16 ? ':00' : '') : '';
+    const toInput = (s: string | undefined) =>
+      s ? s.replace(' ', 'T').slice(0, 16) : '';
 
     return (
       <Label>
@@ -833,7 +864,147 @@ componentDidUpdate(prevProps: UnitsProps) {
               : 'Select Chart Type'}
           </Button>
         </Popover2>
+
+        {/* Time Range Selection */}
         </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
+          <Label style={{ width: '47%', fontSize: '12pt', margin: '5px 15px'}}>
+            <b>Start Time</b>
+            <InputGroup
+                type="datetime-local"
+                value={
+                  (this.state.unitManagerData?.[unitId]?.chartConfigs
+                    ?.find((c: any) => c.id === chartId)?.timeRange?.start_time as string) ?? nowLocal_mimusHr(6)
+                }
+                onChange={(e) => {
+                  const v = e.currentTarget.value; // "YYYY-MM-DDTHH:MM"
+                  const stored = toStored(v);      // "YYYY-MM-DD HH:MM:SS"
+
+                  this.setState((prevState) => {
+                    // read end_time from current state
+                    const currCfg = prevState.unitManagerData[unitId].chartConfigs.find((c: any) => c.id === chartId);
+                    const endStored = currCfg?.timeRange?.end_time || nowLocal_mimusHr(0);                // "YYYY-MM-DD HH:MM:SS" | undefined
+                    const endISO = endStored ? endStored.replace(' ', 'T') : ''; // "YYYY-MM-DDTHH:MM:SS"
+                    
+                    // allow update only if end > start (when end exists)
+                    if (endISO && new Date(v).getTime() >= new Date(endISO).getTime()) {
+                      console.log("new Date(Start Time): ", new Date(v))
+                      console.log(" new Date(endISO): ",  new Date(endISO))
+                      return null; // no change
+                    }
+
+                    const updatedConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config: any) =>
+                      config.id === chartId
+                        ? { ...config, timeRange: {...(config.timeRange ?? {}) , start_time: stored } }
+                        : config
+                    );
+
+                    console.log("updatedConfigs: ", updatedConfigs);
+                    return {
+                      unitManagerData: {
+                        ...prevState.unitManagerData,
+                        [unitId]: { ...prevState.unitManagerData[unitId], chartConfigs: updatedConfigs },
+                      },
+                    };
+                  }, () => {
+                    this.getVoltData();
+                  });
+                }}
+            />
+          </Label>
+          <Label style={{ width: '47%', fontSize: '12pt', margin: '5px 15px'}}>
+            <b>End Time</b>
+            <InputGroup
+                type="datetime-local"
+                value={
+                  (this.state.unitManagerData?.[unitId]?.chartConfigs
+                    ?.find((c: any) => c.id === chartId)?.timeRange?.end_time as string) ?? nowLocal_mimusHr(0)
+                }
+                  onChange={(e) => {
+                    const v = e.currentTarget.value; // "YYYY-MM-DDTHH:MM"
+                    const stored = toStored(v);      // "YYYY-MM-DD HH:MM:SS"
+
+                    this.setState((prevState) => {
+                      // read start_time from current state
+                      const currCfg = prevState.unitManagerData[unitId].chartConfigs.find((c: any) => c.id === chartId);
+                      const startStored = currCfg?.timeRange?.start_time || nowLocal_mimusHr(0); // "YYYY-MM-DD HH:MM:SS" | undefined
+                      const startISO = startStored ? startStored.replace(' ', 'T') : ''; // "YYYY-MM-DDTHH:MM:SS"
+                      
+                      // allow update only if end > start (when start exists)
+                      if (startISO && new Date(v).getTime() <= new Date(startISO).getTime()) {
+                        console.log("new Date(End Time): ", new Date(v))
+                        console.log(" new Date(startISO): ",  new Date(startISO))
+                        return null; // no change
+                      }
+
+                      const updatedConfigs = prevState.unitManagerData[unitId].chartConfigs.map((config: any) =>
+                        config.id === chartId
+                          ? { ...config, timeRange: {...(config.timeRange ?? {}) , end_time: stored } }
+                          : config
+                      );
+                      
+                      console.log("updatedConfigs: ", updatedConfigs);
+                      return {
+                        unitManagerData: {
+                          ...prevState.unitManagerData,
+                          [unitId]: { ...prevState.unitManagerData[unitId], chartConfigs: updatedConfigs },
+                        },
+                      };
+                    }, () => {
+                    this.getVoltData();
+                  });
+                  }}
+            />
+          </Label>
+        </div>
+        
+        {/* Quick range buttons */}
+        {(() => {
+          const presets = [
+            { label: 'Past 1 month', start: 'now-1m' },
+            { label: 'Past 1 week',  start: 'now-7d' },
+            { label: 'Past 24 hours',start: 'now-24h' },
+            { label: 'Past 6 hours', start: 'now-6h' },
+          ];
+
+          const currCfg = this.state.unitManagerData[unitId].chartConfigs
+            .find((c: any) => c.id === chartId);
+          const tr = currCfg?.timeRange ?? {};
+          const activeStart = presets.find(p => tr.start_time === p.start && (tr.end_time ?? 'now') === 'now')?.start;
+
+          return (
+            <div className="quick-range">
+              {presets.map(p => (
+                <button
+                  key={p.start}
+                  type="button"
+                  className={`quick-range__btn ${activeStart === p.start ? 'is-active' : ''}`}
+                  aria-pressed={activeStart === p.start}
+                  onClick={() => {
+                    this.setState((prevState: any) => {
+                      const updated = prevState.unitManagerData[unitId].chartConfigs.map((config: any) =>
+                        config.id === chartId
+                          ? {
+                              ...config, timeRange: {...(config.timeRange ?? {}), start_time: p.start,  end_time: 'now', },
+                            } : config
+                      );
+                      return {
+                        unitManagerData: {
+                          ...prevState.unitManagerData,
+                          [unitId]: { ...prevState.unitManagerData[unitId], chartConfigs: updated },
+                        },
+                      };
+                    }, () => {
+                      this.getVoltData();
+                    });
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
       </Label>
     );
@@ -898,7 +1069,6 @@ componentDidUpdate(prevProps: UnitsProps) {
 
                             this.setState(prevState => {
                               const updatedConfigs = prevState.bldgChartConfigs[bldgName].chartConfigs.map((config, idx) => {
-                                console.log("idx, chartId: ", idx, chartId);
                                 if (idx + BLDG_CHART_OFFSET !== chartId) return config;
 
                                 const updatedSelectedVars = isChecked
@@ -1064,21 +1234,35 @@ componentDidUpdate(prevProps: UnitsProps) {
   buildAxisInfo = (unitData: any, chartId: number, spaceType: string): AxisInfo[] => {
     if (!unitData) return [];
   
-    const chartConfig = (unitData.chartConfigs as { id: number; selectedVariables: string[] }[])
+    const chartConfig = (unitData.chartConfigs as { id: number; selectedVariables: string[]; timeRange: TimeRange }[])
       .find((c) => c.id === chartId); 
     if (!chartConfig) return [];
-  
+    console.log("buildAxisInfo+chartConfig.timeRange: ", chartConfig?.timeRange)
+    
+    // NEW: resolve any 'now' / 'now-6h' / absolute tokens to strings
+    const now = new Date();
+    const tr = chartConfig.timeRange ?? {};
+    const resolvedStart = toTimeString(tr.start_time, now);
+    const resolvedEnd   = toTimeString(tr.end_time,   now);
+    console.log("buildAxisInfo resolved range:", { resolvedStart, resolvedEnd });
+
     return chartConfig.selectedVariables.map((outputName) => {
-      const values = unitData.lineChartData.map(({ values }: { values: Record<string, number | string | null | undefined> }) => values[outputName])
+      const values = unitData.lineChartData
+          .map(({ values }: { values: Record<string, number | string | null | undefined> }) => values[outputName])
           .filter((v: number | string): v is number | string => v != null && (typeof v !== "number" || Number.isFinite(v)));
+
       const yAxisMin = Math.min(...values);
       const yAxisMax = Math.max(...values);
-      const match = this.state.sensorMetadata.find(
-        (o) => o.name === outputName.split(/_(.+)/)[1]
-      );
+
+      const match = (spaceType == "building") 
+        ? this.state.sensorMetadata.find((o) => o.name === outputName.split(/_(.+)/)[1]) 
+        : this.state.sensorMetadata.find((o) => o.name === outputName);
+
       return {
         name: outputName,
-        label: match?.label || outputName,
+        label: (spaceType == "building") 
+          ? `[${outputName.split(/_(.+)/)[0]}] ${outputName.split(/_(.+)/)[1]}` 
+          : match?.label || outputName,
         unit: match?.unit || '', 
         min: yAxisMin,
         max: yAxisMax,
@@ -1120,8 +1304,8 @@ componentDidUpdate(prevProps: UnitsProps) {
         <Plot
           key={`${unitData.building}-${chartIndex}`}
           data={yAxisInfo.map((info: AxisInfo, idx: number) => ({
-            x: unitData.lineChartData.slice(-50).map((d: { time: string }) => d.time.split(" ")[1]),
-            y: info.values.slice(-50),
+            x: unitData.lineChartData.map((d: { time: string }) => d.time.split(" ")[1]),
+            y: info.values,//.slice(-390),
             type: 'scatter',
             mode: 'lines',
             name: `${info.label} (${info.unit})`,
@@ -1409,11 +1593,76 @@ componentDidUpdate(prevProps: UnitsProps) {
       {name: "CFM", label: "Supply air flow rate (CFM)"}
     ]
 
+    updateDataTimeRange = (unitId: string | number) => {
+      this.setState((prev: any) => {
+        const unit = prev.unitManagerData[unitId];
+        const charts = unit?.chartConfigs ?? [];
+
+        let earliest: Date | null = null;
+        let latest: Date | null = null;
+        let endIsNow = false;
+
+        const now = new Date();  
+        const defaultStart = new Date(now.getTime() - 6 * 60 * 60 * 1000); // - nowUtc.getTimezoneOffset() * 60000);   
+        const defaultEnd = new Date(now.getTime()); // - nowUtc.getTimezoneOffset() * 60000);    
+
+        charts.forEach((cfg: any) => {
+          const tr = cfg?.timeRange ?? {};
+
+          // start_time: relative (now-*) or absolute
+          const s = toDateOrNull(tr.start_time, defaultEnd);
+          if (s && (!earliest || s < earliest)) earliest = s;
+
+          // end_time: 'now' wins; else take latest absolute
+          if (tr.end_time === 'now') {
+            endIsNow = true;
+          } else {
+            const e = toDateOrNull(tr.end_time, defaultEnd);
+            if (e && (!latest || e > latest)) latest = e;
+          }
+        });
+ 
+        if (endIsNow) latest = defaultEnd; 
+
+        const dataTimeRange = {
+          start_time: fmt(earliest ?? defaultStart),  // 'YYYY-MM-DD HH:MM:SS'
+          end_time:   fmt(latest   ?? defaultEnd),    // never 'now' string
+        };
+
+        return {
+          unitManagerData: {
+            ...prev.unitManagerData,
+            [unitId]: { ...unit, dataTimeRange },
+          },
+        };
+      });
+    };
+
     // Retrieve sensor data and update chart data    
     getVoltData = async () => {
+
+      for (const unitIdStr of Object.keys(this.state.unitManagerData)) {
+        const unitId = Number(unitIdStr);
+        this.updateDataTimeRange(unitId);
+
+        const stateUnit: any = this.state.unitManagerData[unitId];
+        const propsUnit = (this.props.units || []).find((u: any) => u?.id === unitId);
+        const configId = propsUnit?.configuration?.id ?? propsUnit?.configurationId;
+        if (!configId) return;
+
+        this.props.updateConfiguration?.({
+          id: configId,
+          dataTimeRange: stateUnit?.dataTimeRange ?? {},
+        } as any);        
+      }
+
+      // this.props.updateConfiguration?.({
+      //   id: configId,
+      //   dataTimeRange: { start_time: "now-6h", end_time: "now"},   // <-- no "value" wrapper
+      // } as any);
+
       readSensors().then((res) => {
 
-        // console.log("this.state.unitManagerData: ", this.state.unitManagerData);
         console.log("res: ", res);
 
         if (this.state.sensorMetadata.length === 0) {
@@ -1432,10 +1681,7 @@ componentDidUpdate(prevProps: UnitsProps) {
           this.setState(prevState => {
             const unitData = prevState.unitManagerData[unitId] || {
               id: unitId,
-              building: "",
-              system: "",
               ctrlValues: resSensorData.ctrlValues,
-              chartConfigs: [],
               lineChartData: resSensorData.lineChartData,
             };
         
@@ -1475,6 +1721,27 @@ componentDidUpdate(prevProps: UnitsProps) {
     // Initialize default unit manager configuration for each unit
     initializeUnitData = () => {
 
+      const withTimeRangeEverywhere = (chartConfigs: any) => {
+        const tr = {};
+
+        if (Array.isArray(chartConfigs)) {
+          return chartConfigs.map(it => ({ ...it, timeRange: it?.timeRange ?? tr }));
+        }
+
+        if (chartConfigs && typeof chartConfigs === "object") {
+          return Object.fromEntries(
+            Object.entries(chartConfigs).map(([k, v]: [string, any]) => [
+              k,
+              { ...(v ?? {}), timeRange: v?.timeRange ?? tr },
+            ])
+          );
+        }
+
+        // if undefined/null, initialize as empty array (or {} if that's your schema)
+        return [];
+      };
+
+
       if (this.state.startCollect && this.props.units) {
         this.setState({ startCollect: false });
         const newUnitManagerData: UnitsState["unitManagerData"] = {}; 
@@ -1482,13 +1749,35 @@ componentDidUpdate(prevProps: UnitsProps) {
         for (const unit of this.props.units || []) {
           if (!unit?.id) continue; 
 
+          const u = unit as any;
+          const configId = u?.configuration?.id ?? u?.configurationId;
+          
+          const current = u?.configuration?.chartConfigs;
+          const nextChartConfigs = withTimeRangeEverywhere(current);
+          
+          // Initialize the zone-level range of the data time with the default value {}
+          this.props.updateConfiguration?.({
+            id: configId,
+            dataTimeRange: {},
+          } as any);
+
+          // Initialize the chart-level range of the data time with the default value {}
+          this.props.updateConfiguration?.({
+            id: configId,
+            chartConfigs: nextChartConfigs,
+          } as any);
+
           const unitId = unit.id;
+          console.log("(unit.configuration as any)?.chartConfigs: ", (unit.configuration as any)?.chartConfigs)
           const defaultChartConfigs = convertChartConfigs((unit.configuration as any)?.chartConfigs);
+
+          console.log("this.props.units: ", this.props.units);
 
           newUnitManagerData[unitId] = {
             id: unitId,
             building: unit.building,
             system: unit.system,
+            dataTimeRange: {},
             varList: [],
             ctrlValues: {},
             chartConfigs: defaultChartConfigs, //[{ id: 0, type: "line", selectedVariables: [] }], 
@@ -1644,7 +1933,7 @@ componentDidUpdate(prevProps: UnitsProps) {
           >
             {campusIds.map((campusId) => {
               const accessibleBldgs = this.userAccessibleBldgs();
-              const bldgCount = Object.keys(campusGroups[campusId]).filter((bldgName) => accessibleBldgs.includes(bldgName)).length;
+              const bldgCount = (this.isAdmin()) ? Object.keys(campusGroups[campusId]).length : Object.keys(campusGroups[campusId]).filter((bldgName) => accessibleBldgs.includes(bldgName)).length;
 
               return (
                 <Tab
@@ -1844,9 +2133,11 @@ componentDidUpdate(prevProps: UnitsProps) {
                                         <h3>Building Description</h3>                
                                         <div className="placeholder-container">
                                           <img src={unit.image} alt={`Image for ${unit.label}`}/>
-                                          <div className="placeholder-overlay">
-                                            <div className="placeholder-text">Image Placeholder<br/>{unit.building} {unit.system}</div>
-                                          </div>
+                                          {(unit.image === '"https://digipedia.tudelft.nl/app/uploads/2024/06/HBRoomSetup_Image_00.jpg"' || unit.image?.startsWith('https://digipedia.tudelft.nl')) && (
+                                            <div className="placeholder-overlay">
+                                              <div className="placeholder-text">Image Placeholder<br />{unit.building} {unit.system}</div>
+                                            </div>
+                                          )}
                                         </div>
                                         <TextArea value={unit.description} 
                                           readOnly
@@ -2004,7 +2295,7 @@ componentDidUpdate(prevProps: UnitsProps) {
                                           const unitData = this.state.unitManagerData[unit.id!];
                                           const lineChartData = unitData?.lineChartData?.[0] ?? { index: 0, time: "", values: {} };
                                           const axisInfo = this.buildAxisInfo(unitData, chart.id, "zone");
-                                          console.log("axisInfo: ", axisInfo);
+                                          console.log("zone-level axisInfo: ", axisInfo);
 
                                           return (
                                             <div key={`${unit.id}-${chart.id}`} style={{ marginBottom: "10px" }}>

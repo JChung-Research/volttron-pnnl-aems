@@ -182,6 +182,8 @@ const createConfigurationDefault = (unit: Partial<Units>): DeepPartial<UnitsFull
     label: h.label,
     type: enabled.includes(h.name) ? enum_holiday.Enabled : enum_holiday.Disabled,
   }));
+
+  
   return merge(unit, {
     configuration: {
       label,
@@ -195,6 +197,7 @@ const createConfigurationDefault = (unit: Partial<Units>): DeepPartial<UnitsFull
       sundaySchedule: unoccupied,
       holidaySchedule: unoccupied,
       holidays: holidays,
+      dataTimeRange: {},
       chartConfigs: {}
     },
   });
@@ -251,6 +254,7 @@ const updateConfigurationDefaults = (unit: DeepPartial<UnitsFull>, json: any) =>
     set(unit, `${k}.label`, createScheduleLabel("all", get(unit, k)));
   }
 
+  set(unit, "configuration.dataTimeRange", get(json, "data_time_range", {}));
   set(unit, "configuration.chartConfigs", get(json, "chart_configs", {}));
 };
 

@@ -481,9 +481,15 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
         # start_time = start_time or (timestamp - timedelta(hours=6)).strftime('%Y-%m-%d %H:%M:%S')
         # end_time = end_time or timestamp.strftime('%Y-%m-%d %H:%M:%S')
         # start_time = datetime(2025, 9, 21, 19, 00, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        # end_time = datetime(2025, 9, 22, 5, 59, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        start_rfc = to_rfc3339(start_time)
+        end_rfc = to_rfc3339(end_time)
+
         print("start_rfc: ", start_rfc)
         print("end_rfc: ", end_rfc)
     except Exception as e:
+        print(f"[WARN] : {e}")
+
     # Pull all points in the window for this system_id, grouped by signal name.
     q = (
         f'SELECT "value" FROM "{measurement}" '
@@ -495,6 +501,7 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
     print("res: ", res)
 
     entries: List[Dict[str, Any]] = []
+    for (_series_key, tags), points in res.items():
         if not points:
             continue
 
@@ -799,6 +806,7 @@ class building_control(Resource):
 
             # Update environment entries in y
             y_env = restructure_sensor_data_by_zone(system_data)            
+            y = update_zone_environment(y, y_env) 
 
             # Per-system updates (defaults, occupancy replacement, and mirrored y)
             for key in system_data.keys():
@@ -916,7 +924,7 @@ class ui_control(Resource):
             print(f"req.id: {req.id}, req.method: {req.method}")
             print("req.params.data: ", req.params.data)
             if req.method == "get_temperature_setpoints":
-                payload = get_temperature_setpoints(y, req.id) if (len(y) > 0) else None
+                payload = get_temperature_setpoints(req.id, req.params.data)# if (len(y) > 0) elsaee None
                 # print("payload: ", payload)
                 # payload = [{'building': '3147', 'name': 'ZoneAirTemperature', 'label': 'Zone air temperature', 'type': 'environment', 'unit': '°F', 'value': 73.6}, {'building': '3147', 'name': 'ZoneAirHeatingSetpoint', 'label': 'Zone temperature setpoint for heating', 'type': 'control', 'unit': '°F', 'value': 60}, {'building': '3147', 'name': 'ZoneAirCoolingSetpoint', 'label': 'Zone temperature setpoint for cooling', 'type': 'control', 'unit': '°F', 'value': 80}, {'building': '3147', 'name': 'HVACMode', 'label': 'HVAC mode', 'type': 'control', 'unit': 'bool', 'value': 'heat'}, {'building': 'all', 'name': 'Occupancy', 'label': 'Occuapncy', 'type': 'occupancy', 'unit': 'bool', 'value': 'occupied'}]
             elif req.method == "set_temperature_setpoints":
