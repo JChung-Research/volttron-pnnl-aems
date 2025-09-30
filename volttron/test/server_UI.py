@@ -1,7 +1,8 @@
 import argparse
 import threading
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List
+from zoneinfo import ZoneInfo
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from flask import Flask, request
@@ -9,11 +10,11 @@ from flask_restful import Api, Resource
 from pandas.tseries.holiday import AbstractHolidayCalendar, Holiday
 
 # --- AEMS / manager modules ---
-import sys
+import sys, os
 sys.path.append('..\\aems-edge\Manager\manager')
 # Reuse the holiday and observance objects from the 'aems-edge' folder
 from holiday_utils import ALL_HOLIDAYS, OBSERVANCE
-from influxdb.influxdb_utils import HISTORIAN_ENABLE, INFLUXDB_DB, influx_client, points_from_entries
+from influxdb_historian.influxdb_utils import *
 
 # ----------------- FLASK APPS -----------------
 app_volttron = Flask(__name__)
@@ -48,7 +49,7 @@ o: Dict[str, str] = {}
 
 # logical clock used for schedule/holiday checks
 timestamp = datetime.now(timezone.utc)
-time_accelerator = True # Accelerate the time step to 5 min (same as the time step of the BOPTEST emulation), otherwise the time step is 5 second
+time_accelerator = False # Accelerate the time step to 5 min (same as the time step of the BOPTEST emulation), otherwise the time step is 5 second
 
 # ----------------- DATA CONVERSION TOOL -----------------
 
@@ -296,7 +297,7 @@ def _write_influx_for_systems(sys_keys: list[str]):
 
         # Append Occupancy as 1/0 for easy plotting
         occ = data_mapping['occupancy'].copy()
-        occ['value'] = 1 if o.get(system_id, 'unoccupied') == 'occupied' else 0
+        occ['value'] = 1.0 if o.get(system_id, 'unoccupied') == 'occupied' else 0.0
         entries_with_occ = list(entries) + [occ]
 
         all_points += points_from_entries(system_id, entries_with_occ, timestamp)
@@ -342,6 +343,7 @@ def restructure_sensor_data_by_zone(raw_zone_data: Dict[str, Dict[str, Any]]) ->
             if not meta:  # skip unknown points defensively
                 continue
             entry = meta.copy()
+            entry["value"] = value
             structured.append(entry)
         # output[f"manager.zone-{system_id}"] = structured
         output[f"manager.{system_id}"] = structured
@@ -452,7 +454,7 @@ class JSONRPCRequest:
         self.params = params         # Authentication flag and data payload (e.g., {authentication: token, data: data})
 
 # ------------- READ SENSOR DATA FROM VOLTTRON -------------
-def get_temperature_setpoints(y_: Dict[str, List[Dict[str, Any]]], system_id: str) -> List[Dict[str, Any]]:
+def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
 
     """
     Simulates control setpoints and environmental readings for different BOPTEST test cases.
@@ -460,24 +462,76 @@ def get_temperature_setpoints(y_: Dict[str, List[Dict[str, Any]]], system_id: st
 
     Args:
         system_id (str): System ID like "manager.bestest_air".
+        start_time (str | None): Start time in 'YYYY-MM-DD HH:MM:SS' (UTC).
+        end_time (str | None): End time in 'YYYY-MM-DD HH:MM:SS' (UTC).
     
     Returns:
         list[dict]: Emulated or actual sensor readings / control signals for that system
     """
+    try:
+        if isinstance(time_range, dict):
+            if time_range.get("start_time"):
+                start_time = time_range["start_time"]
+                print("start_time: ", start_time)
+            if time_range.get("end_time"):
+                end_time = time_range["end_time"]
+                print("end_time: ", end_time)
 
-    occ_object = data_mapping['occupancy'].copy()    
-    state = o.get(system_id)
-    if state is None:
-        try:
-            state = get_current_occupancy_state(system_id, t)
-        except Exception:
-            state = 'unoccupied'
-    occ_object['value'] = state
-    output = y_[system_id].copy()
-    # output = y_[f"manager.zone-{system_id}"].copy()
-    output.append(occ_object)
-    
-    return output
+        measurement = building_of(system_id)  # 'bestest_air' | 'bestest_hydronic' | '3147'
+        # start_time = start_time or (timestamp - timedelta(hours=6)).strftime('%Y-%m-%d %H:%M:%S')
+        # end_time = end_time or timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        # start_time = datetime(2025, 9, 21, 19, 00, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        print("start_rfc: ", start_rfc)
+        print("end_rfc: ", end_rfc)
+    except Exception as e:
+    # Pull all points in the window for this system_id, grouped by signal name.
+    q = (
+        f'SELECT "value" FROM "{measurement}" '
+        f'WHERE "system_id"=\'{system_id}\' AND time >= \'{start_rfc}\' AND time <= \'{end_rfc}\' '
+        f'GROUP BY "name"'
+    )    
+
+    res = influx_client.query(q, database=INFLUXDB_DB)
+    print("res: ", res)
+
+    entries: List[Dict[str, Any]] = []
+        if not points:
+            continue
+
+        name = (tags or {}).get("name", "")
+        if not name:
+            continue  # need 'name' to enrich from data_mapping
+
+        # Enrich from data_mapping (label/type/unit not stored in Influx)
+        meta = next((m for m in data_mapping.values() if m.get("name") == name), None)
+        label = meta.get("label", name) if meta else name
+        typ   = meta.get("type", "")     if meta else ""
+        unit  = meta.get("unit", "")     if meta else ""
+
+        history = [{"time": to_datetime_str(p.get("time")), "value": p.get("value")} for p in points if "value" in p]
+        current_val = history[-1]["value"] if history else None
+
+        if name == "Occupancy":
+            current_val = "occupied" if float(current_val) == 1.0 else "unoccupied" if float(current_val) == 0.0 else current_val
+            for h in history:
+                v = h.get("value")
+                h["value"] = "occupied" if float(v) == 1.0 else "unoccupied" if float(v) == 0.0 else v
+        # elif name == "HVACMode":
+        #     current_val = "occupied" if float(current_val) == 1.0 else "unoccupied" if float(current_val) == 0.0 else current_val
+        #     for h in history:
+        #         v = h.get("value")
+        #         h["value"] = "occupied" if float(v) == 1.0 else "unoccupied" if float(v) == 0.0 else v          
+
+        entries.append({
+            "name": name,
+            "label": label,
+            "type": typ,
+            "value": current_val,
+            "unit": unit,
+            "history": history
+        })
+
+    return entries
 
 # ------------------ VOLTTRON AGENTS CONTROLLER ---------------
 def set_temperature_setpoints(system_id: str, control_signals: Dict[str, Any]) -> Dict[str, Any]:
@@ -492,6 +546,7 @@ def set_temperature_setpoints(system_id: str, control_signals: Dict[str, Any]) -
     Returns:
         tuple: (response dict, updated y dict)
     """    
+    print("set_temperature_setpoints: ", control_signals)
     try:
         global u, u_o, u_uo, y
 
@@ -662,8 +717,11 @@ def get_current_occupancy_state(system_id: str, t_state: Dict[str, Any]) -> str:
         str: "occupied" or "unoccupied"
     """
 
-    today_str = timestamp.strftime("%Y-%m-%d")
-    current_time = timestamp.time()
+    ts = timestamp if getattr(timestamp, "tzinfo", None) else timestamp.replace(tzinfo=timezone.utc)
+    est_ts = ts.astimezone(ZoneInfo("America/New_York"))
+
+    today_str = est_ts.strftime("%Y-%m-%d")
+    current_time = est_ts.time()
 
     # 1. Check manual occupancy overrides
     occupancies = t_state.get(system_id, {}).get("occupancies", {})
@@ -740,8 +798,7 @@ class building_control(Resource):
             system_data = body.get(next(iter(body))) if next(iter(body)) == '3147' else body
 
             # Update environment entries in y
-            y_env = restructure_sensor_data_by_zone(system_data)
-            y = update_zone_environment(y, y_env)                         
+            y_env = restructure_sensor_data_by_zone(system_data)            
 
             # Per-system updates (defaults, occupancy replacement, and mirrored y)
             for key in system_data.keys():
@@ -802,7 +859,6 @@ class building_control(Resource):
             else:
                 # updated_u = next((v for k, v in u.items() if k in [f"manager.zone-{key}" for key in system_data.keys()]), None)
                 updated_u = next((v for k, v in u.items() if k in [f"manager.{key}" for key in system_data.keys()]), None)
-                print("updated_u: ", updated_u)
 
             if time_accelerator:  
                 global timestamp               
@@ -812,6 +868,8 @@ class building_control(Resource):
 
             # Persist to InfluxDB (same version & pattern as Alfalfa)
             try:
+                # print("body: ", body)
+                # print("system_data: ", system_data)
                 _write_influx_for_systems(list(system_data.keys()))
             except Exception as e:
                 print(f"[WARN] Influx logging skipped due to error: {e}")
@@ -855,8 +913,12 @@ class ui_control(Resource):
             return {'status': 401, 'message': 'Unauthorized', 'payload': None}
 
         try:
+            print(f"req.id: {req.id}, req.method: {req.method}")
+            print("req.params.data: ", req.params.data)
             if req.method == "get_temperature_setpoints":
                 payload = get_temperature_setpoints(y, req.id) if (len(y) > 0) else None
+                # print("payload: ", payload)
+                # payload = [{'building': '3147', 'name': 'ZoneAirTemperature', 'label': 'Zone air temperature', 'type': 'environment', 'unit': '°F', 'value': 73.6}, {'building': '3147', 'name': 'ZoneAirHeatingSetpoint', 'label': 'Zone temperature setpoint for heating', 'type': 'control', 'unit': '°F', 'value': 60}, {'building': '3147', 'name': 'ZoneAirCoolingSetpoint', 'label': 'Zone temperature setpoint for cooling', 'type': 'control', 'unit': '°F', 'value': 80}, {'building': '3147', 'name': 'HVACMode', 'label': 'HVAC mode', 'type': 'control', 'unit': 'bool', 'value': 'heat'}, {'building': 'all', 'name': 'Occupancy', 'label': 'Occuapncy', 'type': 'occupancy', 'unit': 'bool', 'value': 'occupied'}]
             elif req.method == "set_temperature_setpoints":
                 payload = set_temperature_setpoints(req.id, req.params.data)
             elif req.method == "set_holidays":

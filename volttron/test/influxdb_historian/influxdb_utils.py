@@ -1,15 +1,16 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from influxdb import InfluxDBClient
+from zoneinfo import ZoneInfo
 
 # ---- Env & defaults (match your current setup) ----
 HISTORIAN_ENABLE: bool = True #os.environ.get('HISTORIAN_ENABLE', 'true').lower() == 'true'
-INFLUXDB_DB: Optional[str] = "bems" #os.environ.get('INFLUXDB_DB', 'bems')
-INFLUXDB_HOST: str = "localhost", #os.environ.get('INFLUXDB_HOST', 'localhost')
-INFLUXDB_ADMIN_USER: str = "admin", #os.environ.get('INFLUXDB_ADMIN_USER', 'admin')
-INFLUXDB_ADMIN_PASSWORD: str = "admin", #os.environ.get('INFLUXDB_ADMIN_PASSWORD', 'admin')
+INFLUXDB_DB: Optional[str] = "test"# "test_20250923" #os.environ.get('INFLUXDB_DB', 'bems')
+INFLUXDB_HOST: str = "localhost" #os.environ.get('INFLUXDB_HOST', 'localhost')
+INFLUXDB_ADMIN_USER: str = "admin" #os.environ.get('INFLUXDB_ADMIN_USER', 'admin')
+INFLUXDB_ADMIN_PASSWORD: str = "admin" #os.environ.get('INFLUXDB_ADMIN_PASSWORD', 'admin')
 
 # Build once, reuse everywhere
 influx_client: Optional[InfluxDBClient] = None
@@ -20,16 +21,20 @@ if HISTORIAN_ENABLE:
         password=INFLUXDB_ADMIN_PASSWORD,
     )
 
-def _cast_field_value(v: Any) -> Optional[float | bool]:
+def _cast_field_value(v: Any) -> float:
     """Influx-friendly cast: keep numeric/bool; parse common strings; else None (skip)."""
-    if isinstance(v, (int, float, bool)):
-        return v
+    if isinstance(v, bool):
+        return 1.0 if v else 0.0
+    if isinstance(v, (int, float)):
+        return float(v)
     if isinstance(v, str):
         s = v.strip().lower()
-        if s in ('true', 'false'):
-            return s == 'true'
+        if s in ('occupied', 'true', '1'):
+            return 1.0
+        if s in ('unoccupied', 'false', '0'):
+            return 0.0
         try:
-            return float(v)
+            return float(s)
         except Exception:
             return None
     return None
@@ -68,10 +73,20 @@ def points_from_entries(system_id: str,
             "tags": {
                 "system_id": system_id,
                 "name": e.get("name", ""),
-                "type": e.get("type", ""),
-                "unit": e.get("unit", ""),
-                "source": "aems-ui",
+                # "label": e.get("label", ""),
+                # "type": e.get("type", ""),
+                # "unit": e.get("unit", ""),
             },
             "fields": {"value": val},
         })
     return pts
+
+def to_rfc3339(ts: str) -> str:
+    dt = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+def to_datetime_str(ts: any) -> str:
+    dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(ZoneInfo("America/New_York")).strftime('%Y-%m-%d %H:%M:%S')
