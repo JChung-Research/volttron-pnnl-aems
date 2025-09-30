@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+python ./scripts/install-agent.py \
+    -s app_agents/RecvAgent \
+    -i rec_bestest_hydronic \
+    --tag rec_bestest_hydronic \
+    --config config/recv_config_bestest_hydronic \
+    --start \
+    --force

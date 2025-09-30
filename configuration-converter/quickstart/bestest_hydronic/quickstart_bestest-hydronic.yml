@@ -1,0 +1,159 @@
+building unit:
+  config directory path: ./unit
+  system 1:
+    campus*: BOPTEST
+    building*: BESTEST-Hydronic
+    system*: bestest_hydronic
+    local timezone: US/Eastern
+    building type: Medium office
+    operator: Rick
+    image: https://digipedia.tudelft.nl/app/uploads/2024/06/HBRoomSetup_Image_00.jpg
+    description: The building is a single room based on the BESTEST Case 900 model definition.
+    zone point names*:
+        supplyheatersetpoint: SupplyHeaterSetpoint
+        controlstagepump: ControlStagePump
+        zoneairheatingsetpoint: ZoneAirHeatingSetpoint
+        zoneaircoolingsetpoint: ZoneAirCoolingSetpoint
+    default setpoints:
+        UnoccupiedHeatingSetPoint: 63
+        UnoccupiedCoolingSetPoint: 80
+        ControlStagePump: 1
+        SupplyHeaterSetpoint: 71
+        ZoneAirHeatingSetpoint: 65
+        ZoneAirCoolingSetpoint: 78
+    schedule:
+      monday:
+        start: 8:00
+        end: 18:00
+      tuesday:
+        start: 8:00
+        end: 18:00
+      wednesday:
+        start: 8:00
+        end: 18:00
+      thursday:
+        start: 8:00
+        end: 18:00
+      friday:
+        start: 8:00
+        end: 18:00
+      saturday: always_off
+      sunday: always_off
+    chart configs:
+      chart 1:
+        chart type: line
+        selected variables:
+          variable 1: ZoneAirHeatingSetpoint
+          variable 2: ZoneAirCoolingSetpoint
+          variable 3: ZoneAirTemperature
+        visualization setting:
+          variable 1:
+            color: red
+            line width: 2
+            line dash: dashdot
+          variable 2:
+            color: blue
+            line width: 4
+            line dash: dot
+          variable 3:
+            color: olive
+            line width: 4
+            line dash: solid
+
+web server:  
+  config directory path: "./app"
+  project name: skeleton
+  hostname: localhost
+  port*: 3000
+
+  database host: localhost
+  database port: 6543
+  database name: skeleton
+  database schema: public
+  database username: skeleton
+  database password: SeT_tHiS_iN_0x3A-.env.secrets-
+
+  config auth url: https://host.docker.internal:8443/auth
+  config api url: https://host.docker.internal:8443/gs
+  config username: admin
+  config password: admin
+
+  system users*:
+    user 1:
+      name: Test User
+      email: test-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+      building access: 
+        BESTEST-Air: True
+        BESTEST-Hydronic: True
+      read only: True
+    user 2:
+      name: Test Admin
+      email: test-admin@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: admin
+    user 3:
+      name: System User
+      email: system-user@aems.com
+      password: ChAnGe_ThIs_PaSsWoRd_0x2E
+      role: user
+      building access: 
+        BESTEST-Air: True
+        BESTEST-Hydronic: False
+      read only: False
+
+web client:
+  config directory path: "./client"
+  application title: AEMS
+  application description: 
+  application api url: /api
+  port: 2000
+  application login: true
+
+volttron:
+  config directory path: "./"
+  vip address: tcp://127.0.0.1:23921
+  instance name: "central_frp"
+  message bus: zmq
+
+  agent info*: 
+    agent 1:
+      campus: BOPTEST
+      id: bestest_hydronic 
+      class: control_init
+      url: http://api.boptest.net
+      hearbeat period: 5
+      data point:
+        oveTSetSup_u:
+          type: float
+          units: K
+          timezone: UTC
+        ovePum_u:
+          type: bool
+          units: None
+          timezone: UTC
+        oveTSetCoo_u:
+          type: float
+          units: K
+          timezone: UTC
+        oveTSetHea_u:
+          type: float
+          units: K
+          timezone: UTC
+        reaCO2RooAir_y:
+          type: float
+          units: ppm
+          timezone: UTC
+        reaTRoo_y:
+          type: float
+          units: K
+          timezone: UTC
+        reaPPum_y:
+          type: float
+          units: W
+          timezone: UTC
+        reaQHea_y:
+          type: float
+          units: W
+          timezone: UTC

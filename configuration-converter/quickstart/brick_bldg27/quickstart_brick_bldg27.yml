@@ -1,0 +1,3 @@
+building unit:
+  config directory path: "./unit"
+  brick schema file path: "./bldg27.ttl"

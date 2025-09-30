@@ -135,12 +135,10 @@ volttron:
         ...
     ...
 ```
-For a complete exampl of both configuration modes (manual configs and brick import), see the provided examples:
+For a complete exampl of both configuration modes (manual configs and brick import), see the provided example YAML input and output files in the `test` folder:
 - `example_YAML-config.yml` — Manual definition of building units, web client/server, and VOLTTRON configs.
 - `example_YAML-brick-config.yml` — Semantic model–based definition, where building units are auto-generated from a Brick Schema model (TTL).
 - `example_brick.ttl` — A Brick Schema model to generate building unit configuration for demonstration.
-
-Example output configuration files are available in the `test` folder. Additionally, translated building configuration files from an [industrial Brick Schema model](https://brickschema.org/ttl/mortar/bldg27.ttl) can be found in `test/brick_output_bldg27`.
 
 
 ## YAML Template for Quick Start
@@ -152,6 +150,8 @@ The template covers all sections:
 - `web server` (server application settings)
 - `volttron` (middleware backend and agents)
 
+For a quick start, an [industrial Brick Schema model](https://brickschema.org/ttl/mortar/bldg27.ttl)
+, along with the corresponding YAML input file and translated building configuration files, is available in `quickstart/brick_bldg27`. Quick-start examples for two BOPTEST test cases—`bestest-air` and `bestest-hydronic`—can be found in `quickstart/bestest-air` and `quickstart/bestest-hydronic`, respectively.
 
 ## About `config directory path`
 The converter is designed to generate each output file in the designated directory within this `volttron-pnnl-aems` GitHub repository. If users prefer, aach YAML section can specify a `config directory path`. This key does not appear in the generated outputs. Instead, it controls where the converter writes the corresponding files. For instance:
@@ -203,3 +203,10 @@ python main.py -i path/to/config.yml
 - Add new human→machine key mappings in `constants.py` (e.g., for additional env vars).
 - Customize defaults in `DEFAULTS`.
 - Introduce a new output writer by following the pattern in `web_client.py`/`web_server.py` and calling it from `main.py`.
+
+## Citation
+This code was developed as part of the research published in the journal paper:
+
+*[Under Review]* Author names. (2025). Generalizable Web User Interface for Low-Cost, Scalable Building Energy Management Systems in Small and Medium-Sized Commercial Buildings: Bridging Smart Device Capabilities with Accessible Software Infrastructure. *Journal of Building Performance Simulation*.
+
+If you use this code in your work, please cite the above publication.
