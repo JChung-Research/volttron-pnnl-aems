@@ -1,6 +1,6 @@
 import logging, csv
 from volttron.platform.agent import utils
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any, Union
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
@@ -8,6 +8,8 @@ _log = logging.getLogger(__name__)
 # Base URL for the ecobee Smart Themostat API endpoint
 BASE = 'http://host.docker.internal:5005'
 HEADERS = {'Content-Type': 'application/json'}
+
+selected_room = ['103','104','105','108','109','110','111','112','118','119','120','122','124','125']
 
 def initialize(system_id):
     _log.info('Initialize agent "{}"'.format(system_id))
@@ -76,7 +78,7 @@ def convert_ids_to_names(data: Dict, id_to_name_map: Dict) -> Dict:
     Returns:
         Dict: Updated data with room names as keys.
     """
-    return {id_to_name_map.get(str(k), str(k)): v for k, v in data.items()}
+    return {id_to_name_map.get(str(k), str(k)): v for k, v in data.items() if id_to_name_map.get(str(k), str(k)) in selected_room}
 
 def convert_names_to_ids(data: Dict) -> Dict:
     """
@@ -90,7 +92,7 @@ def convert_names_to_ids(data: Dict) -> Dict:
     """
 
     name_to_id_map = build_name_to_id_map('/home/volttron/volttron/app_agents/client/3147_room_id.csv')
-    return {name_to_id_map.get(str(k), str(k)): v for k, v in data.items()}
+    return {name_to_id_map.get(str(k), str(k)): v for k, v in data.items() if k in selected_room}
 
 def preprocessing(payload: Dict, data_point: Dict) -> Tuple[Dict, Dict]:
     """
@@ -106,7 +108,7 @@ def preprocessing(payload: Dict, data_point: Dict) -> Tuple[Dict, Dict]:
             - temp2: Corresponding metadata from data_point.
     """
     try:
-        input_data = payload['output']['payload']['output']
+        input_data = payload['output']
     except KeyError as e:
         _log.error(f"Error reading payload: missing key {e}. Payload was: {payload}")
         return {}, {}
@@ -129,3 +131,24 @@ def preprocessing(payload: Dict, data_point: Dict) -> Tuple[Dict, Dict]:
                 temp2[key][subkey] = data_point.get(subkey, {})
 
     return temp1, temp2
+
+def ecobee_control(input_object: Union[str, Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+    output_object: Dict[str, Dict[str, float]] = {}
+
+    for room_id, settings in input_object.items():
+
+        desired_heat = settings.get("desiredHeat")
+        desired_cool = settings.get("desiredCool")
+        mode = settings.get("HVACMode")
+
+        new_setpoint = None
+        if mode == "heat":
+            new_setpoint = desired_heat
+        elif mode == "cool":
+            new_setpoint = desired_cool
+        else:
+            new_setpoint = desired_heat
+
+        output_object[room_id] = {"TSet": new_setpoint}
+
+    return output_object
