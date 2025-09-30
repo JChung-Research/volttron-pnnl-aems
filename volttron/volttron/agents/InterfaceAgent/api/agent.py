@@ -80,8 +80,9 @@ class InterfaceAgent(Agent):
         self.topic = self.config.get('topic', None)         
         self.points = self.config.get('data_point', None)
         self.inputs = self.config.get('inputs', None)
-        self.building_id = self.topic.split('/')[1]
-        self.system_id = self.topic.split('/')[2]
+        self.campus_id = self.config.get('campus', None)
+        self.building_id = self.config.get('building', None)
+        self.system_id = self.config.get('system', None)
         self.u = None  
 
         if self.config['module'] is not None:
@@ -90,6 +91,7 @@ class InterfaceAgent(Agent):
                 controller = importlib.import_module(control_class)
                 self.initialize = controller.initialize
                 self.preprocessing = getattr(controller, "preprocessing", None)
+                self.ecobee_control = getattr(controller, "ecobee_control", None)
             except:
                 _log.error('Invalid control module')    
         try:
@@ -115,7 +117,7 @@ class InterfaceAgent(Agent):
         headers = {TIMESTAMP: format_timestamp(get_aware_utc_now())}
 
         # BOPTEST API inputs to activate all building systems in the test case
-        if self.building_id == 'BOPTEST':
+        if self.campus_id == 'BOPTEST':
             # Check the temperature variables whose unit is Kelvin to convert it to Fahrenheit degree, using 'interface_config' files
             temp_k_vars = [k for k, v in self.points.items() if v['units'] == 'K']
 
@@ -159,7 +161,7 @@ class InterfaceAgent(Agent):
                                                 headers=API_HEADER).json()
 
         if result['status'] == 200:          
-            if self.building_id == 'BOPTEST':
+            if self.campus_id == 'BOPTEST':
                 _log.info('Advance result: {}'.format(result.get('payload')))
                 raw_data = {
                         k: temp_k_to_f(v) if k in temp_k_vars else v # Convert Kelvin unit to Fahrenheit degree considering the BOPTEST API
@@ -182,9 +184,9 @@ class InterfaceAgent(Agent):
                 temp1, temp2 = self.preprocessing(result.get('payload'), self.points)
 
                 if self.u is not None:
-                    json_object = json.dumps(self.convert_names_to_ids(self.u.get('payload')), default=str) 
+                    ecobee_set_points = self.ecobee_control(self.convert_names_to_ids(self.u.get('payload')))
                     result = requests.put('{}/set_point'.format(self.url),
-                                                        json=json_object,
+                                                        json=ecobee_set_points,
                                                         headers=API_HEADER).json()
                     if result['status'] == 200:
                         _log.info(f'New control signals sent to ecobee: {json_object}')
