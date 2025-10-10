@@ -1,0 +1,8 @@
+{
+    "building": "3147",
+    "manager": "ecobee",
+    "inputs":{"topic":"devices/3147/ecobee/all"},
+    "module":"app_agents.client",
+    "topic":"devices/3147/ecobee/control",
+    "class":"UI"
+}

@@ -1,0 +1,23 @@
+{
+    "building": "3147",
+    "manager": "bacnet",
+    "module":"app_agents.client",
+    "class":"bacnet_init",
+    "topic":"devices/3147/bacnet/all",
+    "heartbeat_period": 30,
+    "inputs":{"topic":"devices/3147/bacnet/control"},
+    "data_point": {
+     "power_hvac1":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"},
+     "power_hvac2":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"},
+     "power_hvac3":
+    {"type":"float",
+     "units":"W",
+     "tz":"UTC"}
+    }
+}

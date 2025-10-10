@@ -13,12 +13,10 @@ disown
 sleep 30
 
 # Run upgrade scripts
-bash upgrade_scripts/upgrade_interface_bestest-air
-bash upgrade_scripts/upgrade_rec_bestest-air
-bash upgrade_scripts/upgrade_interface_bestest-hydronic
-bash upgrade_scripts/upgrade_rec_bestest-hydronic
-bash upgrade_scripts/upgrade_interface_3147
-bash upgrade_scripts/upgrade_rec_3147
+bash upgrade_scripts/upgrade_interface_ecobee
+bash upgrade_scripts/upgrade_rec_ecobee
+bash upgrade_scripts/upgrade_interface_bacnet
+bash upgrade_scripts/upgrade_rec_bacnet
 
 # Keep container running and output logs
 tail -f v.log

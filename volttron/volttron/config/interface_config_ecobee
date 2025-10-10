@@ -1,0 +1,27 @@
+{
+    "building": "3147",
+    "manager": "ecobee",
+    "module":"app_agents.client",
+    "class":"ecobee_init",
+    "topic":"devices/3147/ecobee/all",
+    "heartbeat_period": 30,
+    "inputs":{"topic":"devices/3147/ecobee/control"},
+    "data_point": {
+     "ZoneTemperature":
+    {"type":"float",
+     "units":"F",
+     "tz":"UTC"},
+     "desiredHeat":
+    {"type":"float",
+     "units":"F",
+     "tz":"UTC"},
+     "desiredCool":
+    {"type":"float",
+     "units":"F",
+     "tz":"UTC"},
+     "HVACMode":
+    {"type":"bool",
+     "units":"None",
+     "tz":"UTC"}
+    }
+}

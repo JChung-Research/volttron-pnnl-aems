@@ -80,9 +80,8 @@ class InterfaceAgent(Agent):
         self.topic = self.config.get('topic', None)         
         self.points = self.config.get('data_point', None)
         self.inputs = self.config.get('inputs', None)
-        self.campus_id = self.config.get('campus', None)
         self.building_id = self.config.get('building', None)
-        self.system_id = self.config.get('system', None)
+        self.manager_id = self.config.get('manager', None)
         self.u = None  
 
         if self.config['module'] is not None:
@@ -109,7 +108,7 @@ class InterfaceAgent(Agent):
             self.initialize = controller.initialize
             self.preprocessing = getattr(controller, "preprocessing", None)
             self.convert_names_to_ids = getattr(controller, "convert_names_to_ids", None)
-            self.url = self.initialize(self.system_id) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
+            self.url = self.initialize(self.manager_id) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
         if self._heartbeat_period != 0:
             self.core.schedule(periodic(self._heartbeat_period), self.control_update)
 
@@ -117,7 +116,7 @@ class InterfaceAgent(Agent):
         headers = {TIMESTAMP: format_timestamp(get_aware_utc_now())}
 
         # BOPTEST API inputs to activate all building systems in the test case
-        if self.campus_id == 'BOPTEST':
+        if self.building_id == 'BOPTEST':
             # Check the temperature variables whose unit is Kelvin to convert it to Fahrenheit degree, using 'interface_config' files
             temp_k_vars = [k for k, v in self.points.items() if v['units'] == 'K']
 
@@ -131,7 +130,7 @@ class InterfaceAgent(Agent):
             else:
                 data = {} 
 
-            if self.system_id == 'bestest_air':
+            if self.manager_id == 'bestest_air':
                 activate_systems = {
                       'con_oveTSetCoo_activate': 1,
                       'con_oveTSetHea_activate': 1,
@@ -140,7 +139,7 @@ class InterfaceAgent(Agent):
                  }
                 data.update(activate_systems)
 
-            elif self.system_id == 'bestest_hydronic':
+            elif self.manager_id == 'bestest_hydronic':
                 activate_systems = {
                       'ovePum_activate': 1,
                       'oveTSetCoo_activate': 1,
@@ -149,19 +148,19 @@ class InterfaceAgent(Agent):
                  }
                 data.update(activate_systems)
 
-            _log.info('Inputs for BOPTEST advance "{}": {}'.format(self.system_id, data))
+            _log.info('Inputs for BOPTEST advance "{}": {}'.format(self.manager_id, data))
             result = requests.post('{}'.format(self.url),
                                                     json=data,
                                                     headers=API_HEADER).json()
 
         # Ecobee API inputs for ORNL real buildings (3147, FRP2, etc.)
         else:
-            _log.info('"/get_point" request to ecobee API')
+            _log.info(f'"/get_point" request to {self.manager_id} API')
             result = requests.get('{}/get_point'.format(self.url),
                                                 headers=API_HEADER).json()
 
         if result['status'] == 200:          
-            if self.campus_id == 'BOPTEST':
+            if self.building_id == 'BOPTEST':
                 _log.info('Advance result: {}'.format(result.get('payload')))
                 raw_data = {
                         k: temp_k_to_f(v) if k in temp_k_vars else v # Convert Kelvin unit to Fahrenheit degree considering the BOPTEST API
@@ -179,19 +178,21 @@ class InterfaceAgent(Agent):
                     temp2[key] = self.points[key]
             
             else:
-                _log.info('"/get_point" result from ecobee: {}'.format(result.get('payload')))
+                _log.info('"/get_point" result from {}: {}'.format(self.manager_id, result.get('payload')))
                 
                 temp1, temp2 = self.preprocessing(result.get('payload'), self.points)
+                _log.info('temp1: {}, temp2: {}'.format(temp1, temp2))
 
-                if self.u is not None:
+                if (self.u is not None) and (self.ecobee_control is not None):
                     ecobee_set_points = self.ecobee_control(self.convert_names_to_ids(self.u.get('payload')))
                     result = requests.put('{}/set_point'.format(self.url),
                                                         json=ecobee_set_points,
                                                         headers=API_HEADER).json()
+  
                     if result['status'] == 200:
-                        _log.info(f'New control signals sent to ecobee: {json_object}')
+                        _log.info(f'New control signals sent to ecobee: {ecobee_set_points}')
 
-            _log.info('"set_point" result from the drivers: {}'.format(result))
+            _log.info('"/set_point" result from the {}: {}'.format(self.manager_id, result))
 
             message = []
             message.append(temp1)

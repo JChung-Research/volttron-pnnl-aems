@@ -11,7 +11,7 @@ from pandas.tseries.holiday import AbstractHolidayCalendar, Holiday
 
 # --- AEMS / manager modules ---
 import sys, os
-sys.path.append('..\\aems-edge\Manager\manager')
+sys.path.append(os.getenv("AEMS_MANAGER_PATH", "/app/aems-edge/Manager/manager"))
 # Reuse the holiday and observance objects from the 'aems-edge' folder
 from holiday_utils import ALL_HOLIDAYS, OBSERVANCE
 from influxdb_historian.influxdb_utils import *
@@ -275,6 +275,27 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "type": "control",
         "unit": "bool"
     },
+    "power_hvac1": {
+        "building": "3147",
+        "name": "PowerHVAC1",
+        "label": "Electric Power of HVAC 1",
+        "type": "environment",
+        "unit": "W"
+    },
+    "power_hvac2": {
+        "building": "3147",
+        "name": "PowerHVAC2",
+        "label": "Electric Power of HVAC 2",
+        "type": "environment",
+        "unit": "W"
+    },
+    "power_hvac3": {
+        "building": "3147",
+        "name": "PowerHVAC3",
+        "label": "Electric Power of HVAC 3",
+        "type": "environment",
+        "unit": "W"
+    },
     # --- shared ---
     "occupancy": {
         "building": "all",
@@ -304,6 +325,7 @@ def _write_influx_for_systems(sys_keys: list[str]):
 
     if all_points:
         try:
+            print("all_points: ", all_points)
             ok = influx_client.write_points(points=all_points, time_precision='s', database=INFLUXDB_DB)
             if not ok:
                 print(f"[WARN] Influx write unsuccessful. Points: {len(all_points)}")
@@ -394,6 +416,8 @@ def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
     Returns:
         dict: The updated y dictionary.
     """
+    y_env_manager_id = next(iter(y_env_data)).removeprefix("manager.")
+    y_env_building = building_of(y_env_manager_id)
 
     for system_id, new_env_list in y_env_data.items():
         if system_id in y_:
@@ -403,6 +427,20 @@ def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
             for entry in y_[system_id]:
                 if entry['name'] in new_values:
                     entry['value'] = new_values[entry['name']]
+        elif system_id.removeprefix("manager.") == 'bacnet':
+            new_values = {entry['name']: entry['value'] for entry in new_env_list}
+            for y_system_id, entries in y_.items():
+                if building_of(y_system_id.removeprefix("manager.")) != y_env_building:
+                    continue
+                for entry in entries:
+                    if entry.get("type") == "environment" and entry.get("name") in new_values:
+                        entry['value'] = new_values[entry['name']]
+
+                existing_names = {entry["name"] for entry in entries if isinstance(entry, dict) and "name" in entry}
+                to_add = [entry.copy() for entry in new_env_list
+                        if entry.get("type") == "environment" and entry["name"] not in existing_names]
+                if to_add:
+                    entries.extend(to_add)
         else:
             # If zone doesn't exist — create with new environmental data
             y_[system_id] = new_env_list.copy()
@@ -472,10 +510,8 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
         if isinstance(time_range, dict):
             if time_range.get("start_time"):
                 start_time = time_range["start_time"]
-                print("start_time: ", start_time)
             if time_range.get("end_time"):
                 end_time = time_range["end_time"]
-                print("end_time: ", end_time)
 
         measurement = building_of(system_id)  # 'bestest_air' | 'bestest_hydronic' | '3147'
         # start_time = start_time or (timestamp - timedelta(hours=6)).strftime('%Y-%m-%d %H:%M:%S')
@@ -484,9 +520,6 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
         # end_time = datetime(2025, 9, 22, 5, 59, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         start_rfc = to_rfc3339(start_time)
         end_rfc = to_rfc3339(end_time)
-
-        print("start_rfc: ", start_rfc)
-        print("end_rfc: ", end_rfc)
     except Exception as e:
         print(f"[WARN] : {e}")
 
@@ -802,14 +835,22 @@ class building_control(Resource):
             global y, u, u_uo, t, o, timestamp
 
             body = request.get_json()
-            system_data = body.get(next(iter(body))) if next(iter(body)) == '3147' else body
+            print("body: ", body)
+            first_key = next(iter(body))
+            system_data = body.get(first_key) if first_key == 'ecobee' else body
+            print("system_data: ", system_data)
 
             # Update environment entries in y
             y_env = restructure_sensor_data_by_zone(system_data)            
             y = update_zone_environment(y, y_env) 
 
+            print("y_env: ", y_env)
+            print("y: ", y)
+
             # Per-system updates (defaults, occupancy replacement, and mirrored y)
             for key in system_data.keys():
+                if key == 'bacnet':
+                    continue
                 # system_id = f"manager.zone-{key}"
                 system_id = f"manager.{key}"
                 control_signals = system_data[key]
@@ -861,7 +902,9 @@ class building_control(Resource):
                     y = update_zone_controls(y, system_id, control_data)
 
 
-            if next(iter(body)) == '3147':
+            if first_key == 'bacnet': # Only update global environmental data and skip updating global control data
+                updated_u = {} ; system_data = {}
+            elif first_key == 'ecobee':
                 # updated_u = {key: u[f"manager.zone-{key}"] for key in system_data.keys() if f"manager.zone-{key}" in u.keys()}
                 updated_u = {key: u.get(f"manager.{key}") for key in system_data.keys() if f"manager.{key}" in u.keys()}
             else:
@@ -878,7 +921,7 @@ class building_control(Resource):
             try:
                 # print("body: ", body)
                 # print("system_data: ", system_data)
-                _write_influx_for_systems(list(system_data.keys()))
+                if system_data != {} : _write_influx_for_systems(list(system_data.keys())) 
             except Exception as e:
                 print(f"[WARN] Influx logging skipped due to error: {e}")
 
@@ -925,8 +968,6 @@ class ui_control(Resource):
             print("req.params.data: ", req.params.data)
             if req.method == "get_temperature_setpoints":
                 payload = get_temperature_setpoints(req.id, req.params.data)# if (len(y) > 0) elsaee None
-                # print("payload: ", payload)
-                # payload = [{'building': '3147', 'name': 'ZoneAirTemperature', 'label': 'Zone air temperature', 'type': 'environment', 'unit': '°F', 'value': 73.6}, {'building': '3147', 'name': 'ZoneAirHeatingSetpoint', 'label': 'Zone temperature setpoint for heating', 'type': 'control', 'unit': '°F', 'value': 60}, {'building': '3147', 'name': 'ZoneAirCoolingSetpoint', 'label': 'Zone temperature setpoint for cooling', 'type': 'control', 'unit': '°F', 'value': 80}, {'building': '3147', 'name': 'HVACMode', 'label': 'HVAC mode', 'type': 'control', 'unit': 'bool', 'value': 'heat'}, {'building': 'all', 'name': 'Occupancy', 'label': 'Occuapncy', 'type': 'occupancy', 'unit': 'bool', 'value': 'occupied'}]
             elif req.method == "set_temperature_setpoints":
                 payload = set_temperature_setpoints(req.id, req.params.data)
             elif req.method == "set_holidays":
@@ -934,11 +975,6 @@ class ui_control(Resource):
             elif req.method == "set_schedule":
                 payload = set_schedule(req.id, req.params.data)
             elif req.method == "set_occupancy_override":
-                # print("\nreq: ", {
-                #             'id': req.id,
-                #             'method': req.method,
-                #             'params': req.params.data
-                #         })
                 payload = set_occupancy_override(req.id, req.params.data)
             elif req.method in self.jsonrpc_to_ignore:
                 payload = {}
