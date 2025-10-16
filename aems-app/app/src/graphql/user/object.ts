@@ -18,6 +18,8 @@ export const UserObject = builder.prismaObject("User", {
     role: t.exposeString("role", { nullable: true }),
     // password field is intentionally omitted
     preferences: t.expose("preferences", { type: "Preferences", nullable: true }),
+    bldgAccess: t.expose("bldgAccess", { type: "JSON", nullable: true }),
+    readOnly: t.exposeBoolean("readOnly", { nullable: true }),
     // metadata
     createdAt: t.expose("createdAt", { type: "DateTime" }),
     updatedAt: t.expose("updatedAt", { type: "DateTime" }),
