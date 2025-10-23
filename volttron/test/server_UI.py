@@ -292,6 +292,34 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "type": "sensor",
         "unit": "W"
     },
+    "power": {
+        "building": "3147",
+        "name": "EquipmentPower",
+        "label": "Electric Power of the Room Equipment",
+        "type": "sensor",
+        "unit": "W"
+    },
+    "voltage": {
+        "building": "3147",
+        "name": "EquipmentVoltage",
+        "label": "Voltage of the Room Equipment",
+        "type": "sensor",
+        "unit": "V"
+    },
+    "current": {
+        "building": "3147",
+        "name": "EquipmentElectricCurrent",
+        "label": "Electric Current of the Room Equipment",
+        "type": "sensor",
+        "unit": "A"
+    },
+    "power_factor": {
+        "building": "3147",
+        "name": "EquipmentPowerFactor",
+        "label": "Electric Power Factor of the Room Equipment",
+        "type": "sensor",
+        "unit": "[0-1]"
+    },
     # --- shared ---
     "occupancy": {
         "building": "all",
@@ -399,7 +427,6 @@ def restructure_control_data(control_dict: Dict[str, Any]) -> List[Dict[str, Any
     return output
 
 # ----------------- UPDATE Y VARIABLE -----------------
-
 def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
                             y_env_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[Dict[str, Any]]]:
     """
@@ -412,26 +439,37 @@ def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
     Returns:
         dict: The updated y dictionary.
     """
+
     y_env_manager_id = next(iter(y_env_data)).removeprefix("manager.")
     y_env_building = building_of(y_env_manager_id)
 
     for system_id, new_env_list in y_env_data.items():
         if system_id in y_:
-            # Create a mapping from name to value in new_env_list
-            new_values = {entry['name']: entry['value'] for entry in new_env_list if entry.get("type") == "environment"}
-            # Update values in existing list if the name matches
-            for entry in y_[system_id]:
-                if entry['name'] in new_values:
-                    entry['value'] = new_values[entry['name']]
+            # For fast lookup: map existing sensor name to item dict
+            env_name_object = {item['name']: item for item in y_[system_id] if item.get("type") == "sensor"}
+
+            # Update existing sensor values or append as new if not found
+            for entry in new_env_list:
+                entry_name = entry.get("name")
+                if entry_name in list(env_name_object.keys()):
+                    env_name_object.get(entry_name)["value"] = entry.get("value")
+                else:
+                    y_[system_id].append(entry.copy())
+
         elif system_id.removeprefix("manager.") == 'bacnet':
+            # Updates HVAC energy data of all zones within the same building as `y_env_building`
             new_values = {entry['name']: entry['value'] for entry in new_env_list}
             for y_system_id, entries in y_.items():
+                # Skip zones not belonging to the target building                
                 if building_of(y_system_id.removeprefix("manager.")) != y_env_building:
                     continue
+
+                # Update matching sensor values
                 for entry in entries:
                     if entry.get("type") == "sensor" and entry.get("name") in new_values:
                         entry['value'] = new_values[entry['name']]
 
+                # Append any missing sensor entries
                 existing_names = {entry["name"] for entry in entries if isinstance(entry, dict) and "name" in entry}
                 to_add = [entry.copy() for entry in new_env_list
                         if entry.get("type") == "sensor" and entry["name"] not in existing_names]
@@ -831,9 +869,13 @@ class building_control(Resource):
             global y, u, u_uo, t, o, timestamp
 
             body = request.get_json()
-            print("body: ", body)
-            first_key = next(iter(body))
-            system_data = body.get(first_key) if first_key == 'ecobee' else body
+            body_data = body[0]
+            body_meta = body[1]
+
+            print("body_data: ", body_data)
+            print("body_meta: ", body_meta)
+            first_key = next(iter(body_data))
+            system_data = body_data.get(first_key) if first_key in ['ecobee', 'modbus'] else body_data
             print("system_data: ", system_data)
 
             # Update sensor entries in y
@@ -898,7 +940,7 @@ class building_control(Resource):
                     y = update_zone_controls(y, system_id, control_data)
 
 
-            if first_key == 'bacnet': # Only update global environmental data and skip updating global control data
+            if first_key in ['bacnet', 'modbus']: # Only update global environmental data and skip updating global control data
                 updated_u = {} ; system_data = {}
             elif first_key == 'ecobee':
                 # updated_u = {key: u[f"manager.zone-{key}"] for key in system_data.keys() if f"manager.zone-{key}" in u.keys()}
