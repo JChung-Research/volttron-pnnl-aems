@@ -909,7 +909,7 @@ class building_control(Resource):
 
             if time_accelerator:  
                 global timestamp               
-                timestamp += timedelta(minutes=10)
+                timestamp += timedelta(minutes=2.5)
             else:
                 timestamp = datetime.now(timezone.utc)
 
