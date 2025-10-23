@@ -54,63 +54,64 @@ time_accelerator = False # Accelerate the time step to 5 min (same as the time s
 # ----------------- DATA CONVERSION TOOL -----------------
 
 data_mapping: Dict[str, Dict[str, Any]] = {
-    # --- FRP2 (environment) ---
+    # --- FRP2 (sensor) ---
     'T_OA': {
         "building": "FRP2",
         "name": "OutdoorTemperature",
         "label": "Outdoor air temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     'Flowrate_RTU': {
         "building": "FRP2",
         "name": "SupplyAirflowRateRTU",
         "label": "Supply air mass flow rate of RTU unit",
-        "type": "environment",
+        "type": "sensor",
         "unit": "CFM"
     },
     'Flowrate_VAV': {
         "building": "FRP2",
         "name": "SupplyAirflowRateVAV",
         "label": "Supply air mass flow rate of VAV unit",
-        "type": "environment",
+        "type": "sensor",
         "unit": "CFM"
     },
     'T_inlet': {
         "building": "FRP2",
         "name": "SupplyAirTemperatureInlet",
         "label": "Inlet supply air temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     'T_outlet_VAV': {
         "building": "FRP2",
         "name": "SupplyAirTemperatureVAV",
         "label": "Outlet supply air temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     'W_inlet': {
         "building": "FRP2",
         "name": "HumidityInlet",
         "label": "Inlet air humidity",
-        "type": "environment",
+        "type": "sensor",
         "unit": "%"
     },
     'T_zone': {
         "building": "FRP2",
         "name": "ZoneAirTemperature",
         "label": "Zone air temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     'W_zone': {
         "building": "FRP2",
         "name": "HumidityZone",
         "label": "Zone air humidity",
-        "type": "environment",
+        "type": "sensor",
         "unit": "%"
     },
+
     # --- bestest_air ---
     "fcu_oveFan_u": {
         "building": "bestest_air",
@@ -144,44 +145,45 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "building": "bestest_air",
         "name": "SupplyAirflowRate",
         "label": "Supply air mass flow rate",
-        "type": "environment",
+        "type": "sensor",
         "unit": "kg/s"
     },
     "zon_reaCO2RooAir_y": {
         "building": "bestest_air",
         "name": "ZoneCo2Concentration",
         "label": "Zone air CO2 concentration",
-        "type": "environment",
+        "type": "sensor",
         "unit": "ppm"
     },
     "zon_reaTRooAir_y": {
         "building": "bestest_air",
         "name": "ZoneAirTemperature",
         "label": "Zone air temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     "fcu_reaPFan_y": {
         "building": "bestest_air",
         "name": "SupplyFanPowerConsumption",
         "label": "Supply fan power consumption",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
     "fcu_reaPCoo_y": {
         "building": "bestest_air",
         "name": "CoolingPowerConsumption",
         "label": "Cooling power consumption",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
     "fcu_reaPHea_y": {
         "building": "bestest_air",
         "name": "HeatingPowerConsumption",
         "label": "Heating power consumption",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
+
     # --- bestest_hydronic ---
     "oveTSetSup_u": {
         "building": "bestest_hydronic",
@@ -215,43 +217,37 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "building": "bestest_hydronic",
         "name": "ZoneCo2Concentration",
         "label": "CO2 concentration in the zone",
-        "type": "environment",
+        "type": "sensor",
         "unit": "ppm"
     },
     "reaTRoo_y": {
         "building": "bestest_hydronic",
         "name": "ZoneOperativeTemperature",
         "label": "Operative zone temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     "reaPPum_y": {
         "building": "bestest_hydronic",
         "name": "PumpPowerConsumption",
         "label": "Pump power consumption",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
     "reaQHea_y": {
         "building": "bestest_hydronic",
         "name": "HeatingPowerConsumption",
         "label": "Heating power consumption",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
-    "reaQHea_y": {
-        "building": "bestest_hydronic",
-        "name": "HeatingPowerConsumption",
-        "label": "Heating power consumption",
-        "type": "environment",
-        "unit": "W"
-    },
+
     # --- 3147 ---
     "ZoneTemperature": {
         "building": "3147",
         "name": "ZoneAirTemperature",
         "label": "Zone air temperature",
-        "type": "environment",
+        "type": "sensor",
         "unit": "°F"
     },
     "desiredHeat": {
@@ -279,21 +275,21 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "building": "3147",
         "name": "PowerHVAC1",
         "label": "Electric Power of HVAC 1",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
     "power_hvac2": {
         "building": "3147",
         "name": "PowerHVAC2",
         "label": "Electric Power of HVAC 2",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
     "power_hvac3": {
         "building": "3147",
         "name": "PowerHVAC3",
         "label": "Electric Power of HVAC 3",
-        "type": "environment",
+        "type": "sensor",
         "unit": "W"
     },
     # --- shared ---
@@ -407,7 +403,7 @@ def restructure_control_data(control_dict: Dict[str, Any]) -> List[Dict[str, Any
 def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
                             y_env_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[Dict[str, Any]]]:
     """
-    Updates the 'environment' entries for each system (zone) in the global 'y' dictionary.ovided environment data.
+    Updates the 'sensor' entries for each system (zone) in the global 'y' dictionary.
 
     Args:
         y_ (dict): The existing y variable (global zone data).
@@ -840,7 +836,7 @@ class building_control(Resource):
             system_data = body.get(first_key) if first_key == 'ecobee' else body
             print("system_data: ", system_data)
 
-            # Update environment entries in y
+            # Update sensor entries in y
             y_env = restructure_sensor_data_by_zone(system_data)            
             y = update_zone_environment(y, y_env) 
 

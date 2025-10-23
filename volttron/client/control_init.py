@@ -8,7 +8,6 @@ utils.setup_logging()
 _log = logging.getLogger(__name__)
 
 # BASE = 'http://host.docker.internal:5000'  # or your hosted API endpoint
-BASE = 'http://api.boptest.net' # LBNL's BOPTEST API endpoint
 HEADERS = {'Content-Type': 'application/json'}
 
 now = datetime.now(timezone.utc)
@@ -18,7 +17,7 @@ step = 300
 scenario_period = 'peak_heat_day'
 scenario_pricing = 'highly_dynamic'
 
-def initialize(testcase):
+def initialize(BASE, testcase):
     _log.info('[INFO] Select testcase: {}'.format(testcase))
 
     testid = requests.post('{}/testcases/{}/select'.format(BASE,testcase)).json()['testid'] # testcase info should be imported from config files

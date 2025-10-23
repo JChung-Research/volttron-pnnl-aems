@@ -1,0 +1,61 @@
+{
+    "building": "BOPTEST",
+    "manager": "bestest_air",
+    "module":"app_agents.client",
+    "class":"control_init",
+    "url": "http://api.boptest.net",
+    "topic":"devices/BOPTEST/bestest_air/all",
+    "inputs":{"topic":"devices/BOPTEST/bestest_air/control"},
+    "data_point": {
+     "fcu_oveTSup_u":
+    {"name": "SupplyAirSetpoint",
+     "label": "Supply air temperature setpoint",
+     "type": "control",
+     "unit": "F"},
+     "fcu_oveFan_u":
+    {"name": "SupplyFanSpeed",
+     "label": "Supply fan Speed",
+     "type": "control",
+     "unit": "[0-1]"},
+     "con_oveTSetCoo_u":
+    {"name": "ZoneAirCoolingSetpoint",
+     "label": "Zone temperature setpoint for cooling",
+     "type": "control",
+     "unit": "F"},
+     "con_oveTSetHea_u":
+    {"name": "ZoneAirHeatingSetpoint",
+     "label": "Zone temperature setpoint for heating",
+     "type": "control",
+     "unit": "F"},
+     "fcu_reaFloSup_y":
+    {"name": "SupplyAirflowRate",
+     "label": "Supply air mass flow rate",
+     "type": "sensor",
+     "unit": "kg/s"},
+     "zon_reaCO2RooAir_y":
+    {"name": "ZoneCo2Concentration",
+     "label": "Zone air CO2 concentration",
+     "type": "sensor",
+     "unit": "ppm"},
+     "zon_reaTRooAir_y":
+    {"name": "ZoneAirTemperature",
+     "label": "Zone air temperature",
+     "type": "sensor",
+     "unit": "F"},
+     "fcu_reaPFan_y":
+    {"name": "SupplyFanPowerConsumption",
+     "label": "Supply fan power consumption",
+     "type": "sensor",
+     "unit": "W"},
+     "fcu_reaPCoo_y":
+    {"name": "CoolingPowerConsumption",
+     "label": "Cooling power consumption",
+     "type": "sensor",
+     "unit": "W"},
+     "fcu_reaPHea_y":
+    {"name": "HeatingPowerConsumption",
+     "label": "Heating power consumption",
+     "type": "sensor",
+     "unit": "W"}
+    }
+}

@@ -6,7 +6,6 @@ utils.setup_logging()
 _log = logging.getLogger(__name__)
 
 # Base URL for the ecobee Smart Themostat API endpoint
-BASE = 'http://bacnet-test:5006'
 HEADERS = {'Content-Type': 'application/json'}
 
 def initialize(system_id):

@@ -3,21 +3,25 @@
     "manager": "bacnet",
     "module":"app_agents.client",
     "class":"bacnet_init",
+    "url": "http://bacnet-test:5006",
     "topic":"devices/3147/bacnet/all",
     "heartbeat_period": 30,
     "inputs":{"topic":"devices/3147/bacnet/control"},
     "data_point": {
      "power_hvac1":
-    {"type":"float",
-     "units":"W",
-     "tz":"UTC"},
+    {"name": "PowerHVAC1",
+     "label": "Electric Power of HVAC 1",
+     "type": "sensor",
+     "unit": "W"},
      "power_hvac2":
-    {"type":"float",
-     "units":"W",
-     "tz":"UTC"},
+    {"name": "PowerHVAC2",
+     "label": "Electric Power of HVAC 2",
+     "type": "sensor",
+     "unit": "W"},
      "power_hvac3":
-    {"type":"float",
-     "units":"W",
-     "tz":"UTC"}
+    {"name": "PowerHVAC3",
+     "label": "Electric Power of HVAC 3",
+     "type": "sensor",
+     "unit": "W"}
     }
 }

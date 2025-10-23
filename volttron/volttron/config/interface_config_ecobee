@@ -3,25 +3,30 @@
     "manager": "ecobee",
     "module":"app_agents.client",
     "class":"ecobee_init",
+    "url": "http://host.docker.internal:5005",
     "topic":"devices/3147/ecobee/all",
     "heartbeat_period": 30,
     "inputs":{"topic":"devices/3147/ecobee/control"},
     "data_point": {
      "ZoneTemperature":
-    {"type":"float",
-     "units":"F",
-     "tz":"UTC"},
+    {"name": "ZoneAirTemperature",
+     "label": "Zone air temperature",
+     "type": "sensor",
+     "unit": "F"},
      "desiredHeat":
-    {"type":"float",
-     "units":"F",
-     "tz":"UTC"},
+    {"name": "ZoneAirHeatingSetpoint",
+     "label": "Zone temperature setpoint for heating",
+     "type": "control",
+     "unit": "F"},
      "desiredCool":
-    {"type":"float",
-     "units":"F",
-     "tz":"UTC"},
+    {"name": "ZoneAirCoolingSetpoint",
+     "label": "Zone temperature setpoint for cooling",
+     "type": "control",
+     "unit": "F"},
      "HVACMode":
-    {"type":"bool",
-     "units":"None",
-     "tz":"UTC"}
+    {"name": "HVACMode",
+     "label": "HVAC mode",
+     "type": "control",
+     "unit": "bool"}
     }
 }

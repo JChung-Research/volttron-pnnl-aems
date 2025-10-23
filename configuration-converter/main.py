@@ -87,8 +87,8 @@ def process_yaml_and_update_configs(yaml_path: str) -> List[str]:
         for human_agent_key, human_agent_block in agent_info.items():
             if not isinstance(human_agent_block, dict): continue
             agent_machine = transform_keys(human_agent_block, ("volttron","agent info",human_agent_key), overrides)
-            agent_id = agent_machine.get("id")
-            if not agent_id: raise ValueError(f"Missing 'id' for {human_agent_key} under volttron -> agent info")
+            agent_id = agent_machine.get("manager")
+            if not agent_id: raise ValueError(f"Missing 'manager' for {human_agent_key} under volttron -> agent info")
             agents_machine[str(agent_id)] = agent_machine
         outputs.extend(write_agent_artifacts(vt, yaml_dir, agents_machine))
 

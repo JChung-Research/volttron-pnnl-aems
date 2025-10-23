@@ -108,7 +108,7 @@ class InterfaceAgent(Agent):
             self.initialize = controller.initialize
             self.preprocessing = getattr(controller, "preprocessing", None)
             self.convert_names_to_ids = getattr(controller, "convert_names_to_ids", None)
-            self.url = self.initialize(self.manager_id) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
+            self.url = self.initialize(self.url, self.manager_id) # Provide to 'control_init.py' with testcase info for BOPTEST initialization
         if self._heartbeat_period != 0:
             self.core.schedule(periodic(self._heartbeat_period), self.control_update)
 
@@ -118,7 +118,7 @@ class InterfaceAgent(Agent):
         # BOPTEST API inputs to activate all building systems in the test case
         if self.building_id == 'BOPTEST':
             # Check the temperature variables whose unit is Kelvin to convert it to Fahrenheit degree, using 'interface_config' files
-            temp_k_vars = [k for k, v in self.points.items() if v['units'] == 'K']
+            temp_k_vars = [k for k, v in self.points.items() if v['unit'] == 'F']
 
             if self.u is not None:
                 _log.info(f"[BOPTEST] self.u.get('payload'): {self.u.get('payload')}")
@@ -172,7 +172,6 @@ class InterfaceAgent(Agent):
                 
                 temp1 = {}
                 temp2 = {}
-                Request_SAT_tot = 0
                 for key in raw_data:
                     temp1[key] = raw_data[key]
                     temp2[key] = self.points[key]
@@ -182,6 +181,8 @@ class InterfaceAgent(Agent):
                 
                 temp1, temp2 = self.preprocessing(result.get('payload'), self.points)
                 _log.info('temp1: {}, temp2: {}'.format(temp1, temp2))
+
+                _log.info('self.u: {}'.format(self.u))
 
                 if (self.u is not None) and (self.ecobee_control is not None):
                     ecobee_set_points = self.ecobee_control(self.convert_names_to_ids(self.u.get('payload')))

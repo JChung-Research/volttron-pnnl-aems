@@ -6,12 +6,11 @@ utils.setup_logging()
 _log = logging.getLogger(__name__)
 
 # Base URL for the ecobee Smart Themostat API endpoint
-BASE = 'http://host.docker.internal:5005'
 HEADERS = {'Content-Type': 'application/json'}
 
 selected_room = ['103','104','105','108','109','110','111','112','118','119','120','122','124','125']
 
-def initialize(system_id):
+def initialize(BASE, system_id):
     _log.info('Initialize agent "{}"'.format(system_id))
     url = f'{BASE}'
     return url

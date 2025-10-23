@@ -51,9 +51,9 @@ def update_volttron_config(vt: dict, yaml_dir: str, overrides: Dict[Tuple[str, .
 
 # ----- Agent configs -----
 def render_interface_json(agent_id: str, agent: Dict[str, Any]) -> dict:
-    """Build InterfaceAgent JSON config for a given agent id + metadata."""
+    """Build InterfaceAgent JSON config for a given agent manager + metadata."""
 
-    topic_base = f"devices/{agent.get('campus', '')}/{agent_id}"
+    topic_base = f"devices/{agent.get('building', '')}/{agent_id}"
     dp = {}
     for name, meta in (agent.get("data_point") or {}).items():
         meta = meta or {}
@@ -71,9 +71,9 @@ def render_interface_json(agent_id: str, agent: Dict[str, Any]) -> dict:
     }
 
 def render_recv_json(agent_id: str, agent: Dict[str, Any]) -> dict:
-    """Build RecvAgent JSON config for a given agent id + metadata."""
+    """Build RecvAgent JSON config for a given agent manager + metadata."""
 
-    topic_base = f"devices/{agent.get('campus', '')}/{agent_id}"
+    topic_base = f"devices/{agent.get('building', '')}/{agent_id}"
     return {"inputs": {"topic": f"{topic_base}/all"},
             "module": "app_agents.client",
             "topic": f"{topic_base}/control",
