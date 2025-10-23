@@ -429,12 +429,12 @@ def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
                 if building_of(y_system_id.removeprefix("manager.")) != y_env_building:
                     continue
                 for entry in entries:
-                    if entry.get("type") == "environment" and entry.get("name") in new_values:
+                    if entry.get("type") == "sensor" and entry.get("name") in new_values:
                         entry['value'] = new_values[entry['name']]
 
                 existing_names = {entry["name"] for entry in entries if isinstance(entry, dict) and "name" in entry}
                 to_add = [entry.copy() for entry in new_env_list
-                        if entry.get("type") == "environment" and entry["name"] not in existing_names]
+                        if entry.get("type") == "sensor" and entry["name"] not in existing_names]
                 if to_add:
                     entries.extend(to_add)
         else:

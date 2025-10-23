@@ -7,7 +7,7 @@ app = Flask(__name__)
 api = Api(app)
 
 def randomize (value):
-    return value * round(random.uniform(0.95, 1.05), 4)
+    return round(value * random.uniform(0.95, 1.05), 4)
 
 class building_data(Resource):
     '''Interface to get the operation information from BACnet devices.''' 

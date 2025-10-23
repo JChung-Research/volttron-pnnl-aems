@@ -8,7 +8,7 @@ _log = logging.getLogger(__name__)
 # Base URL for the ecobee Smart Themostat API endpoint
 HEADERS = {'Content-Type': 'application/json'}
 
-def initialize(system_id):
+def initialize(BASE, system_id):
     _log.info('Initialize agent "{}"'.format(system_id))
     url = f'{BASE}'
     return url
