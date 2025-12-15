@@ -18,6 +18,12 @@ ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 # may be necessary for proxy with self signed cert
 RUN npm config set strict-ssl false
 
+# Boming's suggestion to bypass the SSL certificate verification issue entirely by using plain HTTP instead of HTTPS when downloading Alpine packages.
+# First command: Overwrites /etc/apk/repositories with the HTTP URL for the main repository
+# Second command: Appends the HTTP URL for the community repository
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/main" > /etc/apk/repositories && \
+    echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories
+
 # used for healthcheck and starting services
 RUN apk add --no-cache curl
 
