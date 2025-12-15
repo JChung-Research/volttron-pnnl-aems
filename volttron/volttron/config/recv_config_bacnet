@@ -1,0 +1,8 @@
+{
+    "building": "3147",
+    "manager": "bacnet",
+    "inputs":{"topic":"devices/3147/bacnet/all"},
+    "module":"app_agents.client",
+    "topic":"devices/3147/bacnet/control",
+    "class":"UI"
+}

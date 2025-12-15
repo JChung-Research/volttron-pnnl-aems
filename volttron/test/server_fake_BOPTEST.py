@@ -80,30 +80,40 @@ def advance(testid):
     # If the testcase is 'bestest_air'
     if current_test_ids[testid] == 'bestest_air':
         payload = {
-            'fcu_oveTSup_u': 294.15,
-            'fcu_oveFan_u': 1,
-            'con_oveTSetCoo_u': 278.15,
-            'con_oveTSetHea_u': 288.15,
-            'fcu_reaFloSup_y': 0.55,
-            'zon_reaCO2RooAir_y': 316.0569045066186,
-            'zon_reaTRooAir_y': 292.84001603352203,
-            'fcu_reaPFan_y': 173.05008447568497,
-            'fcu_reaPCoo_y': 0,
-            'fcu_reaPHea_y': 811.0584278278242
+            # 'fcu_oveTSup_u': randomize(294.15),
+            # 'fcu_oveFan_u': 1,
+            # 'con_oveTSetCoo_u': randomize(278.15),
+            # 'con_oveTSetHea_u': randomize(288.15),
+            'fcu_reaFloSup_y': randomize(0.55),
+            'zon_reaCO2RooAir_y': randomize(316.0569045066186),
+            'zon_reaTRooAir_y': randomize(292.84001603352203),
+            'fcu_reaPFan_y': randomize(173.05008447568497),
+            'fcu_reaPCoo_y': randomize(150),
+            'fcu_reaPHea_y': randomize(811.0584278278242)
         }
 
     # If the testcase is 'bestest_hydronic'
     elif current_test_ids[testid] == 'bestest_hydronic':
         payload = {
-            'oveTSetSup_u': 294.15,
-            'ovePum_u': 1,           
-            'oveTSetCoo_u': 278.15,
-            'oveTSetHea_u': 288.15,
-            'reaCO2RooAir_y': 316.0569045066186,
-            'reaTRoo_y': 292.84001603352203,
-            'reaPPum_y': 173.05008447568497,
-            'reaQHea_y': 811.0584278278242
+            # 'oveTSetSup_u': randomize(294.15),
+            # 'ovePum_u': 1,           
+            # 'oveTSetCoo_u': randomize(278.15),
+            # 'oveTSetHea_u': randomize(288.15),
+            'reaCO2RooAir_y': randomize(316.0569045066186),
+            'reaTRoo_y': randomize(292.84001603352203),
+            'reaPPum_y': randomize(173.05008447568497),
+            'reaQHea_y': randomize(811.0584278278242)
         }
+        # payload = {
+        #     'oveTSetSup_u': randomize(70),
+        #     'ovePum_u': 1,           
+        #     'oveTSetCoo_u': randomize(41),
+        #     'oveTSetHea_u': randomize(59),
+        #     'reaCO2RooAir_y': randomize(316.0569045066186),
+        #     'reaTRoo_y': randomize(67.4),
+        #     'reaPPum_y': randomize(173.05008447568497),
+        #     'reaQHea_y': randomize(811.0584278278242)
+        # }
         
     return jsonify({'status': 200, 'message': 'Advanced', 'payload': payload})
 

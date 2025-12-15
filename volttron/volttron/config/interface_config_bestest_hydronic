@@ -1,0 +1,51 @@
+{
+    "building": "BOPTEST",
+    "manager": "bestest_hydronic",
+    "module":"app_agents.client",
+    "class":"control_init",
+    "url": "http://api.boptest.net",
+    "topic":"devices/BOPTEST/bestest_hydronic/all",
+    "inputs":{"topic":"devices/BOPTEST/bestest_hydronic/control"},
+    "data_point": {
+     "oveTSetSup_u":
+    {"name": "SupplyHeaterSetpoint",
+     "label": "Supply setpoint of the heater",
+     "type": "control",
+     "unit": "F"},
+     "ovePum_u":
+    {"name": "ControlStagePump",
+     "label": "Control signal to control pump stage",
+     "type": "control",
+     "unit": "on/off"},
+     "oveTSetCoo_u":
+    {"name": "ZoneOperativeCoolingSetpoint",
+     "label": "Zone temperature setpoint for cooling",
+     "type": "control",
+     "unit": "F"},
+     "oveTSetHea_u":
+    {"name": "ZoneOperativeHeatingSetpoint",
+     "label": "Zone temperature setpoint for heating",
+     "type": "control",
+     "unit": "F"},
+     "reaCO2RooAir_y":
+    {"name": "ZoneCo2Concentration",
+     "label": "CO2 concentration in the zone",
+     "type": "sensor",
+     "unit": "ppm"},
+     "reaTRoo_y":
+    {"name": "ZoneOperativeTemperature",
+     "label": "Operative zone temperature",
+     "type": "sensor",
+     "unit": "F"},
+     "reaPPum_y":
+    {"name": "PumpPowerConsumption",
+     "label": "Pump power consumption",
+     "type": "sensor",
+     "unit": "W"},
+     "reaQHea_y":
+    {"name": "HeatingPowerConsumption",
+     "label": "Heating power consumption",
+     "type": "sensor",
+     "unit": "W"}
+    }
+}

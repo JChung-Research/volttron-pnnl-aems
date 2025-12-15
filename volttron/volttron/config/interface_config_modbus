@@ -1,0 +1,32 @@
+{
+    "building": "3147",
+    "manager": "modbus",
+    "module":"app_agents.client",
+    "class":"modbus_init",
+    "url": "http://modbus-test:5008",
+    "topic":"devices/3147/modbus/all",
+    "heartbeat_period": 30,
+    "inputs":{"topic":"devices/3147/modbus/control"},
+    "data_point": {
+     "power":
+    {"name": "EquipmentPower",
+     "label": "Electric Power of the Room Equipment",
+     "type": "sensor",
+     "unit": "W"},
+     "voltage":
+    {"name": "EquipmentVoltage",
+     "label": "Electric Power of the Room Equipment",
+     "type": "sensor",
+     "unit": "V"},
+     "current":
+    {"name": "EquipmentElectricCurrent",
+     "label": "Electric Power of the Room Equipment",
+     "type": "sensor",
+     "unit": "A"},
+     "power_factor":
+    {"name": "EquipmentPowerFactor",
+     "label": "Electric Power Factor of the Room Equipment",
+     "type": "sensor",
+     "unit": "[0-1]"}
+    }
+}

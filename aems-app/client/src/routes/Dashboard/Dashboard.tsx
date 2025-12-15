@@ -888,8 +888,6 @@ componentDidUpdate(prevProps: UnitsProps) {
                     
                     // allow update only if end > start (when end exists)
                     if (endISO && new Date(v).getTime() >= new Date(endISO).getTime()) {
-                      console.log("new Date(Start Time): ", new Date(v))
-                      console.log(" new Date(endISO): ",  new Date(endISO))
                       return null; // no change
                     }
 
@@ -899,7 +897,6 @@ componentDidUpdate(prevProps: UnitsProps) {
                         : config
                     );
 
-                    console.log("updatedConfigs: ", updatedConfigs);
                     return {
                       unitManagerData: {
                         ...prevState.unitManagerData,
@@ -932,8 +929,6 @@ componentDidUpdate(prevProps: UnitsProps) {
                       
                       // allow update only if end > start (when start exists)
                       if (startISO && new Date(v).getTime() <= new Date(startISO).getTime()) {
-                        console.log("new Date(End Time): ", new Date(v))
-                        console.log(" new Date(startISO): ",  new Date(startISO))
                         return null; // no change
                       }
 
@@ -943,7 +938,6 @@ componentDidUpdate(prevProps: UnitsProps) {
                           : config
                       );
                       
-                      console.log("updatedConfigs: ", updatedConfigs);
                       return {
                         unitManagerData: {
                           ...prevState.unitManagerData,
@@ -1237,14 +1231,12 @@ componentDidUpdate(prevProps: UnitsProps) {
     const chartConfig = (unitData.chartConfigs as { id: number; selectedVariables: string[]; timeRange: TimeRange }[])
       .find((c) => c.id === chartId); 
     if (!chartConfig) return [];
-    console.log("buildAxisInfo+chartConfig.timeRange: ", chartConfig?.timeRange)
     
     // NEW: resolve any 'now' / 'now-6h' / absolute tokens to strings
     const now = new Date();
     const tr = chartConfig.timeRange ?? {};
     const resolvedStart = toTimeString(tr.start_time, now);
     const resolvedEnd   = toTimeString(tr.end_time,   now);
-    console.log("buildAxisInfo resolved range:", { resolvedStart, resolvedEnd });
 
     return chartConfig.selectedVariables.map((outputName) => {
       const values = unitData.lineChartData
@@ -1304,7 +1296,7 @@ componentDidUpdate(prevProps: UnitsProps) {
         <Plot
           key={`${unitData.building}-${chartIndex}`}
           data={yAxisInfo.map((info: AxisInfo, idx: number) => ({
-            x: unitData.lineChartData.map((d: { time: string }) => d.time.split(" ")[1]),
+            x: unitData.lineChartData.map((d: { time: string }) => d.time),
             y: info.values,//.slice(-390),
             type: 'scatter',
             mode: 'lines',
@@ -1768,10 +1760,7 @@ componentDidUpdate(prevProps: UnitsProps) {
           } as any);
 
           const unitId = unit.id;
-          console.log("(unit.configuration as any)?.chartConfigs: ", (unit.configuration as any)?.chartConfigs)
           const defaultChartConfigs = convertChartConfigs((unit.configuration as any)?.chartConfigs);
-
-          console.log("this.props.units: ", this.props.units);
 
           newUnitManagerData[unitId] = {
             id: unitId,
@@ -2295,7 +2284,6 @@ componentDidUpdate(prevProps: UnitsProps) {
                                           const unitData = this.state.unitManagerData[unit.id!];
                                           const lineChartData = unitData?.lineChartData?.[0] ?? { index: 0, time: "", values: {} };
                                           const axisInfo = this.buildAxisInfo(unitData, chart.id, "zone");
-                                          console.log("zone-level axisInfo: ", axisInfo);
 
                                           return (
                                             <div key={`${unit.id}-${chart.id}`} style={{ marginBottom: "10px" }}>

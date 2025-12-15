@@ -1,0 +1,8 @@
+{
+    "building": "3147",
+    "manager": "modbus",
+    "inputs":{"topic":"devices/3147/modbus/all"},
+    "module":"app_agents.client",
+    "topic":"devices/3147/modbus/control",
+    "class":"UI"
+}

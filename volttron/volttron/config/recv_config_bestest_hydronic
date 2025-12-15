@@ -1,4 +1,6 @@
 {
+    "building": "BOPTEST",
+    "manager": "bestest_hydronic",
     "inputs":{"topic":"devices/BOPTEST/bestest_hydronic/all"},
     "module":"app_agents.client",
     "topic":"devices/BOPTEST/bestest_hydronic/control",

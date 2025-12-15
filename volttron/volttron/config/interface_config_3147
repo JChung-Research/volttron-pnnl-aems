@@ -1,4 +1,7 @@
 {
+    "campus": "ORNL",
+    "building": "",
+    "system": "",
     "module":"app_agents.client",
     "class":"ecobee_init",
     "topic":"devices/ORNL/3147/all",
