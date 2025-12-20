@@ -84,6 +84,10 @@ class InterfaceAgent(Agent):
         self.manager_id = self.config.get('manager', None)
         self.u = None  
 
+        # Track whether inputs changed since last successful /set_point
+        self._u_updated = False
+        self._last_u_payload_json = None
+
         if self.config['module'] is not None:
             try:
                 control_class="{}.{}".format(self.config['module'],self.config['class'])
@@ -184,7 +188,7 @@ class InterfaceAgent(Agent):
 
                 _log.info('self.u: {}'.format(self.u))
 
-                if (self.u is not None) and (self.ecobee_control is not None):
+                if (self.u is not None) and (self.ecobee_control is not None) and self._u_updated:
                     ecobee_set_points = self.ecobee_control(self.convert_names_to_ids(self.u.get('payload')))
                     result = requests.put('{}/set_point'.format(self.url),
                                                         json=ecobee_set_points,
@@ -192,8 +196,10 @@ class InterfaceAgent(Agent):
   
                     if result['status'] == 200:
                         _log.info(f'New control signals sent to ecobee: {ecobee_set_points}')
+                        _log.info('"/set_point" result from the {}: {}'.format(self.manager_id, result))
 
-            _log.info('"/set_point" result from the {}: {}'.format(self.manager_id, result))
+                        # Clear flag only after a successful send
+                        self._u_updated = False
 
             message = []
             message.append(temp1)
@@ -232,8 +238,18 @@ class InterfaceAgent(Agent):
         :param message: actual message
         :return:
         """
-        if message is not None:
+
+        if message is None:
+            return
+
+        # Compare payload content to avoid re-sending when the same input repeats
+        payload = message.get("payload") if isinstance(message, dict) else message
+        payload_json = json.dumps(payload, sort_keys=True, default=str)  # stable compare
+
+        if payload_json != self._last_u_payload_json:
             self.u = message
+            self._last_u_payload_json = payload_json
+            self._u_updated = True
 
 def main(argv=sys.argv):
     '''Main method called by the eggsecutable.'''
