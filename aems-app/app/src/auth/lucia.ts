@@ -12,7 +12,7 @@ const lucia = new Lucia(adapter, {
     expires: false,
     attributes: {
       // set to `true` when using HTTPS
-      secure: process.env.NODE_ENV === "production",
+      secure: false, //process.env.NODE_ENV === "production",
     },
   },
   getUserAttributes: (user) => pick(user, ["id", "name", "email", "role"]),
