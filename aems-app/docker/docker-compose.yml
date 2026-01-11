@@ -182,7 +182,7 @@ services:
       timeout: 10s
       retries: 10
     hostname: database
-    image: postgis/postgis:16-3.4
+    image: postgis/postgis:16-3.5
     ports:
       - ${DATABASE_PORT}:5432
     restart: unless-stopped
@@ -314,7 +314,7 @@ services:
       timeout: 10s
       retries: 10
     hostname: keycloak-db
-    image: postgis/postgis:16-3.4
+    image: postgis/postgis:16-3.5
     profiles:
       - sso
     restart: unless-stopped
