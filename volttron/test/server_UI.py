@@ -15,6 +15,7 @@ sys.path.append(os.getenv("AEMS_MANAGER_PATH", "/app/aems-edge/Manager/manager")
 # Reuse the holiday and observance objects from the 'aems-edge' folder
 from holiday_utils import ALL_HOLIDAYS, OBSERVANCE
 from influxdb_historian.influxdb_utils import *
+from influxdb_historian.influxdb_utils import _auto_bucket_interval
 
 # ----------------- FLASK APPS -----------------
 app_volttron = Flask(__name__)
@@ -557,15 +558,27 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
     except Exception as e:
         print(f"[WARN] : {e}")
 
+    interval = _auto_bucket_interval(start_rfc, end_rfc)
+
     # Pull all points in the window for this system_id, grouped by signal name.
     q = (
-        f'SELECT "value" FROM "{measurement}" '
+        f'SELECT MEAN("value") FROM "{measurement}" '
         f'WHERE "system_id"=\'{system_id}\' AND time >= \'{start_rfc}\' AND time <= \'{end_rfc}\' '
-        f'GROUP BY "name"'
-    )    
+        f'GROUP BY time({interval}), "name" fill(null)'
+    )
 
     res = influx_client.query(q, database=INFLUXDB_DB)
-    print("res: ", res)
+    print("res (mean): ", res)
+
+    # Occupancy special handling: use MAX so if any 1.0 exists in bucket => occupied
+    q_occ = (
+        f'SELECT MAX("value") FROM "{measurement}" '
+        f'WHERE "system_id"=\'{system_id}\' AND "name"=\'Occupancy\' '
+        f'AND time >= \'{start_rfc}\' AND time <= \'{end_rfc}\' '
+        f'GROUP BY time({interval}), "name" fill(null)'
+    )
+    res_occ = influx_client.query(q_occ, database=INFLUXDB_DB)
+    print("res (occupancy max): ", res_occ)
 
     entries: List[Dict[str, Any]] = []
     for (_series_key, tags), points in res.items():
@@ -582,14 +595,31 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
         typ   = meta.get("type", "")     if meta else ""
         unit  = meta.get("unit", "")     if meta else ""
 
-        history = [{"time": to_datetime_str(p.get("time")), "value": p.get("value")} for p in points if "value" in p]
+        history = [
+            {"time": to_datetime_str(p.get("time")), "value": p.get("mean")}
+            for p in points
+            if ("mean" in p and p.get("mean") is not None)
+        ]
         current_val = history[-1]["value"] if history else None
 
         if name == "Occupancy":
-            current_val = "occupied" if float(current_val) == 1.0 else "unoccupied" if float(current_val) == 0.0 else current_val
-            for h in history:
-                v = h.get("value")
-                h["value"] = "occupied" if float(v) == 1.0 else "unoccupied" if float(v) == 0.0 else v
+            # Replace mean-based occupancy with MAX-based occupancy (any occupied in bucket => occupied)
+            occ_points = []
+            for (_k2, tags2), points2 in res_occ.items():
+                if (tags2 or {}).get("name") == "Occupancy":
+                    occ_points = points2
+                    break
+
+            history = [
+                {
+                    "time": to_datetime_str(p.get("time")),
+                    "value": "occupied" if (p.get("max") is not None and float(p.get("max")) > 0.0) else "unoccupied"
+                }
+                for p in occ_points
+                if "max" in p
+            ]
+
+            current_val = history[-1]["value"] if history else None
         # elif name == "HVACMode":
         #     current_val = "occupied" if float(current_val) == 1.0 else "unoccupied" if float(current_val) == 0.0 else current_val
         #     for h in history:
@@ -725,7 +755,7 @@ def set_schedule(system_id: str, schedules: Dict[str, Any]) -> Dict[str, Any]:
             elif value == "always_off":
                 parsed_schedule[day_cap] = "always_off"
             elif value == "always_on":
-                parsed_schedule[day_cap] = "always_oN"
+                parsed_schedule[day_cap] = "always_on"
             else:
                 raise ValueError(f"Invalid value for {day}: {value}")
 
@@ -869,13 +899,12 @@ class building_control(Resource):
             global y, u, u_uo, t, o, timestamp
 
             body = request.get_json()
-            body_data = body[0]
-            body_meta = body[1]
+            first_key = next(iter(body))
+            body_data = body[first_key]
 
-            print("body_data: ", body_data)
-            print("body_meta: ", body_meta)
-            first_key = next(iter(body_data))
-            system_data = body_data.get(first_key) if first_key in ['ecobee', 'modbus'] else body_data
+            system_meta = body_data[1]
+            system_data = body_data[0] if first_key in ['ecobee', 'modbus'] else {first_key: body_data[0]}
+            print("system_meta: ", system_meta)
             print("system_data: ", system_data)
 
             # Update sensor entries in y

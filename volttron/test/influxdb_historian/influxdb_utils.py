@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from influxdb import InfluxDBClient
 from zoneinfo import ZoneInfo
+import pandas as pd
 
 # ---- Env & defaults (match your current setup) ----
 HISTORIAN_ENABLE: bool = True #os.environ.get('HISTORIAN_ENABLE', 'true').lower() == 'true'
@@ -90,3 +91,18 @@ def to_datetime_str(ts: any) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(ZoneInfo("America/New_York")).strftime('%Y-%m-%d %H:%M:%S')
+
+def _auto_bucket_interval(start_rfc: str, end_rfc: str) -> str:
+    """Choose group-by interval based on requested time range."""
+    start_dt = pd.to_datetime(start_rfc, utc=True)
+    end_dt = pd.to_datetime(end_rfc, utc=True)
+    hours = (end_dt - start_dt).total_seconds() / 3600.0
+
+    if hours <= 6:
+        return "5m"
+    elif hours <= 24:
+        return "15m"
+    elif hours <= 24 * 7:
+        return "1h"
+    else:
+        return "2h"  # ~1 month and larger
