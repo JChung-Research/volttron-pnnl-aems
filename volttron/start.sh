@@ -20,5 +20,9 @@ bash upgrade_scripts/upgrade_rec_bacnet
 bash upgrade_scripts/upgrade_interface_modbus
 bash upgrade_scripts/upgrade_rec_modbus
 
+# Start /ping server for health checks
+python /home/volttron/ping_server.py > /tmp/ping.log 2>&1 &
+disown
+
 # Keep container running and output logs
 tail -f v.log

@@ -112,6 +112,12 @@ class building_data(Resource):
         return {'status': 200, 'message': None, 'payload': {'output': output, 'time': now}}
 
 
+class health(Resource): 
+    def get(self): 
+        ts_local = datetime.now().astimezone().isoformat()
+
+        return {'status': 200, 'message': None, 'payload': {"time": ts_local}}
+
 # ------------------------------------------------------------
 # API Configuration
 # ------------------------------------------------------------
@@ -119,6 +125,7 @@ app = Flask(__name__)
 api = Api(app)
 
 api.add_resource(building_data, '/get_point')
+api.add_resource(health, '/ping')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5008, debug=False)

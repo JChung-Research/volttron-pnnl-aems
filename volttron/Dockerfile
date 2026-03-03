@@ -25,6 +25,12 @@ USER root
 RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
     echo "Etc/UTC" > /etc/timezone
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+RUN /home/volttron/volttron/env/bin/pip install --no-cache-dir flask
+
+COPY ping_server.py /home/volttron/ping_server.py
+
 RUN chown volttron /home/volttron/.volttron_central/keystore
 
 RUN chown volttron /home/volttron/.volttron_central/config

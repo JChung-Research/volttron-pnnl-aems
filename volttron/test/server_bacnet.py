@@ -1,3 +1,4 @@
+from datetime import datetime
 import asyncio
 from time import gmtime, strftime
 from flask import Flask
@@ -138,7 +139,14 @@ class building_data(Resource):
 
         return {'status': 200, 'message': None, 'payload': {'output': output, 'time': now}}
 
+class health(Resource): 
+    def get(self): 
+        ts_local = datetime.now().astimezone().isoformat()
+
+        return {'status': 200, 'message': None, 'payload': {"time": ts_local}}
+
 api.add_resource(building_data, '/get_point')
+api.add_resource(health, '/ping')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5006, debug=False)
