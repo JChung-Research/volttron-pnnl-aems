@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 
 RUN /home/volttron/volttron/env/bin/pip install --no-cache-dir flask
 
-COPY ping_server.py /home/volttron/ping_server.py
+COPY test/ping_server.py /home/volttron/ping_server.py
 
 RUN chown volttron /home/volttron/.volttron_central/keystore
 
@@ -40,4 +40,3 @@ RUN chown volttron /home/volttron/.volttron_central/auth.json
 RUN chown volttron /home/volttron/.volttron_central/ -R
 
 USER volttron
-
