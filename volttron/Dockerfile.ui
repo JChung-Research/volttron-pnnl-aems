@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata ca-certificates openssl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy code from the child folder
+COPY test/server_UI.py test/holiday_utils.py /app/
+RUN mkdir -p /app/influxdb_historian
+COPY test/influxdb_historian/influxdb_utils.py /app/influxdb_historian/influxdb_utils.py
+
+# Deps
+RUN pip install --no-cache-dir flask flask-restful pandas influxdb
+
+# Defaults (override via compose)
+ENV HISTORIAN_ENABLE=true \
+    INFLUXDB_DB=building3147 \
+    INFLUXDB_HOST=influxdb \
+    INFLUXDB_ADMIN_USER=admin \
+    INFLUXDB_ADMIN_PASSWORD=admin \
+    AEMS_MANAGER_PATH=/app/aems-edge/Manager/manager \
+    CERT_DIR=/certs
+
+EXPOSE 5100 8443
+
+# Entrypoint: mint self-signed cert if none is mounted, then run both servers in server_UI.py
+COPY entrypoint.ui.sh /entrypoint.ui.sh
+RUN chmod +x /entrypoint.ui.sh
+ENTRYPOINT ["/entrypoint.ui.sh"]

@@ -20,6 +20,7 @@ from influxdb_historian.influxdb_utils import (
     _influx_db_for_measurement,
     _ensure_influx_database,
     get_influx_client,
+    get_all_influx_clients,
 )
 
 # ----------------- FLASK APPS -----------------
@@ -397,10 +398,11 @@ def _write_influx_for_systems(sys_keys: list[str]):
         system_id = f"manager.{key}"
         measurement = building_of(system_id)
         dbname = _influx_db_for_measurement(measurement)
-        client = get_influx_client(dbname)
-        if not client:
+
+        # Get ALL clients (primary + replica) for this database
+        clients = get_all_influx_clients(dbname)
+        if not clients:
             continue
-        _ensure_influx_database(client, dbname, _CREATED_DBS)
 
         entries = y.get(system_id, [])
 
@@ -420,16 +422,18 @@ def _write_influx_for_systems(sys_keys: list[str]):
         if not points:
             continue
 
-        try:
-            print(f"Writing.. {dbname}")
-            print(f"system keys: {sys_keys}")
-            print(f"points: {points}")
-            ok = client.write_points(points=points, time_precision="s", database=dbname)
-            if not ok:
-                print(f"[WARN] Influx write unsuccessful. db={dbname}, points={len(points)}")
-        except Exception as ex:
-            print(f"[WARN] Influx write failed: {ex}")
-            print(f"[WARN] Influx write failed. db={dbname}: {ex}")
+        # Write to every target host
+        for client, host_label in clients:
+            try:
+                _ensure_influx_database(client, dbname, _CREATED_DBS)
+                print(f"Writing.. {dbname} @ {host_label}")
+                print(f"system keys: {sys_keys}")
+                print(f"points: {points}")
+                ok = client.write_points(points=points, time_precision="s", database=dbname)
+                if not ok:
+                    print(f"[WARN] Influx write unsuccessful. db={dbname} @ {host_label}, points={len(points)}")
+            except Exception as ex:
+                print(f"[WARN] Influx write failed. db={dbname} @ {host_label}: {ex}")
 
 # ----------------- HELPERS -----------------
 def building_of(system_id: str) -> str:

@@ -1,6 +1,45 @@
 version: '3.8'
 
 services:
+  influxdb:
+    image: influxdb:1.8
+    restart: unless-stopped
+    environment:
+      INFLUXDB_DB: building3147
+      INFLUXDB_ADMIN_USER: admin
+      INFLUXDB_ADMIN_PASSWORD: admin
+    volumes:
+      - ./influxdb-data:/var/lib/influxdb
+    expose:
+      - "8086"
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui  # see below
+    image: aems-ui:latest
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+    environment:
+      HISTORIAN_ENABLE: "true"
+      INFLUXDB_DB: "building3147,yuma"
+      INFLUXDB_HOST: "influxdb"
+      INFLUXDB_DB_HOSTS: "building3147=localhost,yuma=localhost"
+      INFLUXDB_ADMIN_USER: "admin"
+      INFLUXDB_ADMIN_PASSWORD: "admin"
+      AEMS_MANAGER_PATH: "/app/aems-edge/Manager/manager"
+      INFLUXDB_HOST_2: "localhost"
+      INFLUXDB_ADMIN_USER_2: admin
+      INFLUXDB_ADMIN_PASSWORD_2: admin
+    volumes:
+      - ./certs:/certs           # mount real certs if you have them
+      - ./aems-edge/Manager/manager:/app/aems-edge/Manager/manager:ro
+    expose:
+      - "5100"                   # internal-only
+    ports:
+      - "8443:8443"                   # internal-only
+
   ecobee:
     build:
       context: .

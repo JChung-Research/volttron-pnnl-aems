@@ -13,7 +13,9 @@ INFLUXDB_HOST: str = os.environ.get('INFLUXDB_HOST', 'influxdb')
 INFLUXDB_ADMIN_USER: str = os.environ.get('INFLUXDB_ADMIN_USER', 'admin')
 INFLUXDB_ADMIN_PASSWORD: str = os.environ.get('INFLUXDB_ADMIN_PASSWORD', 'admin')
 
-# Build once, reuse everywhere
+# Per-database host mapping.
+# Env format: "dbname1=host1,dbname2=host2"
+# Databases not listed fall back to INFLUXDB_HOST.
 _DB_HOST_MAP: Dict[str, str] = {}
 for _pair in os.environ.get('INFLUXDB_DB_HOSTS', '').split(','):
     _pair = _pair.strip()
@@ -137,6 +139,21 @@ def _influx_db_for_measurement(measurement: str) -> str:
     if m.lower() == "3147":
         return "building3147"
     return m.lower()
+
+def get_all_influx_clients(dbname: str) -> List[tuple]:
+    """Return [(client, host_label), ...] for every host that should receive writes."""
+    if not HISTORIAN_ENABLE:
+        return []
+
+    clients = []
+    primary_host = _DB_HOST_MAP.get(dbname, INFLUXDB_HOST)
+    clients.append((_get_or_create_client(primary_host), primary_host))
+
+    # Replica: INFLUXDB_HOST_2, if configured and not already the primary
+    if _INFLUXDB_HOST_2 and _INFLUXDB_HOST_2 != primary_host:
+        clients.append((_get_or_create_client(_INFLUXDB_HOST_2), _INFLUXDB_HOST_2))
+
+    return clients
 
 def _ensure_influx_database(influx_client, dbname: str, created_dbs: set[str]) -> None:
     """
