@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Minimal deps for this service
+RUN pip install --no-cache-dir \
+    flask \
+    flask-restful \
+    pandas \
+    bacpypes3
+
+# Copy service and mapping file into the image
+COPY test/server_egauge.py /app/
+COPY test/egauge_topic.csv /app/
+COPY test/egauge_device.csv /app/
+
+# Useful runtime envs (optional)
+ENV PYTHONUNBUFFERED=1
+ENV LOCAL_ADDRESS="0.0.0.0:47808"
+ENV DEVICE_ADDRESS="10.108.1.3:47808"
+
+# REST (Flask) and BACnet/IP
+EXPOSE 5006/tcp
+EXPOSE 47808/udp
+
+CMD ["python", "server_egauge.py"]

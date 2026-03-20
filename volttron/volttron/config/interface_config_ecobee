@@ -3,7 +3,7 @@
     "manager": "ecobee",
     "module":"app_agents.client",
     "class":"ecobee_init",
-    "url": "http://host.docker.internal:5005",
+    "url": "http://ecobee:5005",
     "topic":"devices/3147/ecobee/all",
     "heartbeat_period": 30,
     "inputs":{"topic":"devices/3147/ecobee/control"},
