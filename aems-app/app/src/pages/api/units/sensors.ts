@@ -75,20 +75,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       function buildLineChartDataFromPayload(payload: PayloadItem[]) {
-        const firstHist = payload[0]?.history ?? [];
-        const len = firstHist.length;
-        const rows: Array<{ index: number; time: string; values: Record<string, number | string | null> }> = [];
+        // Collect all timestamps across all series
+        const timeSet = new Set<string>();
+        const seriesByName = new Map<string, Map<string, number | string | null>>();
 
-        for (let i = 0; i < len; i++) {
-          const time = firstHist[i].time;
+        for (const item of payload) {
+          const m = new Map<string, number | string | null>();
+          for (const h of item.history ?? []) {
+            timeSet.add(h.time);
+            // keep null as null
+            m.set(h.time, (h.value ?? null) as any);
+          }
+          seriesByName.set(item.name, m);
+        }
+
+        const times = Array.from(timeSet).sort();
+
+        const rows = times.map((time, index) => {
           const values: Record<string, number | string | null> = {};
           for (const item of payload) {
-            const v = item.history?.[i]?.value ?? item.value ?? null;
-            values[item.name] = v as any;
+            const s = seriesByName.get(item.name);
+            values[item.name] = s?.has(time) ? (s.get(time) as any) : null;
           }
-          rows.push({ index: i, time, values });
-        }
-        return rows;
+          return { index, time, values };
+        });
+
+        // Drop rows where everything is null OR only Occupancy is non-null
+        const filtered = rows.filter((row) => {
+          for (const [k, v] of Object.entries(row.values)) {
+            if (k === "Occupancy") continue; // ignore occupancy-only rows
+            if (v == null) continue;         // null/undefined not meaningful
+            if (typeof v === "number" && !Number.isFinite(v)) continue; // ignore NaN/Inf
+            return true; // found at least one real non-Occupancy value
+          }
+          return false;
+        });
+
+        // reindex so client doesn't see gaps in index
+        return filtered.map((row, i) => ({ ...row, index: i }));
       }
 
       const resSensorData: Record<number, any> = {};
@@ -97,6 +121,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       for (const unit of output) {
         const unitId = unit.id;
         const systemId = `manager.${unit.system.toLowerCase()}`;
+        const qStart = typeof req.query.start_time === "string" ? req.query.start_time : undefined;
+        const qEnd   = typeof req.query.end_time === "string" ? req.query.end_time : undefined;
+
+        const timeRange =
+          (qStart && qEnd)
+            ? { start_time: qStart, end_time: qEnd }
+            : (unit.configuration?.dataTimeRange ?? null);
 
         const body = {
           jsonrpc: "2.0",
@@ -104,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           method: "get_temperature_setpoints",
           params: {
             authentication: token,
-            data: unit.configuration?.dataTimeRange,
+            data: timeRange,
           },
         };
 
@@ -125,7 +156,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             // 2) build ctrlValues + lineChartData
             const ctrlValues = buildCtrlValuesFromPayload(payload);
-            console.log("payload: ", payload)
             const lineChartData = buildLineChartDataFromPayload(payload);
 
             // 3) assign to resSensorData
