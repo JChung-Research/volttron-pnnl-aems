@@ -131,7 +131,7 @@ def preprocessing(payload: Dict, data_point: Dict) -> Tuple[Dict, Dict]:
 
     return temp1, temp2
 
-def ecobee_control(input_object: Union[str, Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+def thermostat_control(input_object: Union[str, Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
     output_object: Dict[str, Dict[str, float]] = {}
 
     for room_id, settings in input_object.items():
@@ -140,14 +140,8 @@ def ecobee_control(input_object: Union[str, Dict[str, Any]]) -> Dict[str, Dict[s
         desired_cool = settings.get("desiredCool")
         mode = settings.get("HVACMode")
 
-        new_setpoint = None
-        if mode == "heat":
-            new_setpoint = desired_heat
-        elif mode == "cool":
-            new_setpoint = desired_cool
-        else:
-            new_setpoint = desired_heat
 
         output_object[room_id] = {"TSet": new_setpoint}
+        output_object[room_id] = {"desiredHeat": desired_heat, "desiredCool": desired_cool}
 
     return output_object

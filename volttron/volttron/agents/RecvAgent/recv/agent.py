@@ -67,6 +67,7 @@ class RecvAgent(Agent):
         self.config = utils.load_config(config_path)
         self.inputs = self.config.get('inputs', None)   
         self.topic = self.config.get('topic', None)
+        # self.manager_id = self.config.get('topic', None).split('/')[2]
         self.building_id = self.config.get('building', None)
         self.manager_id = self.config.get('manager', None)
         try:
@@ -111,7 +112,7 @@ class RecvAgent(Agent):
 
         # Input format for '/set_point' endpoint of server_UI: {manager_id: sensor_data}
         # Response format: sensor_data corresponding to the input manager_id
-        y = self.call_back({self.manager_id: msg[0]})
+        y = self.call_back({self.manager_id: msg})
                 
         try:
             self.vip.pubsub.publish(peer='pubsub',

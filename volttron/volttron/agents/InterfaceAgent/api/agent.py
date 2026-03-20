@@ -94,7 +94,7 @@ class InterfaceAgent(Agent):
                 controller = importlib.import_module(control_class)
                 self.initialize = controller.initialize
                 self.preprocessing = getattr(controller, "preprocessing", None)
-                self.ecobee_control = getattr(controller, "ecobee_control", None)
+                self.thermostat_control = getattr(controller, "thermostat_control", None)
             except:
                 _log.error('Invalid control module')    
         try:
@@ -157,7 +157,7 @@ class InterfaceAgent(Agent):
                                                     json=data,
                                                     headers=API_HEADER).json()
 
-        # Ecobee API inputs for ORNL real buildings (3147, FRP2, etc.)
+        # API inputs for ORNL real buildings (3147, FRP2, etc.)
         else:
             _log.info(f'"/get_point" request to {self.manager_id} API')
             result = requests.get('{}/get_point'.format(self.url),
@@ -186,16 +186,16 @@ class InterfaceAgent(Agent):
                 temp1, temp2 = self.preprocessing(result.get('payload'), self.points)
                 _log.info('temp1: {}, temp2: {}'.format(temp1, temp2))
 
-                _log.info('self.u: {}'.format(self.u))
 
-                if (self.u is not None) and (self.ecobee_control is not None) and self._u_updated:
-                    ecobee_set_points = self.ecobee_control(self.convert_names_to_ids(self.u.get('payload')))
+                if (self.u is not None) and (self.thermostat_control is not None) and self._u_updated:
+                    _log.info('self.u: {}'.format(self.u))
+                    thermostat_set_points = self.thermostat_control(self.convert_names_to_ids(self.u.get('payload'))) if self.convert_names_to_ids is not None else self.thermostat_control(self.u.get('payload'))
                     result = requests.put('{}/set_point'.format(self.url),
-                                                        json=ecobee_set_points,
+                                                        json=thermostat_set_points,
                                                         headers=API_HEADER).json()
   
                     if result['status'] == 200:
-                        _log.info(f'New control signals sent to ecobee: {ecobee_set_points}')
+                        _log.info(f'New control signals sent to thermosta: {thermostat_set_points}')
                         _log.info('"/set_point" result from the {}: {}'.format(self.manager_id, result))
 
                         # Clear flag only after a successful send
