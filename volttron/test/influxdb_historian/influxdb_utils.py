@@ -7,20 +7,52 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 # ---- Env & defaults (match your current setup) ----
-HISTORIAN_ENABLE: bool = True #os.environ.get('HISTORIAN_ENABLE', 'true').lower() == 'true'
-INFLUXDB_DB: Optional[str] = "test"# "test_20250923" #os.environ.get('INFLUXDB_DB', 'bems')
-INFLUXDB_HOST: str = "localhost" #os.environ.get('INFLUXDB_HOST', 'localhost')
-INFLUXDB_ADMIN_USER: str = "admin" #os.environ.get('INFLUXDB_ADMIN_USER', 'admin')
-INFLUXDB_ADMIN_PASSWORD: str = "admin" #os.environ.get('INFLUXDB_ADMIN_PASSWORD', 'admin')
+HISTORIAN_ENABLE: bool = os.environ.get('HISTORIAN_ENABLE', 'true').lower() == 'true'
+INFLUXDB_DB: Optional[str] = os.environ.get('INFLUXDB_DB', 'test')
+INFLUXDB_HOST: str = os.environ.get('INFLUXDB_HOST', 'influxdb')
+INFLUXDB_ADMIN_USER: str = os.environ.get('INFLUXDB_ADMIN_USER', 'admin')
+INFLUXDB_ADMIN_PASSWORD: str = os.environ.get('INFLUXDB_ADMIN_PASSWORD', 'admin')
 
 # Build once, reuse everywhere
+_DB_HOST_MAP: Dict[str, str] = {}
+for _pair in os.environ.get('INFLUXDB_DB_HOSTS', '').split(','):
+    _pair = _pair.strip()
+    if '=' in _pair:
+        _db, _host = _pair.split('=', 1)
+        _DB_HOST_MAP[_db.strip()] = _host.strip()
+
+# Per-host credential overrides (Version-A compat: INFLUXDB_HOST_2 / _USER_2 / _PASSWORD_2)
+_HOST_CREDS: Dict[str, tuple] = {}
+_INFLUXDB_HOST_2     = os.environ.get('INFLUXDB_HOST_2', "10.158.174.56").strip()
+_INFLUXDB_USER_2     = os.environ.get('INFLUXDB_ADMIN_USER_2', INFLUXDB_ADMIN_USER)
+_INFLUXDB_PASSWORD_2 = os.environ.get('INFLUXDB_ADMIN_PASSWORD_2', INFLUXDB_ADMIN_PASSWORD)
+if _INFLUXDB_HOST_2:
+    _HOST_CREDS[_INFLUXDB_HOST_2] = (_INFLUXDB_USER_2, _INFLUXDB_PASSWORD_2)
+
+_influx_clients: Dict[str, InfluxDBClient] = {}
+
+def _get_or_create_client(host: str) -> InfluxDBClient:
+    """Return (and cache) an InfluxDBClient for the given host."""
+    if host not in _influx_clients:
+        user, pw = _HOST_CREDS.get(host, (INFLUXDB_ADMIN_USER, INFLUXDB_ADMIN_PASSWORD))
+        _influx_clients[host] = InfluxDBClient(
+            host=host,
+            username=user,
+            password=pw,
+        )
+    return _influx_clients[host]
+
+def get_influx_client(dbname: str) -> Optional[InfluxDBClient]:
+    """Return the InfluxDBClient for *dbname*, respecting per-DB host overrides."""
+    if not HISTORIAN_ENABLE:
+        return None
+    host = _DB_HOST_MAP.get(dbname, INFLUXDB_HOST)
+    return _get_or_create_client(host)
+
+# Legacy single-client alias (for any code that still references it directly)
 influx_client: Optional[InfluxDBClient] = None
 if HISTORIAN_ENABLE:
-    influx_client = InfluxDBClient(
-        host=INFLUXDB_HOST,
-        username=INFLUXDB_ADMIN_USER,
-        password=INFLUXDB_ADMIN_PASSWORD,
-    )
+    influx_client = _get_or_create_client(INFLUXDB_HOST)
 
 def _cast_field_value(v: Any) -> float:
     """Influx-friendly cast: keep numeric/bool; parse common strings; else None (skip)."""
@@ -40,29 +72,14 @@ def _cast_field_value(v: Any) -> float:
             return None
     return None
 
-def _measurement_for(system_id: str) -> str:
-    """
-    Use building tag as the measurement name to keep Grafana groupings neat.
-    Mirrors server logic:
-      - contains 'bestest_air'     -> 'bestest_air'
-      - contains 'bestest_hydronic'-> 'bestest_hydronic'
-      - otherwise                  -> '3147'
-    """
-    sid = system_id.lower()
-    if 'bestest_air' in sid:
-        return 'bestest_air'
-    if 'bestest_hydronic' in sid:
-        return 'bestest_hydronic'
-    return '3147'
-
-def points_from_entries(system_id: str,
+def points_from_entries(meas: str,
+                        system_id: str,
                         entries: List[Dict[str, Any]],
                         when: datetime) -> List[Dict[str, Any]]:
     """
     Convert AEMS entries (environment+control) to Influx v1 JSON points.
     The entries already carry 'name'/'type'/'unit'—we tag with them.
     """
-    meas = _measurement_for(system_id)
     pts: List[Dict[str, Any]] = []
     for e in entries:
         val = _cast_field_value(e.get('value'))
@@ -90,7 +107,8 @@ def to_datetime_str(ts: any) -> str:
     dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(ZoneInfo("America/New_York")).strftime('%Y-%m-%d %H:%M:%S')
+    # return dt.astimezone(ZoneInfo("America/New_York")).strftime('%Y-%m-%d %H:%M:%S')
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 def _auto_bucket_interval(start_rfc: str, end_rfc: str) -> str:
     """Choose group-by interval based on requested time range."""
@@ -106,3 +124,32 @@ def _auto_bucket_interval(start_rfc: str, end_rfc: str) -> str:
         return "1h"
     else:
         return "2h"  # ~1 month and larger
+    
+# ----------------- INFLUX DB ROUTING -----------------
+
+def _influx_db_for_measurement(measurement: str) -> str:
+    """
+    Map measurement/building -> InfluxDB database name.
+    - '3147' is stored in DB 'building3147'
+    - otherwise use measurement name as DB name (e.g., 'yuma' -> 'yuma')
+    """
+    m = (measurement or "").strip()
+    if m.lower() == "3147":
+        return "building3147"
+    return m.lower()
+
+def _ensure_influx_database(influx_client, dbname: str, created_dbs: set[str]) -> None:
+    """
+    Create DB if missing (safe to call repeatedly). Uses caller-provided cache set.
+    """
+    if not influx_client or not dbname:
+        return
+    if dbname in created_dbs:
+        return
+
+    try:
+        influx_client.query(f'CREATE DATABASE "{dbname}"')
+        created_dbs.add(dbname)
+        print(f"[INFO] ensured InfluxDB database exists: {dbname}")
+    except Exception as e:
+        print(f"[WARN] could not ensure database '{dbname}': {e}")

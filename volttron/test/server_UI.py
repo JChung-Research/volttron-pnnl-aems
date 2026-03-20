@@ -15,7 +15,12 @@ sys.path.append(os.getenv("AEMS_MANAGER_PATH", "/app/aems-edge/Manager/manager")
 # Reuse the holiday and observance objects from the 'aems-edge' folder
 from holiday_utils import ALL_HOLIDAYS, OBSERVANCE
 from influxdb_historian.influxdb_utils import *
-from influxdb_historian.influxdb_utils import _auto_bucket_interval
+from influxdb_historian.influxdb_utils import (
+    _auto_bucket_interval,
+    _influx_db_for_measurement,
+    _ensure_influx_database,
+    get_influx_client,
+)
 
 # ----------------- FLASK APPS -----------------
 app_volttron = Flask(__name__)
@@ -51,6 +56,8 @@ o: Dict[str, str] = {}
 # logical clock used for schedule/holiday checks
 timestamp = datetime.now(timezone.utc)
 time_accelerator = False # Accelerate the time step to 5 min (same as the time step of the BOPTEST emulation), otherwise the time step is 5 second
+
+_CREATED_DBS: set[str] = set()
 
 # ----------------- DATA CONVERSION TOOL -----------------
 
@@ -272,27 +279,6 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "type": "control",
         "unit": "bool"
     },
-    "power_hvac1": {
-        "building": "3147",
-        "name": "PowerHVAC1",
-        "label": "Electric Power of HVAC 1",
-        "type": "sensor",
-        "unit": "W"
-    },
-    "power_hvac2": {
-        "building": "3147",
-        "name": "PowerHVAC2",
-        "label": "Electric Power of HVAC 2",
-        "type": "sensor",
-        "unit": "W"
-    },
-    "power_hvac3": {
-        "building": "3147",
-        "name": "PowerHVAC3",
-        "label": "Electric Power of HVAC 3",
-        "type": "sensor",
-        "unit": "W"
-    },
     "power": {
         "building": "3147",
         "name": "EquipmentPower",
@@ -321,6 +307,77 @@ data_mapping: Dict[str, Dict[str, Any]] = {
         "type": "sensor",
         "unit": "[0-1]"
     },
+    # --- Yuma ---
+    "power_hvac1": {
+        "building": "yuma",
+        "name": "PowerHVAC1",
+        "label": "Electric Power of HVAC 1",
+        "type": "sensor",
+        "unit": "W"
+    },
+    "power_hvac2": {
+        "building": "yuma",
+        "name": "PowerHVAC2",
+        "label": "Electric Power of HVAC 2",
+        "type": "sensor",
+        "unit": "W"
+    },
+    "power_hvac3": {
+        "building": "yuma",
+        "name": "PowerHVAC3",
+        "label": "Electric Power of HVAC 3",
+        "type": "sensor",
+        "unit": "W"
+    },
+    "RoomTemperature": {
+        "building": "yuma",
+        "name": "ZoneAirTemperature",
+        "label": "Zone air temperature",
+        "type": "sensor",
+        "unit": "°F"
+    },
+    "RoomHumidity": {
+        "building": "yuma",
+        "name": "ZoneAirHumidity",
+        "label": "Zone air humidity",
+        "type": "sensor",
+        "unit": "%" 
+    },
+    "Co2Level": {
+        "building": "yuma",
+        "name": "ZoneCo2Concentration",
+        "label": "CO2 concentration in the zone",
+        "type": "sensor",
+        "unit": "ppm"
+    },
+    "desiredHeat": {
+        "building": "yuma",
+        "name": "ZoneAirHeatingSetpoint",
+        "label": "Zone temperature setpoint for heating",
+        "type": "control",
+        "unit": "°F"
+    },
+    "desiredCool": {
+        "building": "yuma",
+        "name": "ZoneAirCoolingSetpoint",
+        "label": "Zone temperature setpoint for cooling",
+        "type": "control",
+        "unit": "°F"
+    },
+    "HVACMode": {
+        "building": "yuma",
+        "name": "HVACMode",
+        "label": "HVAC mode",
+        "type": "control",
+        "unit": "bool"
+    },
+    "FanMode": {
+        "building": "yuma",
+        "name": "FanMode",
+        "label": "Fan mode",
+        "type": "control",
+        "unit": "bool"
+    },
     # --- shared ---
     "occupancy": {
         "building": "all",
@@ -332,41 +389,60 @@ data_mapping: Dict[str, Dict[str, Any]] = {
 }
 
 def _write_influx_for_systems(sys_keys: list[str]):
-    """Write the current y[] snapshot (plus Occupancy) for each system in system_data."""
-    if not HISTORIAN_ENABLE or not influx_client or not INFLUXDB_DB:
+    """Write the current y[] snapshot (plus Occupancy) to the right DB per system."""
+    if not HISTORIAN_ENABLE:
         return
 
-    all_points = []
     for key in sys_keys:
         system_id = f"manager.{key}"
+        measurement = building_of(system_id)
+        dbname = _influx_db_for_measurement(measurement)
+        client = get_influx_client(dbname)
+        if not client:
+            continue
+        _ensure_influx_database(client, dbname, _CREATED_DBS)
+
         entries = y.get(system_id, [])
 
         # Append Occupancy as 1/0 for easy plotting
-        occ = data_mapping['occupancy'].copy()
-        occ['value'] = 1.0 if o.get(system_id, 'unoccupied') == 'occupied' else 0.0
-        entries_with_occ = list(entries) + [occ]
+        occ = data_mapping["occupancy"].copy()
+        occ["value"] = 1.0 if o.get(system_id, "unoccupied") == "occupied" else 0.0
 
-        all_points += points_from_entries(system_id, entries_with_occ, timestamp)
+        # IMPORTANT: force all points (including occupancy) to be written under this building measurement
+        entries_with_occ = []
+        for e in list(entries) + [occ]:
+            ee = e.copy()
+            ee["building"] = measurement
+            entries_with_occ.append(ee)
 
-    if all_points:
+        points = points_from_entries(measurement, system_id, entries_with_occ, timestamp)
+
+        if not points:
+            continue
+
         try:
-            print("all_points: ", all_points)
-            ok = influx_client.write_points(points=all_points, time_precision='s', database=INFLUXDB_DB)
+            print(f"Writing.. {dbname}")
+            print(f"system keys: {sys_keys}")
+            print(f"points: {points}")
+            ok = client.write_points(points=points, time_precision="s", database=dbname)
             if not ok:
-                print(f"[WARN] Influx write unsuccessful. Points: {len(all_points)}")
+                print(f"[WARN] Influx write unsuccessful. db={dbname}, points={len(points)}")
         except Exception as ex:
             print(f"[WARN] Influx write failed: {ex}")
-
+            print(f"[WARN] Influx write failed. db={dbname}: {ex}")
 
 # ----------------- HELPERS -----------------
 def building_of(system_id: str) -> str:
     """Return mapping tag for the given system_id."""
     sid = system_id.lower()
-    if 'bestest_air' in sid: # Single-zone building
-        return 'bestest_air'
-    if 'bestest_hydronic' in sid: # Single-zone building
-        return 'bestest_hydronic'
-    return '3147'
+
+    if "zone-" in sid:
+        return "yuma"
+    if "bestest_air" in sid:
+        return "bestest_air"
+    if "bestest_hydronic" in sid:
+        return "bestest_hydronic"
+    return "3147"
 
 
 # ----------------- AEMS STRUCTURERS -----------------
@@ -457,7 +533,7 @@ def update_zone_environment(y_: Dict[str, List[Dict[str, Any]]],
                 else:
                     y_[system_id].append(entry.copy())
 
-        elif system_id.removeprefix("manager.") == 'bacnet':
+        elif system_id.removeprefix("manager.") == 'egauge':
             # Updates HVAC energy data of all zones within the same building as `y_env_building`
             new_values = {entry['name']: entry['value'] for entry in new_env_list}
             for y_system_id, entries in y_.items():
@@ -549,6 +625,8 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
                 end_time = time_range["end_time"]
 
         measurement = building_of(system_id)  # 'bestest_air' | 'bestest_hydronic' | '3147'
+        dbname = _influx_db_for_measurement(measurement)
+        _ensure_influx_database(influx_client, dbname, _CREATED_DBS)  # optional but helpful if yuma DB may not exist yet
         # start_time = start_time or (timestamp - timedelta(hours=6)).strftime('%Y-%m-%d %H:%M:%S')
         # end_time = end_time or timestamp.strftime('%Y-%m-%d %H:%M:%S')
         # start_time = datetime(2025, 9, 21, 19, 00, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
@@ -567,7 +645,9 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
         f'GROUP BY time({interval}), "name" fill(null)'
     )
 
-    res = influx_client.query(q, database=INFLUXDB_DB)
+    print(f"Reading.. {dbname}, {measurement}, {system_id}")
+
+    res = influx_client.query(q, database=dbname)
     print("res (mean): ", res)
 
     # Occupancy special handling: use MAX so if any 1.0 exists in bucket => occupied
@@ -577,7 +657,7 @@ def get_temperature_setpoints(system_id: str, time_range: Optional[Dict[str, Any
         f'AND time >= \'{start_rfc}\' AND time <= \'{end_rfc}\' '
         f'GROUP BY time({interval}), "name" fill(null)'
     )
-    res_occ = influx_client.query(q_occ, database=INFLUXDB_DB)
+    res_occ = influx_client.query(q_occ, database=dbname)
     print("res (occupancy max): ", res_occ)
 
     entries: List[Dict[str, Any]] = []
@@ -903,9 +983,9 @@ class building_control(Resource):
             body_data = body[first_key]
 
             system_meta = body_data[1]
-            system_data = body_data[0] if first_key in ['ecobee', 'modbus'] else {first_key: body_data[0]}
             print("system_meta: ", system_meta)
             print("system_data: ", system_data)
+            system_data = body_data[0] if first_key in ['ecobee', 'modbus', 'egauge', 'schneider'] else {first_key: body_data[0]}
 
             # Update sensor entries in y
             y_env = restructure_sensor_data_by_zone(system_data)            
@@ -916,7 +996,7 @@ class building_control(Resource):
 
             # Per-system updates (defaults, occupancy replacement, and mirrored y)
             for key in system_data.keys():
-                if key == 'bacnet':
+                if key in ['egauge', 'modbus']:
                     continue
                 # system_id = f"manager.zone-{key}"
                 system_id = f"manager.{key}"
@@ -969,9 +1049,9 @@ class building_control(Resource):
                     y = update_zone_controls(y, system_id, control_data)
 
 
-            if first_key in ['bacnet', 'modbus']: # Only update global environmental data and skip updating global control data
+            if first_key in ['egauge', 'modbus']: # Only update global environmental data and skip updating global control data
                 updated_u = {} ; system_data = {}
-            elif first_key == 'ecobee':
+            elif first_key in ['ecobee', 'schneider']:
                 # updated_u = {key: u[f"manager.zone-{key}"] for key in system_data.keys() if f"manager.zone-{key}" in u.keys()}
                 updated_u = {key: u.get(f"manager.{key}") for key in system_data.keys() if f"manager.{key}" in u.keys()}
             else:
@@ -1083,3 +1163,4 @@ if __name__ == '__main__':
     t1 = threading.Thread(target=run_volttron_server)
     t2 = threading.Thread(target=run_aems_server)
     t1.start(); t2.start()
+    t1.join(); t2.join()
