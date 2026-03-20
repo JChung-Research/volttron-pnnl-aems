@@ -1,12 +1,12 @@
 {
-    "building": "3147",
-    "manager": "bacnet",
+    "building": "yuma",
+    "manager": "egauge",
     "module":"app_agents.client",
-    "class":"bacnet_init",
-    "url": "http://bacnet-test:5006",
-    "topic":"devices/3147/bacnet/all",
+    "class":"egauge_init",
+    "url": "http://egauge:5006",
+    "topic":"devices/yuma/egauge/all",
     "heartbeat_period": 30,
-    "inputs":{"topic":"devices/3147/bacnet/control"},
+    "inputs":{"topic":"devices/yuma/egauge/control"},
     "data_point": {
      "power_hvac1":
     {"name": "PowerHVAC1",

@@ -15,8 +15,8 @@ sleep 30
 # Run upgrade scripts
 bash upgrade_scripts/upgrade_interface_ecobee
 bash upgrade_scripts/upgrade_rec_ecobee
-bash upgrade_scripts/upgrade_interface_bacnet
-bash upgrade_scripts/upgrade_rec_bacnet
+bash upgrade_scripts/upgrade_interface_egauge
+bash upgrade_scripts/upgrade_rec_egauge
 bash upgrade_scripts/upgrade_interface_modbus
 bash upgrade_scripts/upgrade_rec_modbus
 

@@ -2,8 +2,8 @@
 # Build a temp file string for use with the configuration
 python ./scripts/install-agent.py \
     -s app_agents/InterfaceAgent \
-    -i interface_bacnet \
-    --tag interface_bacnet \
-    --config config/interface_config_bacnet \
+    -i interface_egauge \
+    --tag interface_egauge \
+    --config config/interface_config_egauge \
     --start \
     --force

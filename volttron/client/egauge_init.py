@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Any, Union
 utils.setup_logging()
 _log = logging.getLogger(__name__)
 
-# Base URL for the ecobee Smart Themostat API endpoint
+# Base URL for the eguage energy meter API endpoint
 HEADERS = {'Content-Type': 'application/json'}
 
 def initialize(BASE, system_id):
@@ -15,7 +15,7 @@ def initialize(BASE, system_id):
 
 def preprocessing(payload: Dict, data_point: Dict) -> Tuple[Dict, Dict]:
     """
-    Processes raw payload from the ecobee API and aligns it with data point definitions.
+    Processes raw payload from the eguage API and aligns it with data point definitions.
 
     Args:
         payload (Dict): Incoming payload containing real-time thermostat data.
@@ -33,8 +33,12 @@ def preprocessing(payload: Dict, data_point: Dict) -> Tuple[Dict, Dict]:
         return {}, {}
 
     temp1, temp2 = {}, {}
-    for subkey, subvalue in input_data.items():
-            temp1[subkey] = subvalue
-            temp2[subkey] = data_point.get(subkey, {})
+    for key, room_data in input_data.items():
+        temp1.setdefault(key, {})
+        temp2.setdefault(key, {})
+
+        for subkey, subvalue in room_data.items():
+            temp1[key][subkey] = subvalue
+            temp2[key][subkey] = data_point.get(subkey, {})
 
     return temp1, temp2

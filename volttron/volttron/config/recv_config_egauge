@@ -1,0 +1,8 @@
+{
+    "building": "yuma",
+    "manager": "egauge",
+    "inputs":{"topic":"devices/yuma/egauge/all"},
+    "module":"app_agents.client",
+    "topic":"devices/yuma/egauge/control",
+    "class":"UI"
+}
